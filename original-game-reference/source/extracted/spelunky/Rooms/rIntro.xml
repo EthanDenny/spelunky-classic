@@ -1,0 +1,2725 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<room id="100">
+  <caption/>
+  <size height="240" width="960"/>
+  <grid>
+    <isometric>false</isometric>
+    <snap x="16" y="16"/>
+  </grid>
+  <speed>30</speed>
+  <persistent>false</persistent>
+  <creationCode/>
+  <backgroundColor>C0C0C0</backgroundColor>
+  <drawBackgroundColor>false</drawBackgroundColor>
+  <backgrounds>
+    <backgroundDef>
+      <visibleOnRoomStart>true</visibleOnRoomStart>
+      <isForeground>false</isForeground>
+      <backgroundImage>backgroundNight</backgroundImage>
+      <offset x="0" y="0"/>
+      <speed x="0" y="0"/>
+      <tileHorizontally>true</tileHorizontally>
+      <tileVertically>true</tileVertically>
+      <stretch>false</stretch>
+    </backgroundDef>
+    <backgroundDef>
+      <visibleOnRoomStart>false</visibleOnRoomStart>
+      <isForeground>false</isForeground>
+      <backgroundImage/>
+      <offset x="0" y="0"/>
+      <speed x="0" y="0"/>
+      <tileHorizontally>true</tileHorizontally>
+      <tileVertically>true</tileVertically>
+      <stretch>false</stretch>
+    </backgroundDef>
+    <backgroundDef>
+      <visibleOnRoomStart>false</visibleOnRoomStart>
+      <isForeground>false</isForeground>
+      <backgroundImage/>
+      <offset x="0" y="0"/>
+      <speed x="0" y="0"/>
+      <tileHorizontally>true</tileHorizontally>
+      <tileVertically>true</tileVertically>
+      <stretch>false</stretch>
+    </backgroundDef>
+    <backgroundDef>
+      <visibleOnRoomStart>false</visibleOnRoomStart>
+      <isForeground>false</isForeground>
+      <backgroundImage/>
+      <offset x="0" y="0"/>
+      <speed x="0" y="0"/>
+      <tileHorizontally>true</tileHorizontally>
+      <tileVertically>true</tileVertically>
+      <stretch>false</stretch>
+    </backgroundDef>
+    <backgroundDef>
+      <visibleOnRoomStart>false</visibleOnRoomStart>
+      <isForeground>false</isForeground>
+      <backgroundImage/>
+      <offset x="0" y="0"/>
+      <speed x="0" y="0"/>
+      <tileHorizontally>true</tileHorizontally>
+      <tileVertically>true</tileVertically>
+      <stretch>false</stretch>
+    </backgroundDef>
+    <backgroundDef>
+      <visibleOnRoomStart>false</visibleOnRoomStart>
+      <isForeground>false</isForeground>
+      <backgroundImage/>
+      <offset x="0" y="0"/>
+      <speed x="0" y="0"/>
+      <tileHorizontally>true</tileHorizontally>
+      <tileVertically>true</tileVertically>
+      <stretch>false</stretch>
+    </backgroundDef>
+    <backgroundDef>
+      <visibleOnRoomStart>false</visibleOnRoomStart>
+      <isForeground>false</isForeground>
+      <backgroundImage/>
+      <offset x="0" y="0"/>
+      <speed x="0" y="0"/>
+      <tileHorizontally>true</tileHorizontally>
+      <tileVertically>true</tileVertically>
+      <stretch>false</stretch>
+    </backgroundDef>
+    <backgroundDef>
+      <visibleOnRoomStart>false</visibleOnRoomStart>
+      <isForeground>false</isForeground>
+      <backgroundImage/>
+      <offset x="0" y="0"/>
+      <speed x="0" y="0"/>
+      <tileHorizontally>true</tileHorizontally>
+      <tileVertically>true</tileVertically>
+      <stretch>false</stretch>
+    </backgroundDef>
+  </backgrounds>
+  <enableViews>true</enableViews>
+  <views>
+    <view>
+      <visibleOnRoomStart>true</visibleOnRoomStart>
+      <viewInRoom height="240" width="320" x="0" y="0"/>
+      <portOnScreen height="480" width="640" x="0" y="0"/>
+      <objectFollowing hBorder="160" hSpeed="-1" vBorder="160" vSpeed="-1">oPDummy3</objectFollowing>
+    </view>
+    <view>
+      <visibleOnRoomStart>false</visibleOnRoomStart>
+      <viewInRoom height="480" width="640" x="0" y="0"/>
+      <portOnScreen height="480" width="640" x="0" y="0"/>
+      <objectFollowing hBorder="32" hSpeed="-1" vBorder="32" vSpeed="-1"/>
+    </view>
+    <view>
+      <visibleOnRoomStart>false</visibleOnRoomStart>
+      <viewInRoom height="480" width="640" x="0" y="0"/>
+      <portOnScreen height="480" width="640" x="0" y="0"/>
+      <objectFollowing hBorder="32" hSpeed="-1" vBorder="32" vSpeed="-1"/>
+    </view>
+    <view>
+      <visibleOnRoomStart>false</visibleOnRoomStart>
+      <viewInRoom height="480" width="640" x="0" y="0"/>
+      <portOnScreen height="480" width="640" x="0" y="0"/>
+      <objectFollowing hBorder="32" hSpeed="-1" vBorder="32" vSpeed="-1"/>
+    </view>
+    <view>
+      <visibleOnRoomStart>false</visibleOnRoomStart>
+      <viewInRoom height="480" width="640" x="0" y="0"/>
+      <portOnScreen height="480" width="640" x="0" y="0"/>
+      <objectFollowing hBorder="32" hSpeed="-1" vBorder="32" vSpeed="-1"/>
+    </view>
+    <view>
+      <visibleOnRoomStart>false</visibleOnRoomStart>
+      <viewInRoom height="480" width="640" x="0" y="0"/>
+      <portOnScreen height="480" width="640" x="0" y="0"/>
+      <objectFollowing hBorder="32" hSpeed="-1" vBorder="32" vSpeed="-1"/>
+    </view>
+    <view>
+      <visibleOnRoomStart>false</visibleOnRoomStart>
+      <viewInRoom height="480" width="640" x="0" y="0"/>
+      <portOnScreen height="480" width="640" x="0" y="0"/>
+      <objectFollowing hBorder="32" hSpeed="-1" vBorder="32" vSpeed="-1"/>
+    </view>
+    <view>
+      <visibleOnRoomStart>false</visibleOnRoomStart>
+      <viewInRoom height="480" width="640" x="0" y="0"/>
+      <portOnScreen height="480" width="640" x="0" y="0"/>
+      <objectFollowing hBorder="32" hSpeed="-1" vBorder="32" vSpeed="-1"/>
+    </view>
+  </views>
+  <instances>
+    <instance id="131015">
+      <object>oMoon</object>
+      <position x="208" y="16"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="131534">
+      <object>oIntroBG</object>
+      <position x="0" y="112"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="131035">
+      <object>oPalmTreeDark</object>
+      <position x="80" y="64"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="131036">
+      <object>oPalmTreeDark</object>
+      <position x="224" y="64"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="131037">
+      <object>oPalmTreeDark</object>
+      <position x="272" y="64"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="131038">
+      <object>oPalmTreeDark</object>
+      <position x="416" y="64"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="131039">
+      <object>oPalmTreeDark</object>
+      <position x="512" y="64"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="131041">
+      <object>oPalmTreeDark</object>
+      <position x="640" y="64"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="131017">
+      <object>oCaveBG2</object>
+      <position x="752" y="144"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="131018">
+      <object>oCaveBG2</object>
+      <position x="720" y="144"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="131019">
+      <object>oCaveBG2</object>
+      <position x="784" y="144"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="131020">
+      <object>oCaveBG2</object>
+      <position x="816" y="144"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="131021">
+      <object>oCaveBG2</object>
+      <position x="848" y="144"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="131022">
+      <object>oCaveBG2</object>
+      <position x="880" y="144"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="131023">
+      <object>oCaveBG2</object>
+      <position x="912" y="144"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="131024">
+      <object>oCaveBG2</object>
+      <position x="720" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="131025">
+      <object>oCaveBG2</object>
+      <position x="752" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="131026">
+      <object>oCaveBG2</object>
+      <position x="784" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="131027">
+      <object>oCaveBG2</object>
+      <position x="816" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="131028">
+      <object>oCaveBG2</object>
+      <position x="848" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="131029">
+      <object>oCaveBG2</object>
+      <position x="880" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="131030">
+      <object>oCaveBG2</object>
+      <position x="912" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="131031">
+      <object>oCaveBG2</object>
+      <position x="912" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="131032">
+      <object>oCaveBGEntrance</object>
+      <position x="704" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="131043">
+      <object>oShrubDark</object>
+      <position x="192" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="131044">
+      <object>oShrubDark</object>
+      <position x="336" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="131046">
+      <object>oShrubDark</object>
+      <position x="384" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="131047">
+      <object>oShrubDark</object>
+      <position x="464" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="131048">
+      <object>oShrubDark</object>
+      <position x="560" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="131049">
+      <object>oShrubDark</object>
+      <position x="640" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="131050">
+      <object>oShrubDark</object>
+      <position x="672" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130330">
+      <object>oDesert</object>
+      <position x="0" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130331">
+      <object>oDesert</object>
+      <position x="16" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130332">
+      <object>oDesert</object>
+      <position x="32" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130333">
+      <object>oDesert</object>
+      <position x="48" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130334">
+      <object>oDesert</object>
+      <position x="64" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130336">
+      <object>oDesert</object>
+      <position x="48" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130337">
+      <object>oDesert</object>
+      <position x="32" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130338">
+      <object>oDesert</object>
+      <position x="16" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130339">
+      <object>oDesert</object>
+      <position x="0" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130362">
+      <object>oDesert</object>
+      <position x="224" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130363">
+      <object>oDesert</object>
+      <position x="208" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130364">
+      <object>oDesert</object>
+      <position x="192" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130365">
+      <object>oDesert</object>
+      <position x="176" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130366">
+      <object>oDesert</object>
+      <position x="160" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130367">
+      <object>oDesert</object>
+      <position x="144" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130368">
+      <object>oDesert</object>
+      <position x="128" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130372">
+      <object>oDesert</object>
+      <position x="64" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130373">
+      <object>oDesert</object>
+      <position x="80" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130374">
+      <object>oDesert</object>
+      <position x="96" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130375">
+      <object>oDesert</object>
+      <position x="112" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130392">
+      <object>oDesert</object>
+      <position x="80" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130393">
+      <object>oDesert</object>
+      <position x="96" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130394">
+      <object>oDesert</object>
+      <position x="112" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130395">
+      <object>oDesert</object>
+      <position x="128" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130396">
+      <object>oDesert</object>
+      <position x="144" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130397">
+      <object>oDesert</object>
+      <position x="160" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130398">
+      <object>oDesert</object>
+      <position x="176" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130399">
+      <object>oDesert</object>
+      <position x="192" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130400">
+      <object>oDesert</object>
+      <position x="208" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130412">
+      <object>oDesert</object>
+      <position x="432" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130413">
+      <object>oDesert</object>
+      <position x="416" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130414">
+      <object>oDesert</object>
+      <position x="400" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130418">
+      <object>oDesert</object>
+      <position x="336" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130419">
+      <object>oDesert</object>
+      <position x="320" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130420">
+      <object>oDesert</object>
+      <position x="304" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130421">
+      <object>oDesert</object>
+      <position x="288" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130422">
+      <object>oDesert</object>
+      <position x="272" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130424">
+      <object>oDesert</object>
+      <position x="240" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130425">
+      <object>oDesert</object>
+      <position x="256" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130435">
+      <object>oDesert</object>
+      <position x="384" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130436">
+      <object>oDesert</object>
+      <position x="368" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130437">
+      <object>oDesert</object>
+      <position x="352" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130446">
+      <object>oDesert</object>
+      <position x="224" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130447">
+      <object>oDesert</object>
+      <position x="240" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130448">
+      <object>oDesert</object>
+      <position x="256" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130449">
+      <object>oDesert</object>
+      <position x="272" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130450">
+      <object>oDesert</object>
+      <position x="288" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130451">
+      <object>oDesert</object>
+      <position x="304" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130452">
+      <object>oDesert</object>
+      <position x="320" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130453">
+      <object>oDesert</object>
+      <position x="336" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130454">
+      <object>oDesert</object>
+      <position x="352" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130455">
+      <object>oDesert</object>
+      <position x="368" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130456">
+      <object>oDesert</object>
+      <position x="384" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130457">
+      <object>oDesert</object>
+      <position x="400" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130458">
+      <object>oDesert</object>
+      <position x="416" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130494">
+      <object>oDesert</object>
+      <position x="624" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130495">
+      <object>oDesert</object>
+      <position x="608" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130496">
+      <object>oDesert</object>
+      <position x="592" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130497">
+      <object>oDesert</object>
+      <position x="576" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130498">
+      <object>oDesert</object>
+      <position x="560" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130499">
+      <object>oDesert</object>
+      <position x="544" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130500">
+      <object>oDesert</object>
+      <position x="528" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130501">
+      <object>oDesert</object>
+      <position x="512" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130502">
+      <object>oDesert</object>
+      <position x="496" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130503">
+      <object>oDesert</object>
+      <position x="480" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130504">
+      <object>oDesert</object>
+      <position x="464" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130505">
+      <object>oDesert</object>
+      <position x="448" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130507">
+      <object>oDesert</object>
+      <position x="432" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130508">
+      <object>oDesert</object>
+      <position x="448" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130509">
+      <object>oDesert</object>
+      <position x="464" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130510">
+      <object>oDesert</object>
+      <position x="480" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130511">
+      <object>oDesert</object>
+      <position x="496" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130512">
+      <object>oDesert</object>
+      <position x="512" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130513">
+      <object>oDesert</object>
+      <position x="528" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130514">
+      <object>oDesert</object>
+      <position x="544" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130515">
+      <object>oDesert</object>
+      <position x="560" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130516">
+      <object>oDesert</object>
+      <position x="576" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130517">
+      <object>oDesert</object>
+      <position x="592" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130520">
+      <object>oDesert</object>
+      <position x="640" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130521">
+      <object>oDesert</object>
+      <position x="656" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130522">
+      <object>oDesert</object>
+      <position x="672" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130536">
+      <object>oDesert</object>
+      <position x="608" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130537">
+      <object>oDesert</object>
+      <position x="624" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130538">
+      <object>oDesert</object>
+      <position x="640" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130539">
+      <object>oDesert</object>
+      <position x="656" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130540">
+      <object>oDesert</object>
+      <position x="672" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130541">
+      <object>oDesert</object>
+      <position x="688" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130542">
+      <object>oDesert</object>
+      <position x="704" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130543">
+      <object>oDesert</object>
+      <position x="720" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130687">
+      <object>oDark</object>
+      <position x="944" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130688">
+      <object>oDark</object>
+      <position x="944" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130689">
+      <object>oDark</object>
+      <position x="944" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130690">
+      <object>oDark</object>
+      <position x="928" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130691">
+      <object>oDark</object>
+      <position x="928" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130695">
+      <object>oDark</object>
+      <position x="928" y="144"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130696">
+      <object>oDark</object>
+      <position x="944" y="144"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130697">
+      <object>oDark</object>
+      <position x="944" y="160"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130698">
+      <object>oDark</object>
+      <position x="944" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130699">
+      <object>oDark</object>
+      <position x="896" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130700">
+      <object>oDark</object>
+      <position x="896" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130701">
+      <object>oDark</object>
+      <position x="896" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130702">
+      <object>oDark</object>
+      <position x="880" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130703">
+      <object>oDark</object>
+      <position x="880" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130704">
+      <object>oDark</object>
+      <position x="864" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130706">
+      <object>oDark</object>
+      <position x="880" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130707">
+      <object>oDark</object>
+      <position x="864" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130708">
+      <object>oDark</object>
+      <position x="848" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130709">
+      <object>oDark</object>
+      <position x="832" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130710">
+      <object>oDark</object>
+      <position x="816" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130711">
+      <object>oDark</object>
+      <position x="800" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130712">
+      <object>oDark</object>
+      <position x="784" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130717">
+      <object>oDark</object>
+      <position x="736" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130718">
+      <object>oDark</object>
+      <position x="752" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130719">
+      <object>oDark</object>
+      <position x="768" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130722">
+      <object>oDark</object>
+      <position x="800" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130723">
+      <object>oDark</object>
+      <position x="816" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130724">
+      <object>oDark</object>
+      <position x="832" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130725">
+      <object>oDark</object>
+      <position x="848" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130727">
+      <object>oDark</object>
+      <position x="864" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130728">
+      <object>oDark</object>
+      <position x="848" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130729">
+      <object>oDark</object>
+      <position x="832" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130730">
+      <object>oDark</object>
+      <position x="816" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130731">
+      <object>oDark</object>
+      <position x="800" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130733">
+      <object>oDark</object>
+      <position x="768" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130734">
+      <object>oDark</object>
+      <position x="784" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130735">
+      <object>oDark</object>
+      <position x="784" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130736">
+      <object>oDark</object>
+      <position x="768" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130737">
+      <object>oDark</object>
+      <position x="752" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130738">
+      <object>oDark</object>
+      <position x="736" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130739">
+      <object>oDark</object>
+      <position x="720" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130740">
+      <object>oDark</object>
+      <position x="704" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130741">
+      <object>oDark</object>
+      <position x="688" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130742">
+      <object>oDark</object>
+      <position x="896" y="128"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130743">
+      <object>oDark</object>
+      <position x="880" y="128"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130744">
+      <object>oDark</object>
+      <position x="864" y="128"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130745">
+      <object>oDark</object>
+      <position x="848" y="128"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130746">
+      <object>oDark</object>
+      <position x="832" y="128"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130747">
+      <object>oDark</object>
+      <position x="816" y="128"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130748">
+      <object>oDark</object>
+      <position x="800" y="128"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130749">
+      <object>oDark</object>
+      <position x="784" y="128"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130750">
+      <object>oDark</object>
+      <position x="768" y="128"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130751">
+      <object>oDark</object>
+      <position x="752" y="128"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130752">
+      <object>oDark</object>
+      <position x="736" y="128"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130753">
+      <object>oDark</object>
+      <position x="720" y="128"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130754">
+      <object>oDark</object>
+      <position x="704" y="128"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130755">
+      <object>oDark</object>
+      <position x="688" y="128"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130756">
+      <object>oDark</object>
+      <position x="672" y="128"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130758">
+      <object>oDark</object>
+      <position x="640" y="128"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130759">
+      <object>oDark</object>
+      <position x="656" y="128"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130760">
+      <object>oDark</object>
+      <position x="656" y="112"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130761">
+      <object>oDark</object>
+      <position x="672" y="112"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130762">
+      <object>oDark</object>
+      <position x="688" y="112"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130763">
+      <object>oDark</object>
+      <position x="704" y="112"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130764">
+      <object>oDark</object>
+      <position x="720" y="112"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130765">
+      <object>oDark</object>
+      <position x="736" y="112"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130766">
+      <object>oDark</object>
+      <position x="752" y="112"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130767">
+      <object>oDark</object>
+      <position x="768" y="112"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130768">
+      <object>oDark</object>
+      <position x="784" y="112"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130769">
+      <object>oDark</object>
+      <position x="800" y="112"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130770">
+      <object>oDark</object>
+      <position x="816" y="112"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130771">
+      <object>oDark</object>
+      <position x="832" y="112"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130772">
+      <object>oDark</object>
+      <position x="848" y="112"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130773">
+      <object>oDark</object>
+      <position x="864" y="112"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130774">
+      <object>oDark</object>
+      <position x="880" y="112"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130775">
+      <object>oDark</object>
+      <position x="896" y="112"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130776">
+      <object>oDark</object>
+      <position x="896" y="96"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130777">
+      <object>oDark</object>
+      <position x="880" y="96"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130778">
+      <object>oDark</object>
+      <position x="864" y="96"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130779">
+      <object>oDark</object>
+      <position x="848" y="96"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130780">
+      <object>oDark</object>
+      <position x="832" y="96"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130781">
+      <object>oDark</object>
+      <position x="816" y="96"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130782">
+      <object>oDark</object>
+      <position x="800" y="96"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130783">
+      <object>oDark</object>
+      <position x="784" y="96"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130784">
+      <object>oDark</object>
+      <position x="768" y="96"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130785">
+      <object>oDark</object>
+      <position x="752" y="96"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130786">
+      <object>oDark</object>
+      <position x="736" y="96"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130787">
+      <object>oDark</object>
+      <position x="720" y="96"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130788">
+      <object>oDark</object>
+      <position x="704" y="96"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130789">
+      <object>oDark</object>
+      <position x="688" y="96"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130791">
+      <object>oDark</object>
+      <position x="688" y="64"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130792">
+      <object>oDark</object>
+      <position x="704" y="64"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130793">
+      <object>oDark</object>
+      <position x="704" y="48"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130794">
+      <object>oDark</object>
+      <position x="720" y="48"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130795">
+      <object>oDark</object>
+      <position x="736" y="48"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130799">
+      <object>oDark</object>
+      <position x="736" y="80"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130802">
+      <object>oDark</object>
+      <position x="688" y="80"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130803">
+      <object>oDark</object>
+      <position x="704" y="80"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130804">
+      <object>oDark</object>
+      <position x="720" y="80"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130811">
+      <object>oDark</object>
+      <position x="720" y="64"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130812">
+      <object>oDark</object>
+      <position x="736" y="64"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130814">
+      <object>oDark</object>
+      <position x="768" y="64"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130817">
+      <object>oDark</object>
+      <position x="816" y="64"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130823">
+      <object>oDark</object>
+      <position x="880" y="80"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130835">
+      <object>oDark</object>
+      <position x="848" y="80"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130837">
+      <object>oDark</object>
+      <position x="816" y="80"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130838">
+      <object>oDark</object>
+      <position x="800" y="80"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130839">
+      <object>oDark</object>
+      <position x="784" y="80"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130840">
+      <object>oDark</object>
+      <position x="768" y="80"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130841">
+      <object>oDark</object>
+      <position x="752" y="80"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130842">
+      <object>oDark</object>
+      <position x="752" y="64"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130846">
+      <object>oDark</object>
+      <position x="752" y="0"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130847">
+      <object>oDark</object>
+      <position x="736" y="0"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130848">
+      <object>oDark</object>
+      <position x="736" y="16"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130849">
+      <object>oDark</object>
+      <position x="736" y="32"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130867">
+      <object>oDark</object>
+      <position x="752" y="48"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130868">
+      <object>oDark</object>
+      <position x="752" y="32"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130869">
+      <object>oDark</object>
+      <position x="752" y="16"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130870">
+      <object>oDark</object>
+      <position x="768" y="16"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130871">
+      <object>oDark</object>
+      <position x="768" y="0"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130872">
+      <object>oDark</object>
+      <position x="784" y="0"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130873">
+      <object>oDark</object>
+      <position x="800" y="0"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130875">
+      <object>oDark</object>
+      <position x="800" y="32"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130876">
+      <object>oDark</object>
+      <position x="800" y="48"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130877">
+      <object>oDark</object>
+      <position x="800" y="64"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130878">
+      <object>oDark</object>
+      <position x="784" y="64"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130879">
+      <object>oDark</object>
+      <position x="784" y="48"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130881">
+      <object>oDark</object>
+      <position x="784" y="16"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130883">
+      <object>oDark</object>
+      <position x="768" y="48"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130884">
+      <object>oDark</object>
+      <position x="768" y="32"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130885">
+      <object>oDark</object>
+      <position x="784" y="32"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130886">
+      <object>oDark</object>
+      <position x="800" y="16"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130889">
+      <object>oDark</object>
+      <position x="832" y="0"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130893">
+      <object>oDark</object>
+      <position x="816" y="48"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130894">
+      <object>oDark</object>
+      <position x="816" y="32"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130895">
+      <object>oDark</object>
+      <position x="816" y="16"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130896">
+      <object>oDark</object>
+      <position x="816" y="0"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130897">
+      <object>oDark</object>
+      <position x="832" y="16"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130901">
+      <object>oDark</object>
+      <position x="832" y="80"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130902">
+      <object>oDark</object>
+      <position x="832" y="64"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130903">
+      <object>oDark</object>
+      <position x="832" y="48"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130904">
+      <object>oDark</object>
+      <position x="832" y="32"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130906">
+      <object>oDark</object>
+      <position x="848" y="0"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130912">
+      <object>oDark</object>
+      <position x="864" y="80"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130913">
+      <object>oDark</object>
+      <position x="864" y="64"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130914">
+      <object>oDark</object>
+      <position x="864" y="48"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130917">
+      <object>oDark</object>
+      <position x="864" y="32"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130920">
+      <object>oDark</object>
+      <position x="848" y="64"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130921">
+      <object>oDark</object>
+      <position x="848" y="48"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130922">
+      <object>oDark</object>
+      <position x="848" y="32"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130923">
+      <object>oDark</object>
+      <position x="848" y="16"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130924">
+      <object>oDark</object>
+      <position x="864" y="16"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130925">
+      <object>oDark</object>
+      <position x="864" y="0"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130926">
+      <object>oDark</object>
+      <position x="880" y="0"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130930">
+      <object>oDark</object>
+      <position x="880" y="64"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130931">
+      <object>oDark</object>
+      <position x="880" y="48"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130932">
+      <object>oDark</object>
+      <position x="880" y="32"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130933">
+      <object>oDark</object>
+      <position x="880" y="16"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130939">
+      <object>oDark</object>
+      <position x="896" y="32"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130940">
+      <object>oDark</object>
+      <position x="896" y="16"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130941">
+      <object>oDark</object>
+      <position x="896" y="0"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130942">
+      <object>oDark</object>
+      <position x="912" y="0"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130943">
+      <object>oDark</object>
+      <position x="912" y="16"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130951">
+      <object>oDark</object>
+      <position x="912" y="128"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130952">
+      <object>oDark</object>
+      <position x="928" y="128"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130953">
+      <object>oDark</object>
+      <position x="944" y="128"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130954">
+      <object>oDark</object>
+      <position x="944" y="112"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130956">
+      <object>oDark</object>
+      <position x="912" y="112"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130959">
+      <object>oDark</object>
+      <position x="928" y="80"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130961">
+      <object>oDark</object>
+      <position x="944" y="96"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130963">
+      <object>oDark</object>
+      <position x="928" y="112"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130964">
+      <object>oDark</object>
+      <position x="928" y="96"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130965">
+      <object>oDark</object>
+      <position x="912" y="96"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130966">
+      <object>oDark</object>
+      <position x="912" y="80"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130967">
+      <object>oDark</object>
+      <position x="896" y="80"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130968">
+      <object>oDark</object>
+      <position x="896" y="64"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130969">
+      <object>oDark</object>
+      <position x="896" y="48"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130971">
+      <object>oDark</object>
+      <position x="928" y="48"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130976">
+      <object>oDark</object>
+      <position x="928" y="32"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130978">
+      <object>oDark</object>
+      <position x="928" y="0"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130979">
+      <object>oDark</object>
+      <position x="928" y="16"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130980">
+      <object>oDark</object>
+      <position x="912" y="32"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130981">
+      <object>oDark</object>
+      <position x="912" y="48"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130982">
+      <object>oDark</object>
+      <position x="912" y="64"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130983">
+      <object>oDark</object>
+      <position x="928" y="64"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130985">
+      <object>oDark</object>
+      <position x="944" y="80"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130986">
+      <object>oDark</object>
+      <position x="944" y="64"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130987">
+      <object>oDark</object>
+      <position x="944" y="48"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130988">
+      <object>oDark</object>
+      <position x="944" y="32"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130989">
+      <object>oDark</object>
+      <position x="944" y="16"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130990">
+      <object>oDark</object>
+      <position x="944" y="0"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130991">
+      <object>oDark</object>
+      <position x="912" y="144"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130996">
+      <object>oDark</object>
+      <position x="928" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130997">
+      <object>oDark</object>
+      <position x="928" y="160"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130998">
+      <object>oDark</object>
+      <position x="928" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130999">
+      <object>oDark</object>
+      <position x="896" y="144"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="131000">
+      <object>oDark</object>
+      <position x="672" y="144"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="131001">
+      <object>oDark</object>
+      <position x="688" y="144"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="131002">
+      <object>oDark</object>
+      <position x="704" y="144"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="131003">
+      <object>oDark</object>
+      <position x="720" y="144"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="131004">
+      <object>oDark</object>
+      <position x="736" y="144"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="131005">
+      <object>oDark</object>
+      <position x="704" y="160"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="131006">
+      <object>oDark</object>
+      <position x="688" y="160"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135308">
+      <object>oDesert2</object>
+      <position x="0" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135309">
+      <object>oDesert2</object>
+      <position x="16" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135310">
+      <object>oDesert2</object>
+      <position x="32" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135311">
+      <object>oDesert2</object>
+      <position x="48" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135312">
+      <object>oDesert2</object>
+      <position x="64" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135315">
+      <object>oDesert2</object>
+      <position x="80" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135316">
+      <object>oDesert2</object>
+      <position x="752" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135317">
+      <object>oDesert2</object>
+      <position x="736" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135318">
+      <object>oDesert2</object>
+      <position x="720" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135319">
+      <object>oDesert2</object>
+      <position x="704" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135320">
+      <object>oDesert2</object>
+      <position x="688" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135321">
+      <object>oDesert2</object>
+      <position x="672" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135322">
+      <object>oDesert2</object>
+      <position x="656" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135323">
+      <object>oDesert2</object>
+      <position x="640" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135324">
+      <object>oDesert2</object>
+      <position x="624" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135325">
+      <object>oDesert2</object>
+      <position x="608" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135326">
+      <object>oDesert2</object>
+      <position x="592" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135327">
+      <object>oDesert2</object>
+      <position x="576" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135328">
+      <object>oDesert2</object>
+      <position x="560" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135329">
+      <object>oDesert2</object>
+      <position x="544" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135330">
+      <object>oDesert2</object>
+      <position x="528" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135331">
+      <object>oDesert2</object>
+      <position x="512" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135332">
+      <object>oDesert2</object>
+      <position x="496" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135333">
+      <object>oDesert2</object>
+      <position x="480" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135334">
+      <object>oDesert2</object>
+      <position x="464" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135335">
+      <object>oDesert2</object>
+      <position x="448" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135336">
+      <object>oDesert2</object>
+      <position x="432" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135337">
+      <object>oDesert2</object>
+      <position x="416" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135338">
+      <object>oDesert2</object>
+      <position x="400" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135339">
+      <object>oDesert2</object>
+      <position x="384" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135340">
+      <object>oDesert2</object>
+      <position x="368" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135341">
+      <object>oDesert2</object>
+      <position x="352" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135342">
+      <object>oDesert2</object>
+      <position x="336" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135343">
+      <object>oDesert2</object>
+      <position x="304" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135344">
+      <object>oDesert2</object>
+      <position x="320" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135345">
+      <object>oDesert2</object>
+      <position x="288" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135346">
+      <object>oDesert2</object>
+      <position x="272" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135347">
+      <object>oDesert2</object>
+      <position x="256" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135348">
+      <object>oDesert2</object>
+      <position x="240" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135349">
+      <object>oDesert2</object>
+      <position x="224" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135350">
+      <object>oDesert2</object>
+      <position x="208" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135351">
+      <object>oDesert2</object>
+      <position x="192" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135352">
+      <object>oDesert2</object>
+      <position x="176" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135353">
+      <object>oDesert2</object>
+      <position x="160" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135354">
+      <object>oDesert2</object>
+      <position x="144" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135355">
+      <object>oDesert2</object>
+      <position x="128" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135356">
+      <object>oDesert2</object>
+      <position x="112" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135357">
+      <object>oDesert2</object>
+      <position x="96" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130618">
+      <object>oDesertTop</object>
+      <position x="0" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130619">
+      <object>oDesertTop</object>
+      <position x="16" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130620">
+      <object>oDesertTop</object>
+      <position x="32" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130621">
+      <object>oDesertTop</object>
+      <position x="48" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130622">
+      <object>oDesertTop</object>
+      <position x="64" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130623">
+      <object>oDesertTop</object>
+      <position x="80" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130624">
+      <object>oDesertTop</object>
+      <position x="96" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130625">
+      <object>oDesertTop</object>
+      <position x="112" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130626">
+      <object>oDesertTop</object>
+      <position x="128" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130627">
+      <object>oDesertTop</object>
+      <position x="144" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130628">
+      <object>oDesertTop</object>
+      <position x="160" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130629">
+      <object>oDesertTop</object>
+      <position x="176" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130630">
+      <object>oDesertTop</object>
+      <position x="192" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130631">
+      <object>oDesertTop</object>
+      <position x="208" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130632">
+      <object>oDesertTop</object>
+      <position x="224" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130633">
+      <object>oDesertTop</object>
+      <position x="240" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130634">
+      <object>oDesertTop</object>
+      <position x="256" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130635">
+      <object>oDesertTop</object>
+      <position x="272" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130636">
+      <object>oDesertTop</object>
+      <position x="288" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130637">
+      <object>oDesertTop</object>
+      <position x="304" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130638">
+      <object>oDesertTop</object>
+      <position x="320" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130639">
+      <object>oDesertTop</object>
+      <position x="336" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130640">
+      <object>oDesertTop</object>
+      <position x="352" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130651">
+      <object>oDesertTop</object>
+      <position x="384" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130652">
+      <object>oDesertTop</object>
+      <position x="400" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130653">
+      <object>oDesertTop</object>
+      <position x="416" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130654">
+      <object>oDesertTop</object>
+      <position x="432" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130655">
+      <object>oDesertTop</object>
+      <position x="448" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130656">
+      <object>oDesertTop</object>
+      <position x="464" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130657">
+      <object>oDesertTop</object>
+      <position x="480" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130658">
+      <object>oDesertTop</object>
+      <position x="496" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130659">
+      <object>oDesertTop</object>
+      <position x="512" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130660">
+      <object>oDesertTop</object>
+      <position x="528" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130661">
+      <object>oDesertTop</object>
+      <position x="544" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130662">
+      <object>oDesertTop</object>
+      <position x="560" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130663">
+      <object>oDesertTop</object>
+      <position x="576" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130664">
+      <object>oDesertTop</object>
+      <position x="592" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130665">
+      <object>oDesertTop</object>
+      <position x="608" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130666">
+      <object>oDesertTop</object>
+      <position x="624" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130667">
+      <object>oDesertTop</object>
+      <position x="640" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130668">
+      <object>oDesertTop</object>
+      <position x="656" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130669">
+      <object>oDesertTop</object>
+      <position x="672" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="131052">
+      <object>oDesertTop</object>
+      <position x="688" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="131053">
+      <object>oDesertTop</object>
+      <position x="704" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="131054">
+      <object>oDesertTop</object>
+      <position x="720" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="131055">
+      <object>oDesertTop</object>
+      <position x="736" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="131056">
+      <object>oDesertTop</object>
+      <position x="752" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="131057">
+      <object>oDesertTop</object>
+      <position x="688" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="131058">
+      <object>oDesertTop</object>
+      <position x="704" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="134515">
+      <object>oDesertTop</object>
+      <position x="368" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="130617">
+      <object>oIntro</object>
+      <position x="0" y="0"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="131007">
+      <object>oBricks</object>
+      <position x="16" y="0"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="131010">
+      <object>oGlobals</object>
+      <position x="32" y="0"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="131012">
+      <object>oGame</object>
+      <position x="48" y="0"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="134510">
+      <object>oBatIntro</object>
+      <position x="608" y="144"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="134511">
+      <object>oBatIntro</object>
+      <position x="592" y="128"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="134512">
+      <object>oBatIntro</object>
+      <position x="576" y="160"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="134513">
+      <object>oBatIntro</object>
+      <position x="544" y="144"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+  </instances>
+  <tiles/>
+  <editorSettings remember="false"/>
+</room>

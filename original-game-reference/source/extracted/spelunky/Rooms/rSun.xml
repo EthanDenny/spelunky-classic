@@ -1,0 +1,1360 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<room id="111">
+  <caption/>
+  <size height="256" width="320"/>
+  <grid>
+    <isometric>false</isometric>
+    <snap x="16" y="16"/>
+  </grid>
+  <speed>30</speed>
+  <persistent>false</persistent>
+  <creationCode/>
+  <backgroundColor>C0C0C0</backgroundColor>
+  <drawBackgroundColor>false</drawBackgroundColor>
+  <backgrounds>
+    <backgroundDef>
+      <visibleOnRoomStart>true</visibleOnRoomStart>
+      <isForeground>false</isForeground>
+      <backgroundImage>bgCave</backgroundImage>
+      <offset x="0" y="0"/>
+      <speed x="0" y="0"/>
+      <tileHorizontally>true</tileHorizontally>
+      <tileVertically>true</tileVertically>
+      <stretch>false</stretch>
+    </backgroundDef>
+    <backgroundDef>
+      <visibleOnRoomStart>false</visibleOnRoomStart>
+      <isForeground>false</isForeground>
+      <backgroundImage/>
+      <offset x="0" y="0"/>
+      <speed x="0" y="0"/>
+      <tileHorizontally>true</tileHorizontally>
+      <tileVertically>true</tileVertically>
+      <stretch>false</stretch>
+    </backgroundDef>
+    <backgroundDef>
+      <visibleOnRoomStart>false</visibleOnRoomStart>
+      <isForeground>false</isForeground>
+      <backgroundImage/>
+      <offset x="0" y="0"/>
+      <speed x="0" y="0"/>
+      <tileHorizontally>true</tileHorizontally>
+      <tileVertically>true</tileVertically>
+      <stretch>false</stretch>
+    </backgroundDef>
+    <backgroundDef>
+      <visibleOnRoomStart>false</visibleOnRoomStart>
+      <isForeground>false</isForeground>
+      <backgroundImage/>
+      <offset x="0" y="0"/>
+      <speed x="0" y="0"/>
+      <tileHorizontally>true</tileHorizontally>
+      <tileVertically>true</tileVertically>
+      <stretch>false</stretch>
+    </backgroundDef>
+    <backgroundDef>
+      <visibleOnRoomStart>false</visibleOnRoomStart>
+      <isForeground>false</isForeground>
+      <backgroundImage/>
+      <offset x="0" y="0"/>
+      <speed x="0" y="0"/>
+      <tileHorizontally>true</tileHorizontally>
+      <tileVertically>true</tileVertically>
+      <stretch>false</stretch>
+    </backgroundDef>
+    <backgroundDef>
+      <visibleOnRoomStart>false</visibleOnRoomStart>
+      <isForeground>false</isForeground>
+      <backgroundImage/>
+      <offset x="0" y="0"/>
+      <speed x="0" y="0"/>
+      <tileHorizontally>true</tileHorizontally>
+      <tileVertically>true</tileVertically>
+      <stretch>false</stretch>
+    </backgroundDef>
+    <backgroundDef>
+      <visibleOnRoomStart>false</visibleOnRoomStart>
+      <isForeground>false</isForeground>
+      <backgroundImage/>
+      <offset x="0" y="0"/>
+      <speed x="0" y="0"/>
+      <tileHorizontally>true</tileHorizontally>
+      <tileVertically>true</tileVertically>
+      <stretch>false</stretch>
+    </backgroundDef>
+    <backgroundDef>
+      <visibleOnRoomStart>false</visibleOnRoomStart>
+      <isForeground>false</isForeground>
+      <backgroundImage/>
+      <offset x="0" y="0"/>
+      <speed x="0" y="0"/>
+      <tileHorizontally>true</tileHorizontally>
+      <tileVertically>true</tileVertically>
+      <stretch>false</stretch>
+    </backgroundDef>
+  </backgrounds>
+  <enableViews>true</enableViews>
+  <views>
+    <view>
+      <visibleOnRoomStart>true</visibleOnRoomStart>
+      <viewInRoom height="240" width="320" x="0" y="0"/>
+      <portOnScreen height="480" width="640" x="0" y="0"/>
+      <objectFollowing hBorder="32" hSpeed="-1" vBorder="32" vSpeed="-1"/>
+    </view>
+    <view>
+      <visibleOnRoomStart>false</visibleOnRoomStart>
+      <viewInRoom height="480" width="640" x="0" y="0"/>
+      <portOnScreen height="480" width="640" x="0" y="0"/>
+      <objectFollowing hBorder="32" hSpeed="-1" vBorder="32" vSpeed="-1"/>
+    </view>
+    <view>
+      <visibleOnRoomStart>false</visibleOnRoomStart>
+      <viewInRoom height="480" width="640" x="0" y="0"/>
+      <portOnScreen height="480" width="640" x="0" y="0"/>
+      <objectFollowing hBorder="32" hSpeed="-1" vBorder="32" vSpeed="-1"/>
+    </view>
+    <view>
+      <visibleOnRoomStart>false</visibleOnRoomStart>
+      <viewInRoom height="480" width="640" x="0" y="0"/>
+      <portOnScreen height="480" width="640" x="0" y="0"/>
+      <objectFollowing hBorder="32" hSpeed="-1" vBorder="32" vSpeed="-1"/>
+    </view>
+    <view>
+      <visibleOnRoomStart>false</visibleOnRoomStart>
+      <viewInRoom height="480" width="640" x="0" y="0"/>
+      <portOnScreen height="480" width="640" x="0" y="0"/>
+      <objectFollowing hBorder="32" hSpeed="-1" vBorder="32" vSpeed="-1"/>
+    </view>
+    <view>
+      <visibleOnRoomStart>false</visibleOnRoomStart>
+      <viewInRoom height="480" width="640" x="0" y="0"/>
+      <portOnScreen height="480" width="640" x="0" y="0"/>
+      <objectFollowing hBorder="32" hSpeed="-1" vBorder="32" vSpeed="-1"/>
+    </view>
+    <view>
+      <visibleOnRoomStart>false</visibleOnRoomStart>
+      <viewInRoom height="480" width="640" x="0" y="0"/>
+      <portOnScreen height="480" width="640" x="0" y="0"/>
+      <objectFollowing hBorder="32" hSpeed="-1" vBorder="32" vSpeed="-1"/>
+    </view>
+    <view>
+      <visibleOnRoomStart>false</visibleOnRoomStart>
+      <viewInRoom height="480" width="640" x="0" y="0"/>
+      <portOnScreen height="480" width="640" x="0" y="0"/>
+      <objectFollowing hBorder="32" hSpeed="-1" vBorder="32" vSpeed="-1"/>
+    </view>
+  </views>
+  <instances>
+    <instance id="132756">
+      <object>oEntrance</object>
+      <position x="48" y="160"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133315">
+      <object>oVine</object>
+      <position x="112" y="32"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133316">
+      <object>oVine</object>
+      <position x="112" y="48"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133317">
+      <object>oVine</object>
+      <position x="112" y="64"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133318">
+      <object>oVine</object>
+      <position x="112" y="80"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133319">
+      <object>oVine</object>
+      <position x="112" y="96"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133320">
+      <object>oVine</object>
+      <position x="192" y="32"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133321">
+      <object>oVine</object>
+      <position x="192" y="48"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133322">
+      <object>oVine</object>
+      <position x="192" y="64"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133323">
+      <object>oVine</object>
+      <position x="192" y="80"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133324">
+      <object>oVine</object>
+      <position x="192" y="96"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133443">
+      <object>oVine</object>
+      <position x="112" y="112"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133444">
+      <object>oVine</object>
+      <position x="192" y="112"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132907">
+      <object>oLavaSolid</object>
+      <position x="32" y="240"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132908">
+      <object>oLavaSolid</object>
+      <position x="48" y="240"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132909">
+      <object>oLavaSolid</object>
+      <position x="64" y="240"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132910">
+      <object>oLavaSolid</object>
+      <position x="80" y="240"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132911">
+      <object>oLavaSolid</object>
+      <position x="96" y="240"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132912">
+      <object>oLavaSolid</object>
+      <position x="112" y="240"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132913">
+      <object>oLavaSolid</object>
+      <position x="128" y="240"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132914">
+      <object>oLavaSolid</object>
+      <position x="144" y="240"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132915">
+      <object>oLavaSolid</object>
+      <position x="160" y="240"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132916">
+      <object>oLavaSolid</object>
+      <position x="176" y="240"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132917">
+      <object>oLavaSolid</object>
+      <position x="192" y="240"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132918">
+      <object>oLavaSolid</object>
+      <position x="208" y="240"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132919">
+      <object>oLavaSolid</object>
+      <position x="224" y="240"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132920">
+      <object>oLavaSolid</object>
+      <position x="240" y="240"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132921">
+      <object>oLavaSolid</object>
+      <position x="256" y="240"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132922">
+      <object>oLavaSolid</object>
+      <position x="272" y="240"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133244">
+      <object>oArrowRepeaterL</object>
+      <position x="288" y="32"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133253">
+      <object>oArrowRepeaterL</object>
+      <position x="288" y="96"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133257">
+      <object>oArrowRepeaterR</object>
+      <position x="16" y="32"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133258">
+      <object>oArrowRepeaterR</object>
+      <position x="16" y="96"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133339">
+      <object>oSpearTrapTop</object>
+      <position x="144" y="144"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133340">
+      <object>oSpearTrapTop</object>
+      <position x="160" y="144"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133341">
+      <object>oSpearTrapBottom</object>
+      <position x="144" y="160"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133342">
+      <object>oSpearTrapBottom</object>
+      <position x="160" y="160"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132402">
+      <object>oBrick</object>
+      <position x="16" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132403">
+      <object>oBrick</object>
+      <position x="16" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132404">
+      <object>oBrick</object>
+      <position x="16" y="160"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132417">
+      <object>oBrick</object>
+      <position x="80" y="16"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132418">
+      <object>oBrick</object>
+      <position x="96" y="16"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132423">
+      <object>oBrick</object>
+      <position x="176" y="16"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132439">
+      <object>oBrick</object>
+      <position x="288" y="160"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132440">
+      <object>oBrick</object>
+      <position x="288" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132441">
+      <object>oBrick</object>
+      <position x="288" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132442">
+      <object>oBrick</object>
+      <position x="64" y="16"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132444">
+      <object>oBrick</object>
+      <position x="160" y="16"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132458">
+      <object>oBrick</object>
+      <position x="48" y="16"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132516">
+      <object>oBrick</object>
+      <position x="16" y="16"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132768">
+      <object>oBrick</object>
+      <position x="112" y="16"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132769">
+      <object>oBrick</object>
+      <position x="128" y="16"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132770">
+      <object>oBrick</object>
+      <position x="144" y="16"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132778">
+      <object>oBrick</object>
+      <position x="192" y="16"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132779">
+      <object>oBrick</object>
+      <position x="208" y="16"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132780">
+      <object>oBrick</object>
+      <position x="224" y="16"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132781">
+      <object>oBrick</object>
+      <position x="240" y="16"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132782">
+      <object>oBrick</object>
+      <position x="256" y="16"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132783">
+      <object>oBrick</object>
+      <position x="272" y="16"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132784">
+      <object>oBrick</object>
+      <position x="288" y="16"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132961">
+      <object>oBrick</object>
+      <position x="48" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132962">
+      <object>oBrick</object>
+      <position x="64" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132963">
+      <object>oBrick</object>
+      <position x="80" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132966">
+      <object>oBrick</object>
+      <position x="128" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132967">
+      <object>oBrick</object>
+      <position x="144" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132968">
+      <object>oBrick</object>
+      <position x="160" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132969">
+      <object>oBrick</object>
+      <position x="176" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132972">
+      <object>oBrick</object>
+      <position x="224" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132973">
+      <object>oBrick</object>
+      <position x="240" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132974">
+      <object>oBrick</object>
+      <position x="256" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133092">
+      <object>oBrick</object>
+      <position x="96" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133093">
+      <object>oBrick</object>
+      <position x="208" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133138">
+      <object>oDamsel</object>
+      <position x="160" y="128"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133157">
+      <object>oHardBlock</object>
+      <position x="0" y="240"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133158">
+      <object>oHardBlock</object>
+      <position x="0" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133159">
+      <object>oHardBlock</object>
+      <position x="0" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133160">
+      <object>oHardBlock</object>
+      <position x="0" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133161">
+      <object>oHardBlock</object>
+      <position x="0" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133162">
+      <object>oHardBlock</object>
+      <position x="0" y="160"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133163">
+      <object>oHardBlock</object>
+      <position x="0" y="144"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133164">
+      <object>oHardBlock</object>
+      <position x="0" y="128"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133165">
+      <object>oHardBlock</object>
+      <position x="0" y="112"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133166">
+      <object>oHardBlock</object>
+      <position x="0" y="96"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133167">
+      <object>oHardBlock</object>
+      <position x="0" y="80"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133168">
+      <object>oHardBlock</object>
+      <position x="0" y="64"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133169">
+      <object>oHardBlock</object>
+      <position x="0" y="48"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133170">
+      <object>oHardBlock</object>
+      <position x="0" y="32"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133171">
+      <object>oHardBlock</object>
+      <position x="0" y="16"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133172">
+      <object>oHardBlock</object>
+      <position x="0" y="0"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133173">
+      <object>oHardBlock</object>
+      <position x="16" y="0"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133175">
+      <object>oHardBlock</object>
+      <position x="48" y="0"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133176">
+      <object>oHardBlock</object>
+      <position x="64" y="0"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133177">
+      <object>oHardBlock</object>
+      <position x="80" y="0"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133178">
+      <object>oHardBlock</object>
+      <position x="96" y="0"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133179">
+      <object>oHardBlock</object>
+      <position x="112" y="0"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133180">
+      <object>oHardBlock</object>
+      <position x="128" y="0"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133181">
+      <object>oHardBlock</object>
+      <position x="144" y="0"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133182">
+      <object>oHardBlock</object>
+      <position x="160" y="0"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133183">
+      <object>oHardBlock</object>
+      <position x="176" y="0"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133184">
+      <object>oHardBlock</object>
+      <position x="192" y="0"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133185">
+      <object>oHardBlock</object>
+      <position x="208" y="0"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133186">
+      <object>oHardBlock</object>
+      <position x="224" y="0"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133187">
+      <object>oHardBlock</object>
+      <position x="240" y="0"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133188">
+      <object>oHardBlock</object>
+      <position x="256" y="0"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133189">
+      <object>oHardBlock</object>
+      <position x="272" y="0"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133190">
+      <object>oHardBlock</object>
+      <position x="288" y="0"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133206">
+      <object>oHardBlock</object>
+      <position x="304" y="240"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133207">
+      <object>oHardBlock</object>
+      <position x="304" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133208">
+      <object>oHardBlock</object>
+      <position x="304" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133209">
+      <object>oHardBlock</object>
+      <position x="304" y="192"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133210">
+      <object>oHardBlock</object>
+      <position x="304" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133211">
+      <object>oHardBlock</object>
+      <position x="304" y="160"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133212">
+      <object>oHardBlock</object>
+      <position x="304" y="144"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133213">
+      <object>oHardBlock</object>
+      <position x="304" y="128"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133214">
+      <object>oHardBlock</object>
+      <position x="304" y="112"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133215">
+      <object>oHardBlock</object>
+      <position x="304" y="96"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133216">
+      <object>oHardBlock</object>
+      <position x="304" y="80"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133217">
+      <object>oHardBlock</object>
+      <position x="304" y="64"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133218">
+      <object>oHardBlock</object>
+      <position x="304" y="48"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133219">
+      <object>oHardBlock</object>
+      <position x="304" y="32"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133220">
+      <object>oHardBlock</object>
+      <position x="304" y="16"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133221">
+      <object>oHardBlock</object>
+      <position x="304" y="0"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133262">
+      <object>oBrick</object>
+      <position x="16" y="80"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133263">
+      <object>oBrick</object>
+      <position x="16" y="64"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133264">
+      <object>oBrick</object>
+      <position x="288" y="64"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133265">
+      <object>oBrick</object>
+      <position x="288" y="80"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133272">
+      <object>oBrick</object>
+      <position x="16" y="144"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133273">
+      <object>oBrick</object>
+      <position x="288" y="144"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133355">
+      <object>oBrick</object>
+      <position x="16" y="112"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133356">
+      <object>oBrick</object>
+      <position x="16" y="128"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133383">
+      <object>oBrick</object>
+      <position x="16" y="48"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133384">
+      <object>oBrick</object>
+      <position x="288" y="48"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133411">
+      <object>oBrick</object>
+      <position x="288" y="128"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133412">
+      <object>oBrick</object>
+      <position x="288" y="112"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133415">
+      <object>oBrick</object>
+      <position x="80" y="64"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133416">
+      <object>oBrick</object>
+      <position x="64" y="64"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133417">
+      <object>oBrick</object>
+      <position x="224" y="64"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133418">
+      <object>oBrick</object>
+      <position x="240" y="64"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133435">
+      <object>oBrick</object>
+      <position x="80" y="128"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133436">
+      <object>oBrick</object>
+      <position x="64" y="128"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133437">
+      <object>oBrick</object>
+      <position x="224" y="128"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133442">
+      <object>oBrick</object>
+      <position x="240" y="128"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133456">
+      <object>oHardBlock</object>
+      <position x="16" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133457">
+      <object>oHardBlock</object>
+      <position x="16" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133458">
+      <object>oHardBlock</object>
+      <position x="16" y="240"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133459">
+      <object>oHardBlock</object>
+      <position x="288" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133460">
+      <object>oHardBlock</object>
+      <position x="288" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133461">
+      <object>oHardBlock</object>
+      <position x="288" y="240"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135288">
+      <object>oSpringTrap</object>
+      <position x="32" y="160"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135289">
+      <object>oSpringTrap</object>
+      <position x="272" y="160"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135290">
+      <object>oSpringTrap</object>
+      <position x="112" y="160"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135291">
+      <object>oSpringTrap</object>
+      <position x="192" y="160"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135292">
+      <object>oDark</object>
+      <position x="32" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135293">
+      <object>oDark</object>
+      <position x="112" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135294">
+      <object>oDark</object>
+      <position x="192" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135295">
+      <object>oDark</object>
+      <position x="272" y="176"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135297">
+      <object>oBrick</object>
+      <position x="32" y="16"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135298">
+      <object>oBrick</object>
+      <position x="32" y="0"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135299">
+      <object>oDarkFall</object>
+      <position x="144" y="96"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135300">
+      <object>oDarkFall</object>
+      <position x="160" y="96"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133452">
+      <object>oSmashTrap</object>
+      <position x="64" y="48"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133453">
+      <object>oSmashTrap</object>
+      <position x="240" y="48"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133454">
+      <object>oSmashTrap</object>
+      <position x="240" y="112"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133455">
+      <object>oSmashTrap</object>
+      <position x="64" y="112"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="126375">
+      <object>oPlayer1</object>
+      <position x="56" y="168"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132924">
+      <object>oLava</object>
+      <position x="32" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132925">
+      <object>oLava</object>
+      <position x="32" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132930">
+      <object>oLava</object>
+      <position x="80" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132931">
+      <object>oLava</object>
+      <position x="64" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132932">
+      <object>oLava</object>
+      <position x="48" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132933">
+      <object>oLava</object>
+      <position x="48" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132934">
+      <object>oLava</object>
+      <position x="64" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132935">
+      <object>oLava</object>
+      <position x="80" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132936">
+      <object>oLava</object>
+      <position x="96" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132937">
+      <object>oLava</object>
+      <position x="112" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132938">
+      <object>oLava</object>
+      <position x="128" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132939">
+      <object>oLava</object>
+      <position x="144" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132940">
+      <object>oLava</object>
+      <position x="160" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132941">
+      <object>oLava</object>
+      <position x="176" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132942">
+      <object>oLava</object>
+      <position x="192" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132943">
+      <object>oLava</object>
+      <position x="208" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132944">
+      <object>oLava</object>
+      <position x="224" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132945">
+      <object>oLava</object>
+      <position x="240" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132946">
+      <object>oLava</object>
+      <position x="256" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132947">
+      <object>oLava</object>
+      <position x="272" y="224"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132948">
+      <object>oLava</object>
+      <position x="272" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132949">
+      <object>oLava</object>
+      <position x="256" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132950">
+      <object>oLava</object>
+      <position x="240" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132951">
+      <object>oLava</object>
+      <position x="224" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132952">
+      <object>oLava</object>
+      <position x="208" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132953">
+      <object>oLava</object>
+      <position x="192" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132954">
+      <object>oLava</object>
+      <position x="176" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132955">
+      <object>oLava</object>
+      <position x="160" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132956">
+      <object>oLava</object>
+      <position x="144" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132957">
+      <object>oLava</object>
+      <position x="128" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132958">
+      <object>oLava</object>
+      <position x="112" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="132959">
+      <object>oLava</object>
+      <position x="96" y="208"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="126380">
+      <object>oGame</object>
+      <position x="0" y="0"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="128447">
+      <object>oBricks</object>
+      <position x="0" y="16"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="133139">
+      <object>oSunRoom</object>
+      <position x="16" y="16"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+  </instances>
+  <tiles>
+    <tile id="10000318">
+      <background>bgSky</background>
+      <backgroundPosition x="0" y="0"/>
+      <roomPosition x="144" y="48"/>
+      <size height="32" width="32"/>
+      <depth>1000000</depth>
+      <locked>false</locked>
+    </tile>
+  </tiles>
+  <editorSettings remember="false"/>
+</room>

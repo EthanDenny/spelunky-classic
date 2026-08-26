@@ -1,0 +1,481 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<room id="124">
+  <caption/>
+  <size height="120" width="160"/>
+  <grid>
+    <isometric>false</isometric>
+    <snap x="8" y="8"/>
+  </grid>
+  <speed>30</speed>
+  <persistent>false</persistent>
+  <creationCode/>
+  <backgroundColor>000000</backgroundColor>
+  <drawBackgroundColor>false</drawBackgroundColor>
+  <backgrounds>
+    <backgroundDef>
+      <visibleOnRoomStart>true</visibleOnRoomStart>
+      <isForeground>false</isForeground>
+      <backgroundImage>bgCave</backgroundImage>
+      <offset x="0" y="0"/>
+      <speed x="0" y="0"/>
+      <tileHorizontally>true</tileHorizontally>
+      <tileVertically>true</tileVertically>
+      <stretch>false</stretch>
+    </backgroundDef>
+    <backgroundDef>
+      <visibleOnRoomStart>false</visibleOnRoomStart>
+      <isForeground>false</isForeground>
+      <backgroundImage/>
+      <offset x="0" y="0"/>
+      <speed x="0" y="0"/>
+      <tileHorizontally>true</tileHorizontally>
+      <tileVertically>true</tileVertically>
+      <stretch>false</stretch>
+    </backgroundDef>
+    <backgroundDef>
+      <visibleOnRoomStart>false</visibleOnRoomStart>
+      <isForeground>false</isForeground>
+      <backgroundImage/>
+      <offset x="0" y="0"/>
+      <speed x="0" y="0"/>
+      <tileHorizontally>true</tileHorizontally>
+      <tileVertically>true</tileVertically>
+      <stretch>false</stretch>
+    </backgroundDef>
+    <backgroundDef>
+      <visibleOnRoomStart>false</visibleOnRoomStart>
+      <isForeground>false</isForeground>
+      <backgroundImage/>
+      <offset x="0" y="0"/>
+      <speed x="0" y="0"/>
+      <tileHorizontally>true</tileHorizontally>
+      <tileVertically>true</tileVertically>
+      <stretch>false</stretch>
+    </backgroundDef>
+    <backgroundDef>
+      <visibleOnRoomStart>false</visibleOnRoomStart>
+      <isForeground>false</isForeground>
+      <backgroundImage/>
+      <offset x="0" y="0"/>
+      <speed x="0" y="0"/>
+      <tileHorizontally>true</tileHorizontally>
+      <tileVertically>true</tileVertically>
+      <stretch>false</stretch>
+    </backgroundDef>
+    <backgroundDef>
+      <visibleOnRoomStart>false</visibleOnRoomStart>
+      <isForeground>false</isForeground>
+      <backgroundImage/>
+      <offset x="0" y="0"/>
+      <speed x="0" y="0"/>
+      <tileHorizontally>true</tileHorizontally>
+      <tileVertically>true</tileVertically>
+      <stretch>false</stretch>
+    </backgroundDef>
+    <backgroundDef>
+      <visibleOnRoomStart>false</visibleOnRoomStart>
+      <isForeground>false</isForeground>
+      <backgroundImage/>
+      <offset x="0" y="0"/>
+      <speed x="0" y="0"/>
+      <tileHorizontally>true</tileHorizontally>
+      <tileVertically>true</tileVertically>
+      <stretch>false</stretch>
+    </backgroundDef>
+    <backgroundDef>
+      <visibleOnRoomStart>false</visibleOnRoomStart>
+      <isForeground>false</isForeground>
+      <backgroundImage/>
+      <offset x="0" y="0"/>
+      <speed x="0" y="0"/>
+      <tileHorizontally>true</tileHorizontally>
+      <tileVertically>true</tileVertically>
+      <stretch>false</stretch>
+    </backgroundDef>
+  </backgrounds>
+  <enableViews>true</enableViews>
+  <views>
+    <view>
+      <visibleOnRoomStart>true</visibleOnRoomStart>
+      <viewInRoom height="120" width="160" x="0" y="0"/>
+      <portOnScreen height="240" width="320" x="0" y="0"/>
+      <objectFollowing hBorder="32" hSpeed="-1" vBorder="32" vSpeed="-1"/>
+    </view>
+    <view>
+      <visibleOnRoomStart>false</visibleOnRoomStart>
+      <viewInRoom height="480" width="640" x="0" y="0"/>
+      <portOnScreen height="480" width="640" x="0" y="0"/>
+      <objectFollowing hBorder="32" hSpeed="-1" vBorder="32" vSpeed="-1"/>
+    </view>
+    <view>
+      <visibleOnRoomStart>false</visibleOnRoomStart>
+      <viewInRoom height="480" width="640" x="0" y="0"/>
+      <portOnScreen height="480" width="640" x="0" y="0"/>
+      <objectFollowing hBorder="32" hSpeed="-1" vBorder="32" vSpeed="-1"/>
+    </view>
+    <view>
+      <visibleOnRoomStart>false</visibleOnRoomStart>
+      <viewInRoom height="480" width="640" x="0" y="0"/>
+      <portOnScreen height="480" width="640" x="0" y="0"/>
+      <objectFollowing hBorder="32" hSpeed="-1" vBorder="32" vSpeed="-1"/>
+    </view>
+    <view>
+      <visibleOnRoomStart>false</visibleOnRoomStart>
+      <viewInRoom height="480" width="640" x="0" y="0"/>
+      <portOnScreen height="480" width="640" x="0" y="0"/>
+      <objectFollowing hBorder="32" hSpeed="-1" vBorder="32" vSpeed="-1"/>
+    </view>
+    <view>
+      <visibleOnRoomStart>false</visibleOnRoomStart>
+      <viewInRoom height="480" width="640" x="0" y="0"/>
+      <portOnScreen height="480" width="640" x="0" y="0"/>
+      <objectFollowing hBorder="32" hSpeed="-1" vBorder="32" vSpeed="-1"/>
+    </view>
+    <view>
+      <visibleOnRoomStart>false</visibleOnRoomStart>
+      <viewInRoom height="480" width="640" x="0" y="0"/>
+      <portOnScreen height="480" width="640" x="0" y="0"/>
+      <objectFollowing hBorder="32" hSpeed="-1" vBorder="32" vSpeed="-1"/>
+    </view>
+    <view>
+      <visibleOnRoomStart>false</visibleOnRoomStart>
+      <viewInRoom height="480" width="640" x="0" y="0"/>
+      <portOnScreen height="480" width="640" x="0" y="0"/>
+      <objectFollowing hBorder="32" hSpeed="-1" vBorder="32" vSpeed="-1"/>
+    </view>
+  </views>
+  <instances>
+    <instance id="135961">
+      <object>oBlack</object>
+      <position x="24" y="16"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135962">
+      <object>oBlack</object>
+      <position x="40" y="16"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135963">
+      <object>oBlack</object>
+      <position x="56" y="16"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135964">
+      <object>oBlack</object>
+      <position x="72" y="16"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135965">
+      <object>oBlack</object>
+      <position x="88" y="16"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135966">
+      <object>oBlack</object>
+      <position x="104" y="16"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135967">
+      <object>oBlack</object>
+      <position x="120" y="16"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135968">
+      <object>oBlack</object>
+      <position x="24" y="32"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135969">
+      <object>oBlack</object>
+      <position x="40" y="32"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135971">
+      <object>oBlack</object>
+      <position x="56" y="32"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135972">
+      <object>oBlack</object>
+      <position x="72" y="32"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135973">
+      <object>oBlack</object>
+      <position x="88" y="32"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135974">
+      <object>oBlack</object>
+      <position x="104" y="32"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135975">
+      <object>oBlack</object>
+      <position x="120" y="32"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135976">
+      <object>oBlack</object>
+      <position x="24" y="48"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135977">
+      <object>oBlack</object>
+      <position x="40" y="48"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135978">
+      <object>oBlack</object>
+      <position x="56" y="48"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135979">
+      <object>oBlack</object>
+      <position x="72" y="48"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135981">
+      <object>oBlack</object>
+      <position x="88" y="48"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135982">
+      <object>oBlack</object>
+      <position x="104" y="48"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135983">
+      <object>oBlack</object>
+      <position x="120" y="48"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135985">
+      <object>oBlack</object>
+      <position x="24" y="64"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135986">
+      <object>oBlack</object>
+      <position x="40" y="64"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135987">
+      <object>oBlack</object>
+      <position x="56" y="64"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135988">
+      <object>oBlack</object>
+      <position x="72" y="64"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135990">
+      <object>oBlack</object>
+      <position x="88" y="64"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135991">
+      <object>oBlack</object>
+      <position x="104" y="64"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135992">
+      <object>oBlack</object>
+      <position x="120" y="64"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135927">
+      <object>oMenuUL</object>
+      <position x="8" y="0"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135929">
+      <object>oMenuUR</object>
+      <position x="136" y="0"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135930">
+      <object>oMenuLL</object>
+      <position x="8" y="80"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135931">
+      <object>oMenuLR</object>
+      <position x="136" y="80"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135932">
+      <object>oMenuLeft</object>
+      <position x="8" y="16"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135933">
+      <object>oMenuLeft</object>
+      <position x="8" y="32"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135934">
+      <object>oMenuLeft</object>
+      <position x="8" y="48"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135935">
+      <object>oMenuLeft</object>
+      <position x="8" y="64"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135938">
+      <object>oMenuRight</object>
+      <position x="136" y="16"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135939">
+      <object>oMenuRight</object>
+      <position x="136" y="32"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135940">
+      <object>oMenuRight</object>
+      <position x="136" y="48"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135941">
+      <object>oMenuRight</object>
+      <position x="136" y="64"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135954">
+      <object>oMenuTop</object>
+      <position x="24" y="0"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135955">
+      <object>oMenuTop</object>
+      <position x="40" y="0"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135956">
+      <object>oMenuTop</object>
+      <position x="56" y="0"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135957">
+      <object>oMenuTop</object>
+      <position x="72" y="0"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135958">
+      <object>oMenuTop</object>
+      <position x="88" y="0"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135959">
+      <object>oMenuTop</object>
+      <position x="104" y="0"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="135960">
+      <object>oMenuTop</object>
+      <position x="120" y="0"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="136009">
+      <object>oMenuBottom</object>
+      <position x="24" y="80"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="136010">
+      <object>oMenuBottom</object>
+      <position x="40" y="80"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="136011">
+      <object>oMenuBottom</object>
+      <position x="56" y="80"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="136012">
+      <object>oMenuBottom</object>
+      <position x="72" y="80"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="136013">
+      <object>oMenuBottom</object>
+      <position x="88" y="80"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="136014">
+      <object>oMenuBottom</object>
+      <position x="104" y="80"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="136015">
+      <object>oMenuBottom</object>
+      <position x="120" y="80"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+    <instance id="136016">
+      <object>oJoyConfig</object>
+      <position x="0" y="0"/>
+      <creationCode/>
+      <locked>false</locked>
+    </instance>
+  </instances>
+  <tiles/>
+  <editorSettings remember="false"/>
+</room>

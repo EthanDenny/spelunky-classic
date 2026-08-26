@@ -1,0 +1,68 @@
+{
+  "description": "Canonical entity pages for original sprite resources. Sprite names are GameMaker resource names and must not be renamed.",
+  "exclude_right_when_left_exists": true,
+  "groups": [
+    {
+      "entity": "Player",
+      "category": "Characters",
+      "sprites": ["sAttackLeft", "sClimbUp", "sClimbUp2", "sClimbUp3", "sCrawlLeft", "sDuckToHangL", "sLookRunL", "sPExit", "sPKissL", "sPKissR", "sPushLeft", "sRunLeft", "sStunL", "sThrowLeft", "sWhoaLeft", "sYellLeft", "sYellRight"]
+    },
+    {
+      "entity": "Damsel",
+      "category": "Characters",
+      "sprites": ["sDamselAttackL", "sDamselClimb", "sDamselClimb2", "sDamselClimb3", "sDamselCrawlL", "sDamselDtHL", "sDamselExit", "sDamselExit2", "sDamselKissL", "sDamselKissR", "sDamselPushL", "sDamselRunL", "sDamselStunL", "sDamselWhoaL", "sDamselYellL", "sDamselYellR", "sWalDamsel"]
+    },
+    {
+      "entity": "Tunnel Man",
+      "category": "Characters",
+      "sprites": ["sTunnelAttackL", "sTunnelClimb", "sTunnelClimb2", "sTunnelClimb3", "sTunnelCrawlL", "sTunnelDtHL", "sTunnelExit", "sTunnelLookRunL", "sTunnelPushL", "sTunnelRunL", "sTunnelStunL", "sTunnelWhoaL"]
+    },
+
+    { "entity": "Alien", "category": "Enemies", "sprites": ["sAlien", "sAlienDeploy"] },
+    { "entity": "Alien Boss", "category": "Enemies", "sprites": ["sAlienBoss", "sAlienBossDie", "sAlienBossHurt"] },
+    { "entity": "Bat", "category": "Enemies", "sprites": ["sBatLeft", "sBatRight"] },
+    { "entity": "Caveman", "category": "Enemies", "sprites": ["sCaveManWorshipL", "sCavemanHeldL", "sCavemanRunLeft", "sCavemanStunL", "sCavemanWorshipR"] },
+    { "entity": "Dead Fish", "category": "Enemies", "sprites": ["sDeadFishLeft", "sDeadFishRight"] },
+    { "entity": "Fire Frog", "category": "Enemies", "sprites": ["sFireFrogArmedL", "sFireFrogLeft"] },
+    { "entity": "Ghost", "category": "Enemies", "sprites": ["sGhostLeft", "sGhostRight", "sGhostDisappear", "sGhostTurnLeft", "sGhostTurnRight"] },
+    { "entity": "Giant Spider", "category": "Enemies", "sprites": ["sGiantSpider", "sGiantSpiderCrawl", "sGiantSpiderFlip", "sGiantSpiderSquirt", "sWebCreate"] },
+    { "entity": "Hawkman", "category": "Enemies", "sprites": ["sHawkHeldL", "sHawkRunLeft", "sHawkStunL", "sHawkThrowL"] },
+    { "entity": "Jaws", "category": "Enemies", "sprites": ["sJawsLeft", "sJawsRight", "sJawsTurnL", "sJawsTurnR"] },
+    { "entity": "Magma Man", "category": "Enemies", "sprites": ["sMagma", "sMagmaManCreate", "sMagmaManDie", "sMagmaManLeft", "sMagmaManWalkL", "sMagmaTrail"] },
+    { "entity": "Mantrap", "category": "Enemies", "sprites": ["sManTrapLeft", "sManTrapEatL", "sManTrapEatCavemanL", "sManTrapEatDamselL", "sManTrapEatShopkeeperL", "sManTrapEatTunnelL", "sManTrapSleepL", "sManTrapStunL", "sManTrapTemp"] },
+    { "entity": "Monkey", "category": "Enemies", "sprites": ["sMonkeyClimbL", "sMonkeyWalkL"] },
+    { "entity": "Olmec", "category": "Enemies", "sprites": ["sOlmecDebris", "sOlmecDebris2", "sOlmecDebris3"] },
+    { "entity": "Piranha", "category": "Enemies", "sprites": ["sPiranhaLeft", "sPiranhaRight"] },
+    { "entity": "Shopkeeper", "category": "Enemies", "sprites": ["sShopHeldL", "sShopRunLeft", "sShopStunL", "sShopThrowL"] },
+    { "entity": "Skeleton", "category": "Enemies", "sprites": ["sSkeletonCreateL", "sSkeletonCreateR", "sSkeletonWalkLeft"] },
+    { "entity": "Spider", "category": "Enemies", "sprites": ["sSpider", "sSpiderDrowning", "sSpiderFlip"] },
+    { "entity": "Tomb Lord", "category": "Enemies", "sprites": ["sFlyLeft", "sFlyRight", "sTombLordLeft", "sTombLordRight", "sTombLordAttackL", "sTombLordAttackR", "sTombLordDisp", "sTombLordTurnL", "sTombLordTurnR", "sTombLordWalkL", "sTombLordWalkR"] },
+    { "entity": "UFO", "category": "Enemies", "sprites": ["sUFO", "sUFOBlast"] },
+    { "entity": "Vampire", "category": "Enemies", "sprites": ["sVampireBatLeft", "sVampireBatRight", "sVampireHeldL", "sVampireRunL", "sVampireStunL"] },
+    { "entity": "Yeti", "category": "Enemies", "sprites": ["sYetiHeldL", "sYetiRunLeft", "sYetiStunL", "sYetiThrowL"] },
+    { "entity": "Yeti King", "category": "Enemies", "sprites": ["sYetiKingTurnL", "sYetiKingTurnR", "sYetiKingWalkL", "sYetiKingWalkR", "sYetiKingYellL", "sYetiKingYellR"] },
+
+    { "entity": "Bomb Arrow", "category": "Items", "sprites": ["sBombArrowLeft", "sBombArrowRight"] },
+    { "entity": "Bow", "category": "Items", "sprites": ["sBowLeft", "sBowRight"] },
+    { "entity": "Cape", "category": "Items", "sprites": ["sCapeLeft", "sCapeRight", "sCapeUL", "sCapeUR"] },
+    { "entity": "Item Get", "category": "Items", "sprites": ["sItemGet", "sBombsGet", "sRopeGet"] },
+    { "entity": "Lamp", "category": "Items", "sprites": ["sLamp", "sLampItem", "sLampRed", "sLampRedItem"] },
+    { "entity": "Mattock", "category": "Items", "sprites": ["sMattockHitL", "sMattockHitR"] },
+    { "entity": "Scarab", "category": "Items", "sprites": ["sScarab", "sScarabDisp"] },
+    { "entity": "Slash", "category": "Items", "sprites": ["sSlashLeft", "sSlashRight"] },
+
+    { "entity": "Arrow Trap", "category": "Traps", "sprites": ["sArrowTrapLeftLit", "sArrowTrapRightLit"] },
+    { "entity": "Boulder", "category": "Traps", "sprites": ["sBoulderRotateL", "sBoulderRotateR"] },
+    { "entity": "Spears", "category": "Traps", "sprites": ["sSpearsLeft", "sSpearsRight"] },
+
+    { "entity": "Blood", "category": "Effects", "sprites": ["sBlood", "sBloodSpark", "sBloodTrail"] },
+    { "entity": "Laser", "category": "Effects", "sprites": ["sLaserExplode", "sLaserTrail"] },
+    { "entity": "Psychic Attack", "category": "Effects", "sprites": ["sPsychicCreate", "sPsychicWave", "sPsychicWaveP"] },
+    { "entity": "Shotgun Blast", "category": "Effects", "sprites": ["sShotgunBlastLeft", "sShotgunBlastRight"] },
+    { "entity": "Yellow Energy", "category": "Effects", "sprites": ["sYellowBall", "sYellowTrail"] },
+
+    { "entity": "Camel", "category": "Other", "sprites": ["sCamel", "sCamelDamsel", "sCamelTunnel"] },
+    { "entity": "Caravan", "category": "Other", "sprites": ["sCaravan1", "sCaravan2", "sCaravan3"] },
+    { "entity": "Flare", "category": "Other", "sprites": ["sFlare", "sFlareCrate", "sFlareSpark"] }
+  ]
+}
