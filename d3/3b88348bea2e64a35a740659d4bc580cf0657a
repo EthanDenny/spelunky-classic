@@ -1,0 +1,69 @@
+src/platform/dynamic_terrain.lua
+  s_4a99641acb4620::t_c3b24cd9fbdbdf 1-91
+conf.lua
+  s_4a99641acb4620::t_5743acbcd5b4bc 2
+src/startup.lua
+  s_4a99641acb4620::t_93440e54e8646b 5,37-39,54
+  s_4a99641acb4620::t_5743acbcd5b4bc 1,3-4,6-28,46-53,56-60,62-77
+  s_4a99641acb4620::t_aab663ed868eba 29,40-44
+  s_4a99641acb4620::t_d06b2b55fc7b52 61
+  s_4a99641acb4620::t_eca025e57639fe 2,30-36,45,55
+src/platform/generated_world.lua
+  s_4a99641acb4620::t_7513c45d9b0708 29-32,40
+  s_4a99641acb4620::t_75ce3ef79d415c 34,39,41-57,63-69,76-78
+src/tests/dynamic_world_test.lua
+  s_4a99641acb4620::t_2fe8410c5af018 55-64
+  s_4a99641acb4620::t_09ca795ef1c233 1-23,25-54,77-79
+  s_4a99641acb4620::t_7513c45d9b0708 65-76
+  s_4a99641acb4620::t_86dec14f5ff3be 24
+src/platform/trap_system.lua
+  s_4a99641acb4620::t_ef7fbb622bc12c 423-431
+  s_4a99641acb4620::t_3ee16db97b0255 15,22,61,88-89,105,228-309,370-385,401-403,414-417,444-449
+  s_4a99641acb4620::t_2bc0a2a4bdaece 1-14,16-21,23-60,62-87,90-104,106-227,310-369,386-400,404-413,418-422,432-443,450-462
+src/tests/generated_world_test.lua
+  s_4a99641acb4620::t_09ca795ef1c233 26-29,35
+src/screens/full_level_playtest.lua
+  s_4a99641acb4620::t_2fe8410c5af018 374-376
+  s_4a99641acb4620::t_3ee16db97b0255 273-276
+  s_4a99641acb4620::t_03f159f26c4d0b 305,342
+  s_4a99641acb4620::t_ef7fbb622bc12c 7-9,70-73,109-115,123-125,222-254,316,326-328,370-373,377,468,474,490-491,552-554,574
+src/platform/world.lua
+  s_4a99641acb4620::t_03f159f26c4d0b 63-64
+  s_4a99641acb4620::t_c3b24cd9fbdbdf 143,145-211
+  s_4a99641acb4620::t_75ce3ef79d415c 20-23,91-135,139-142
+  s_4a99641acb4620::t_aeab16fc211415 144
+src/platform/tool_system.lua
+  s_4a99641acb4620::t_2fe8410c5af018 75-77,165-174
+  s_4a99641acb4620::t_ef7fbb622bc12c 219,242-245
+  s_4a99641acb4620::t_b72070cf17ca34 1-74,78-164,175-218,220-241,246-256
+src/native_splash_window.lua
+  s_4a99641acb4620::t_93440e54e8646b 1-160
+src/app.lua
+  s_4a99641acb4620::t_5743acbcd5b4bc 44-53
+main.lua
+  s_4a99641acb4620::t_5743acbcd5b4bc 2,5-7,9-19,22,119-126,128-129,131-132,136-143,145-150,155-159,164,168,172,176
+  s_4a99641acb4620::t_152d8e666698c5 8,144
+  s_4a99641acb4620::t_09ca795ef1c233 32
+src/platform/player.lua
+  s_4a99641acb4620::t_c3b24cd9fbdbdf 805-807
+src/tests/startup_test.lua
+  s_4a99641acb4620::t_5743acbcd5b4bc 1-19,30-32
+  s_4a99641acb4620::t_aab663ed868eba 25-29
+  s_4a99641acb4620::t_eca025e57639fe 20-24
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "d33b88348bea2e64a35a740659d4bc580cf0657a",
+  "prompts": {},
+  "sessions": {
+    "s_4a99641acb4620": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a03e97-b977-73d0-8eea-8ab6ea0c89bc",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Ethan Denny <ethandenny@protonmail.com>"
+    }
+  }
+}
