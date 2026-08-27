@@ -802,6 +802,9 @@ function Player:updateNormal(world, input, jumpPressed, jumpReleased)
     end
 
     self.pushTimer = math.min(self.pushTimer, 100)
+    if self:isGroundState() and self.pushTimer > 20 and direction ~= 0 then
+        world:tryPush(self, direction)
+    end
     self.ax = clamp(self.ax, -9, 9)
     self.ay = clamp(self.ay, -6, 6)
     self.vx = (self.vx + self.ax) * xFriction

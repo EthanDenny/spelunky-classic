@@ -41,6 +41,16 @@ function App:load()
     self:showScreen("menu")
 end
 
+function App:preload()
+    -- GameMaker displays its splash while resources are loaded. Keep the
+    -- frameless splash alive while the prototype's shared assets are warmed.
+    self.screens.animation_viewer:loadPage(1)
+    self.screens.world_generation:loadAssets()
+    self.screens.platforming_engine:loadAssets()
+    self.screens.enemy_ai:loadAssets()
+    self.screens.full_level_playtest:loadAssets()
+end
+
 function App:showScreen(name)
     local nextScreen = assert(self.screens[name], "Unknown screen: " .. tostring(name))
     local previousName = self.currentScreenName

@@ -4,6 +4,9 @@ local GeneratedWorld = require("src.platform.generated_world")
 local Player = require("src.platform.player")
 local Enemy = require("src.platform.enemy")
 local Item = require("src.platform.item")
+local DynamicTerrain = require("src.platform.dynamic_terrain")
+local ToolSystem = require("src.platform.tool_system")
+local TrapSystem = require("src.platform.trap_system")
 
 local FullLevelPlaytest = {}
 FullLevelPlaytest.__index = FullLevelPlaytest
@@ -64,6 +67,10 @@ function FullLevelPlaytest.new(app)
         hitSound = nil,
         throwSound = nil,
         actionHeld = false,
+        bombs = 4,
+        ropes = 4,
+        tools = nil,
+        traps = nil,
     }, FullLevelPlaytest)
 end
 
@@ -99,6 +106,13 @@ function FullLevelPlaytest:buildSimulation()
     self.player.state = Player.STATES.standing
     self.player.spriteName = "sStandLeft"
     self.player:loadAssets()
+    self.tools = ToolSystem.new(self.world, Player.TICK_RATE)
+    self.tools:loadAssets()
+    self.traps = TrapSystem.new(self.world, self.level, self.renderer)
+    self.traps:loadAssets()
+    self.tools.onExplosion = function(_, x, y, radius)
+        self.traps:explode(x, y, radius)
+    end
 
     self.enemies = {}
     self.items = {}
@@ -106,7 +120,9 @@ function FullLevelPlaytest:buildSimulation()
     self.dynamicEntities = {}
     self.spikeEntities = {}
     for index, entity in ipairs(self.level.entities) do
-        if DYNAMIC_ENEMIES[entity.kind] then
+        if TrapSystem.isTrap(entity.kind) then
+            self.dynamicEntities[entity] = true
+        elseif DYNAMIC_ENEMIES[entity.kind] then
             local enemy = Enemy.new(entity.kind, entity.x * 16 + 8, entity.y * 16 + 16, {
                 seed = self.seed + index * 97,
                 hanging = entity.kind ~= "snake",
@@ -203,6 +219,39 @@ function FullLevelPlaytest:checkWhip()
             if self.hitSound then self.hitSound:clone():play() end
         end
     end
+    for _, entity in ipairs(self.level.entities) do
+        if entity.kind == "web" and not self.dynamicEntities[entity] then
+            local entityLeft, entityTop = entity.x * 16, entity.y * 16
+            if right >= entityLeft and left <= entityLeft + 16
+                and bottom >= entityTop and top <= entityTop + 16 then
+                self.dynamicEntities[entity] = true
+                self.world:remove("web", math.floor(entity.x), math.floor(entity.y))
+            end
+        end
+    end
+end
+
+function FullLevelPlaytest:applyEnvironment(input)
+    local player = self.player
+    local inLiquid = self.world:cellAt("liquid", player.x, player.y)
+        or self.world:cellAt("liquid", player.x, player.y + 7)
+    if inLiquid then
+        if self.world:cellAt("lava", player.x, player.y)
+            or self.world:cellAt("lava", player.x, player.y + 7) then
+            player.health = 0
+            return
+        end
+        player.vx = player.vx * 0.82
+        player.vy = math.min(2, player.vy * 0.6 + 0.15)
+        if input.jump or input.up then
+            player.vy = -3
+            player:setState(Player.STATES.jumping)
+        end
+    end
+    if self.world:cellAt("web", player.x, player.y) then
+        player.vx = player.vx * 0.15
+        player.vy = player.vy * 0.15
+    end
 end
 
 function FullLevelPlaytest:pickupNearestItem()
@@ -221,6 +270,10 @@ function FullLevelPlaytest:pickupNearestItem()
     end
     if nearest and nearest:pickup(self.player) then
         self.heldItem = nearest
+        if nearest.kind == "gold_idol" and not nearest.idolTriggered then
+            nearest.idolTriggered = true
+            self.traps:triggerIdol(self.player, self.level.area or self:selectedArea().key)
+        end
         return true
     end
     return false
@@ -249,7 +302,7 @@ end
 function FullLevelPlaytest:simulationStep()
     if self.player:isDead() then
         self.deathTimer = self.deathTimer - 1
-        if self.deathTimer <= 0 then self:buildSimulation() end
+        if self.deathTimer <= 0 then self:generateLevel(self.seed) end
         return
     end
 
@@ -260,6 +313,7 @@ function FullLevelPlaytest:simulationStep()
     local previousY = self.player.y
     local previousHealth = self.player.health
     self.player:step(self.world, input)
+    self:applyEnvironment(input)
     if actionPressed then
         if self.heldItem then
             self:useHeldItem(input)
@@ -269,6 +323,9 @@ function FullLevelPlaytest:simulationStep()
     end
     self:checkWhip()
     self:checkSpikes(previousY)
+    DynamicTerrain.update(self.world, self.player)
+    self.traps:update(self.player, self.enemies, self.items)
+    self.tools:update(self.player, self.enemies, self.items)
 
     for _, enemy in ipairs(self.enemies) do
         if enemy.alive then
@@ -282,7 +339,7 @@ function FullLevelPlaytest:simulationStep()
 
     if self.player:isDead() then self.deathTimer = 75 end
     if self.player.y > self.world.height * self.world.tileSize + 32 then
-        self:buildSimulation()
+        self:generateLevel(self.seed)
         return
     end
     self.exitReady = self:isNearExit()
@@ -310,7 +367,14 @@ end
 
 function FullLevelPlaytest:keypressed(key, _, isRepeat)
     if isRepeat then return end
-    if (key == "up" or key == "w") and self:isNearExit() then
+    if key == "f" and self.bombs > 0 and self.player and not self.player:isDead() then
+        self.tools:throwBomb(self.player)
+        self.bombs = self.bombs - 1
+    elseif key == "g" and self.ropes > 0 and self.player and not self.player:isDead() then
+        if self.tools:throwRope(self.player, self:getInput()) then
+            self.ropes = self.ropes - 1
+        end
+    elseif (key == "up" or key == "w") and self:isNearExit() then
         self:advanceLevel()
     elseif key == "r" then
         self:generateLevel(self.seed)
@@ -401,11 +465,13 @@ function FullLevelPlaytest:drawWorld(viewport)
             })
         end
     end
+    if self.tools then self.tools:drawBack() end
     for y = 0, self.level.height - 1 do
         for x = 0, self.level.width - 1 do
             self.renderer:drawTile(self.level.tiles[y + 1][x + 1], x * 16, y * 16)
         end
     end
+    DynamicTerrain.draw(self.world, self.renderer)
     for _, decoration in ipairs(self.level.decorations or {}) do
         if decoration.y >= 0 then
             love.graphics.draw(self.renderer.images.bg_cave_top,
@@ -421,6 +487,8 @@ function FullLevelPlaytest:drawWorld(viewport)
     for _, enemy in ipairs(self.enemies) do
         if enemy.alive then enemy:draw() end
     end
+    if self.traps then self.traps:draw() end
+    if self.tools then self.tools:drawFront() end
 
     if not (self.player.invincibleTimer > 0 and math.floor(self.player.invincibleTimer / 2) % 2 == 0) then
         self.player:draw()
@@ -481,7 +549,9 @@ function FullLevelPlaytest:draw()
         .. "    SEED " .. self.seed, 20, 42)
 
     love.graphics.setColor(self.player.health > 0 and COLORS.danger or COLORS.muted)
-    love.graphics.printf("LIFE " .. math.max(0, self.player.health), 0, 20, width - 20, "right")
+    love.graphics.printf("LIFE " .. math.max(0, self.player.health)
+        .. "   BOMBS " .. self.bombs .. "   ROPES " .. self.ropes,
+        0, 20, width - 20, "right")
     if self.heldItem then
         love.graphics.setColor(COLORS.text)
         love.graphics.printf("HOLD " .. self.heldItem.kind:gsub("_", " "):upper(),
@@ -501,7 +571,7 @@ function FullLevelPlaytest:draw()
 
     love.graphics.setColor(COLORS.muted)
     love.graphics.printf(
-        "A/D MOVE   SHIFT SPRINT   Z/SPACE JUMP   X WHIP/THROW   DOWN+X PICK UP/DROP   W/S CLIMB   R RESET   N SEED   [ ] AREA   B COLLIDERS   ESC BACK",
+        "A/D MOVE   SHIFT SPRINT   Z/SPACE JUMP   X WHIP/THROW   DOWN+X PICK UP/DROP   F BOMB   G ROPE   W/S CLIMB   R RESET   N SEED   [ ] AREA   B COLLIDERS   ESC BACK",
         12, height - 27, width - 24, "center")
     love.graphics.setColor(1, 1, 1, 1)
 end

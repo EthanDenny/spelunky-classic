@@ -1,8 +1,25 @@
 local App = require("src.app")
+local Startup = require("src.startup")
 
 local app
+local startup = {
+    phase = "splash",
+    elapsed = 0,
+    minimumTime = tonumber(os.getenv("SPELUNKY_SPLASH_TIME")) or Startup.MINIMUM_SPLASH_TIME,
+    drawn = false,
+    ready = false,
+    image = nil,
+}
+
+local function hasArgument(args, expected)
+    for _, argument in ipairs(args or {}) do
+        if argument == expected then return true end
+    end
+    return false
+end
 
 local function runSmokeTest()
+    require("src.tests.startup_test").run()
     require("src.tests.font_test").run(app)
     require("src.tests.animation_catalog_test").run()
     require("src.tests.platform_player_test").run()
@@ -12,6 +29,7 @@ local function runSmokeTest()
     require("src.tests.classic_area_generator_test").run()
     require("src.tests.entity_population_test").run()
     require("src.tests.generated_world_test").run()
+    require("src.tests.dynamic_world_test").run()
 
     local screenNames = {
         "menu",
@@ -98,40 +116,62 @@ function love.load(args)
         end
     end
 
-    app = App.new()
-    app:load()
-
-    for _, argument in ipairs(args or {}) do
-        if argument == "--smoke-test" then
-            local ok, message = xpcall(runSmokeTest, debug.traceback)
-            if not ok then
-                io.stderr:write(message .. "\n")
-            end
-            love.event.quit(ok and 0 or 1)
+    if hasArgument(args, "--smoke-test") then
+        Startup.openMainWindow(false)
+        startup.phase = "running"
+        app = App.new()
+        app:load()
+        local ok, message = xpcall(runSmokeTest, debug.traceback)
+        if not ok then
+            io.stderr:write(message .. "\n")
         end
+        love.event.quit(ok and 0 or 1)
+        return
     end
+
+    startup.image = Startup.loadSplashImage()
 end
 
 function love.update(dt)
+    if startup.phase == "splash" then
+        startup.elapsed = startup.elapsed + dt
+        if startup.drawn and not startup.ready then
+            app = App.new()
+            app:load()
+            app:preload()
+            startup.ready = true
+        end
+        if startup.ready and startup.elapsed >= startup.minimumTime then
+            Startup.openMainWindow(true)
+            startup.image = nil
+            startup.phase = "running"
+        end
+        return
+    end
     if app then app:update(dt) end
 end
 
 function love.draw()
+    if startup.phase == "splash" then
+        Startup.drawSplash(startup.image)
+        startup.drawn = true
+        return
+    end
     if app then app:draw() end
 end
 
 function love.keypressed(key, scancode, isRepeat)
-    if app then app:keypressed(key, scancode, isRepeat) end
+    if startup.phase == "running" and app then app:keypressed(key, scancode, isRepeat) end
 end
 
 function love.mousemoved(x, y, dx, dy)
-    if app then app:mousemoved(x, y, dx, dy) end
+    if startup.phase == "running" and app then app:mousemoved(x, y, dx, dy) end
 end
 
 function love.mousepressed(x, y, button)
-    if app then app:mousepressed(x, y, button) end
+    if startup.phase == "running" and app then app:mousepressed(x, y, button) end
 end
 
 function love.wheelmoved(x, y)
-    if app then app:wheelmoved(x, y) end
+    if startup.phase == "running" and app then app:wheelmoved(x, y) end
 end

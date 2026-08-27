@@ -17,6 +17,10 @@ function World.new(width, height, tileSize)
         ladder = {},
         ladderTop = {},
         rope = {},
+        liquid = {},
+        lava = {},
+        web = {},
+        dynamicSolids = {},
         labels = {},
     }, World)
 end
@@ -56,7 +60,8 @@ function World:each(kind, callback)
 end
 
 function World:solidAtPoint(x, y)
-    return self:cellAt("solid", x, y)
+    if self:cellAt("solid", x, y) then return true end
+    return self:dynamicSolidAt(x, y, x + 0.001, y + 0.001) ~= nil
 end
 
 function World:climbableAtPoint(x, y)
@@ -83,7 +88,125 @@ function World:overlaps(kind, left, top, right, bottom)
             end
         end
     end
+    if kind == "solid" or kind == "moveableSolid" then
+        for _, block in ipairs(self.dynamicSolids) do
+            if block.alive ~= false and (kind ~= "moveableSolid" or block.moveable)
+                and right > block.x and left < block.x + block.width
+                and bottom > block.y and top < block.y + block.height then
+                return true, block
+            end
+        end
+    end
     return false
+end
+
+function World:addDynamicSolid(block)
+    block.width = block.width or self.tileSize
+    block.height = block.height or self.tileSize
+    block.alive = block.alive ~= false
+    self.dynamicSolids[#self.dynamicSolids + 1] = block
+    return block
+end
+
+function World:removeDynamicSolid(block)
+    block.alive = false
+end
+
+function World:dynamicSolidAt(left, top, right, bottom, moveableOnly, ignored)
+    for _, block in ipairs(self.dynamicSolids) do
+        if block ~= ignored and block.alive ~= false and (not moveableOnly or block.moveable)
+            and right > block.x and left < block.x + block.width
+            and bottom > block.y and top < block.y + block.height then
+            return block
+        end
+    end
+end
+
+function World:staticSolidRect(left, top, right, bottom)
+    local tileSize = self.tileSize
+    local firstX = math.floor(left / tileSize)
+    local lastX = math.floor((right - 0.001) / tileSize)
+    local firstY = math.floor(top / tileSize)
+    local lastY = math.floor((bottom - 0.001) / tileSize)
+    for tileY = firstY, lastY do
+        for tileX = firstX, lastX do
+            if self:has("solid", tileX, tileY) then return true, tileX, tileY end
+        end
+    end
+    return false
+end
+
+function World:solidRect(left, top, right, bottom, ignored)
+    local hit = self:staticSolidRect(left, top, right, bottom)
+    if hit then return true end
+    return self:dynamicSolidAt(left, top, right, bottom, false, ignored) ~= nil
+end
+
+function World:tryPush(player, direction)
+    if direction == 0 then return false end
+    local halfWidth = player:getCollisionHalfWidth()
+    local topOffset, bottomOffset = player:getVerticalBounds()
+    local block = self:dynamicSolidAt(
+        player.x + direction - halfWidth,
+        player.y + topOffset,
+        player.x + direction + halfWidth,
+        player.y + bottomOffset,
+        true)
+    if not block or block.targetX or math.abs(block.vy or 0) > 0.01 then return false end
+
+    local destinationX = block.x + direction * self.tileSize
+    if self:staticSolidRect(destinationX, block.y,
+        destinationX + block.width, block.y + block.height)
+        or self:dynamicSolidAt(destinationX, block.y,
+            destinationX + block.width, block.y + block.height, false, block) then
+        return false
+    end
+    block.targetX = destinationX
+    block.vx = direction
+    return true
+end
+
+function World:isProtectedCell(tileX, tileY)
+    if tileX <= 0 or tileY <= 0 or tileX >= self.width - 1 or tileY >= self.height - 1 then
+        return true
+    end
+    if not self.level then return false end
+    local row = self.level.tiles[tileY + 1]
+    local tile = row and row[tileX + 1]
+    return tile and tile.properties and (tile.properties.invincible or tile.properties.fixed)
+end
+
+function World:destroyTerrain(centerX, centerY, radius)
+    radius = radius or 24
+    local destroyed = {}
+    local tileSize = self.tileSize
+    local firstX = math.floor((centerX - radius) / tileSize)
+    local lastX = math.floor((centerX + radius) / tileSize)
+    local firstY = math.floor((centerY - radius) / tileSize)
+    local lastY = math.floor((centerY + radius) / tileSize)
+    for tileY = firstY, lastY do
+        for tileX = firstX, lastX do
+            local dx = tileX * tileSize + tileSize / 2 - centerX
+            local dy = tileY * tileSize + tileSize / 2 - centerY
+            if dx * dx + dy * dy <= (radius + tileSize * 0.35) ^ 2
+                and self:has("solid", tileX, tileY) and not self:isProtectedCell(tileX, tileY) then
+                self:remove("solid", tileX, tileY)
+                self:remove("moveableSolid", tileX, tileY)
+                if self.level and self.level.tiles[tileY + 1] then
+                    self.level.tiles[tileY + 1][tileX + 1] = { kind = "empty" }
+                end
+                destroyed[#destroyed + 1] = { x = tileX, y = tileY }
+            end
+        end
+    end
+    for _, block in ipairs(self.dynamicSolids) do
+        local dx = block.x + block.width / 2 - centerX
+        local dy = block.y + block.height / 2 - centerY
+        if block.alive ~= false and dx * dx + dy * dy <= (radius + 8) ^ 2 then
+            block.alive = false
+        end
+    end
+    return destroyed
 end
 
 function World:collidesSolid(player, x, y)
