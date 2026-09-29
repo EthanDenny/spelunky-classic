@@ -45,6 +45,50 @@ local WEAPON = {
     web_cannon = true,
 }
 
+local COLLECTIBLE_VALUE = {
+    gold_bar = 500,
+    gold_bars = 1500,
+    emerald_big = 1600,
+    sapphire_big = 1800,
+    ruby_big = 2000,
+    gold_idol = 5000,
+    crystal_skull = 5000,
+    scarab = 5000,
+}
+
+local EQUIPMENT = {
+    spectacles = true,
+    compass = true,
+    parachute = true,
+    paste = true,
+    gloves = true,
+    mitt = true,
+    cape = true,
+    jetpack = true,
+    spike_shoes = true,
+    spring_shoes = true,
+    ankh = true,
+    crown = true,
+    kapala = true,
+    udjat_eye = true,
+}
+
+local SUPPLY = {
+    bomb_bag = { bombs = 3 },
+    bomb_box = { bombs = 12 },
+    rope_pile = { ropes = 3 },
+}
+
+local PRICES = {
+    bomb_bag = 2500, bomb_box = 10000, rope_pile = 2500,
+    pistol = 5000, machete = 5000, bow = 5000, web_cannon = 10000,
+    shotgun = 10000, mattock = 8000, teleporter = 15000,
+    spring_shoes = 4000, spike_shoes = 4000, spectacles = 2500,
+    compass = 2500, gloves = 8000, mitt = 8000, cape = 12000,
+    jetpack = 20000, paste = 3000, parachute = 2500,
+    ankh = 50000, crown = 50000,
+}
+
 -- oItem uses depth 101 while loose; oSolid uses depth 100. GameMaker draws
 -- higher depths first, allowing the foreground pixels of terrain to occlude
 -- every loose item. Held items switch to depth 1 and are drawn in front.
@@ -97,6 +141,37 @@ function Item.isCarryable(kind)
     return CARRYABLE[kind] or false
 end
 
+function Item.isCollectible(kind)
+    return COLLECTIBLE_VALUE[kind] ~= nil or EQUIPMENT[kind] or SUPPLY[kind]
+end
+
+function Item.isEquipment(kind)
+    return EQUIPMENT[kind] or false
+end
+
+function Item.price(kind, absoluteLevel)
+    local base = PRICES[kind] or 2500
+    return math.floor(base * (1 + math.max(0, (absoluteLevel or 1) - 1) * 0.05) / 100) * 100
+end
+
+function Item.collect(kind, run, player)
+    if COLLECTIBLE_VALUE[kind] then
+        run.money = run.money + COLLECTIBLE_VALUE[kind]
+        return "COLLECTED $" .. COLLECTIBLE_VALUE[kind]
+    end
+    if EQUIPMENT[kind] then
+        run.equipment[kind] = true
+        player.equipment[kind] = true
+        return string.upper((kind:gsub("_", " "))) .. " ACQUIRED"
+    end
+    local supply = SUPPLY[kind]
+    if supply then
+        run.bombs = run.bombs + (supply.bombs or 0)
+        run.ropes = run.ropes + (supply.ropes or 0)
+        return supply.bombs and "+" .. supply.bombs .. " BOMBS" or "+" .. supply.ropes .. " ROPES"
+    end
+end
+
 function Item.rendersBehindTerrain(kind)
     return BEHIND_TERRAIN[kind] or false
 end
@@ -121,6 +196,9 @@ function Item.new(entity, metadata)
         held = false,
         safeTimer = 0,
         dropThroughTimer = 0,
+        cooldown = 0,
+        durability = entity.kind == "mattock" and 50 or nil,
+        opened = false,
     }, Item)
 end
 
@@ -181,6 +259,10 @@ function Item:throw(player, input)
             self.vy = 3
         end
     end
+    if player.equipment and player.equipment.mitt then
+        self.vx = self.vx * 1.5
+        self.vy = self.vy * 1.25
+    end
 end
 
 function Item:dropWeapon(player)
@@ -197,6 +279,27 @@ function Item:dropFromHurt(player)
     self.safeTimer = 10
     self.vx = player.vx
     self.vy = -6
+end
+
+function Item:open(run)
+    if self.opened then return nil end
+    if self.kind == "locked_chest" and not run.hasKey then return nil, "IT'S LOCKED" end
+    if self.kind == "locked_chest" then
+        run.hasKey = false
+        run.equipment.udjat_eye = true
+        self.opened = true
+        return "udjat_eye", "THE UDJAT EYE"
+    elseif self.kind == "crate" then
+        self.opened = true
+        local choices = { "bomb_bag", "rope_pile", "shotgun", "mattock", "cape" }
+        return choices[((math.floor(self.x + self.y) % #choices) + 1)], "CRATE OPENED"
+    elseif self.kind == "chest" then
+        self.opened = true
+        return "gold_bars", "TREASURE!"
+    elseif self.kind == "jar" then
+        self.opened = true
+        return (math.floor(self.x + self.y) % 5 == 0) and "snake" or "emerald_big", "JAR SMASHED"
+    end
 end
 
 function Item:consumePixels(axis, amount)
@@ -242,6 +345,8 @@ function Item:moveVertical(world, amount)
 end
 
 function Item:update(world, player)
+    self.justHit = false
+    if self.cooldown > 0 then self.cooldown = self.cooldown - 1 end
     if self.held then
         self:updateHeldPosition(player)
         return
@@ -249,8 +354,10 @@ function Item:update(world, player)
     if self.safeTimer > 0 then self.safeTimer = self.safeTimer - 1 end
     self.vy = math.min(8, self.vy + 0.6)
     if self:moveHorizontal(world, self.vx) then self.vx = -self.vx * 0.5 end
+    local impactSpeed = math.abs(self.vy)
     local verticalHit = self:moveVertical(world, self.vy)
     if verticalHit == "floor" then
+        self.justHit = impactSpeed >= 4
         self.vy = math.abs(self.vy) > 1 and -self.vy * 0.5 or 0
         self.vx = math.abs(self.vx) < 0.1 and 0 or self.vx * 0.3
     elseif verticalHit == "ceiling" then

@@ -66,6 +66,8 @@ function ToolSystem:throwBomb(player)
         timer = scaledTicks(BOMB_FUSE + BOMB_FLASH, self.tickRate),
         flashStart = scaledTicks(BOMB_FLASH, self.tickRate),
         alive = true,
+        sticky = player.equipment and player.equipment.paste or false,
+        stuck = false,
     }
     self.bombs[#self.bombs + 1] = bomb
     return bomb
@@ -106,12 +108,14 @@ function ToolSystem:updateBomb(bomb)
         return
     end
 
+    if bomb.stuck then return end
     bomb.vy = math.min(8, bomb.vy + 0.6)
     local horizontal = math.floor(math.abs(bomb.vx))
     local xDirection = bomb.vx < 0 and -1 or 1
     for _ = 1, horizontal do
         if bombCollision(self.world, bomb, bomb.x + xDirection, bomb.y) then
-            bomb.vx = -bomb.vx * 0.5
+            if bomb.sticky then bomb.vx, bomb.vy, bomb.stuck = 0, 0, true
+            else bomb.vx = -bomb.vx * 0.5 end
             break
         end
         bomb.x = bomb.x + xDirection
@@ -120,7 +124,9 @@ function ToolSystem:updateBomb(bomb)
     local yDirection = bomb.vy < 0 and -1 or 1
     for _ = 1, vertical do
         if bombCollision(self.world, bomb, bomb.x, bomb.y + yDirection) then
-            if yDirection > 0 then
+            if bomb.sticky then
+                bomb.vx, bomb.vy, bomb.stuck = 0, 0, true
+            elseif yDirection > 0 then
                 bomb.vy = math.abs(bomb.vy) > 1 and -bomb.vy * 0.35 or 0
                 bomb.vx = bomb.vx * 0.75
             else

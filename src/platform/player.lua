@@ -16,6 +16,8 @@ Player.STATES = {
     falling = "falling",
     hanging = "hanging",
     duckToHang = "duck_to_hang",
+    stunned = "stunned",
+    dead = "dead",
 }
 
 local function sign(value)
@@ -94,6 +96,14 @@ function Player.new(x, y)
         whipImages = nil,
         whipSound = nil,
         attackPressedThisStep = false,
+        equipment = {},
+        status = "normal",
+        stunTimer = 0,
+        burnTimer = 0,
+        webTimer = 0,
+        fallPeak = 0,
+        parachuteOpen = false,
+        jetpackFuel = 0,
     }, Player)
 end
 
@@ -141,17 +151,58 @@ function Player:reset()
     self.whipJustCracked = false
     self.whipHits = {}
     self.attackPressedThisStep = false
+    self.status = "normal"
+    self.stunTimer = 0
+    self.burnTimer = 0
+    self.webTimer = 0
+    self.fallPeak = 0
+    self.parachuteOpen = false
+    self.jetpackFuel = 0
 end
 
 function Player:isDead()
     return self.health <= 0
 end
 
-function Player:hurt(sourceX)
+function Player:refreshStatus()
+    if self:isDead() then
+        self.status = "dead"
+    elseif self.burnTimer > 0 then
+        self.status = "burning"
+    elseif self.webTimer > 0 then
+        self.status = "webbed"
+    elseif self.stunTimer > 0 then
+        self.status = "stunned"
+    else
+        self.status = "normal"
+    end
+    return self.status
+end
+
+function Player:kill(cause, vx, vy)
+    if self:isDead() and self.state == Player.STATES.dead then return false end
+    self.health = 0
+    self.invincibleTimer = 0
+    self.vx = vx == nil and self.vx or vx
+    self.vy = vy == nil and self.vy or vy
+    self.ax = 0
+    self.ay = 0
+    self.xRemainder = 0
+    self.yRemainder = 0
+    self.climbKind = nil
+    self.transitionTarget = nil
+    self.whipping = false
+    self.stunTimer = 0
+    self.status = "dead"
+    self:setState(Player.STATES.dead)
+    return true
+end
+
+function Player:hurt(sourceX, amount, cause, stunDuration)
     if self.invincibleTimer > 0 or self:isDead() then
         return false
     end
-    self.health = math.max(0, self.health - 1)
+    self.health = math.max(0, self.health - (amount or 1))
     self.invincibleTimer = 30
     self.vx = self.x < sourceX and -6 or 6
     self.vy = -4
@@ -162,14 +213,46 @@ function Player:hurt(sourceX)
     self.climbKind = nil
     self.transitionTarget = nil
     self.whipping = false
-    self:setState(Player.STATES.falling)
+    self.stunTimer = self.health <= 0 and 0 or (stunDuration or 30)
+    if self.health <= 0 then
+        self:kill(cause, self.vx, self.vy)
+    else
+        self:setState(Player.STATES.stunned)
+        self:refreshStatus()
+    end
     return true
 end
 
+function Player:burn(sourceX)
+    if self:isDead() or self.invincibleTimer > 0 then return false end
+    -- oMagma/oMagmaMan set burning to 100, stun for 20 steps, and remove
+    -- two life. Burning itself is presentation state and does no periodic
+    -- damage in oPlayer1's step event.
+    self.burnTimer = math.max(self.burnTimer, 100)
+    local hurt = self:hurt(sourceX, 2, "burning", 20)
+    self:refreshStatus()
+    return hurt
+end
+
+function Player:enterLava()
+    if self:isDead() then return false end
+    -- oPlayer1: collision_point(x, y+6, oLava) removes 99 life, zeroes
+    -- horizontal movement, and leaves a tiny downward velocity.
+    self.burnTimer = math.max(self.burnTimer, 100)
+    return self:kill("lava", 0, 0.1)
+end
+
+function Player:web(duration)
+    self.webTimer = math.max(self.webTimer, duration or 30)
+    self:refreshStatus()
+end
+
+function Player:isStunned()
+    return self.stunTimer > 0 or self.state == Player.STATES.stunned
+end
+
 function Player:loadAssets()
-    if self.images then
-        return
-    end
+    if self.images then return end
     self.images = {}
     for name, data in pairs(SpriteData) do
         local frames = {}
@@ -418,7 +501,7 @@ function Player:updateClimbing(world, input, jumpPressed)
 
     if jumpPressed then
         self.vx = input.left and -4 or (input.right and 4 or 0)
-        self.ay = self.ay - 4
+        self.ay = self.ay - (self.equipment.spring_shoes and 6 or 4)
         self.climbKind = nil
         self.ladderCooldown = 5
         self.jumpTime = 0
@@ -741,6 +824,15 @@ function Player:updateNormal(world, input, jumpPressed, jumpReleased)
             self:beginHang(ledge)
             self:updateHanging(world, input, jumpPressed)
             return
+        elseif self.equipment.gloves then
+            self.vy = math.min(0, self.vy)
+            self.ay = 0
+            if jumpPressed then
+                self.vx = -direction * 5
+                self.vy = -5
+                self.facing = -direction
+                self.hangCooldown = 5
+            end
         end
     end
 
@@ -851,6 +943,8 @@ function Player:selectSprite(world)
         else
             sprite = self.spriteName
         end
+    elseif self.state == Player.STATES.stunned or self.state == Player.STATES.dead then
+        sprite = "sFallLeft"
     elseif self.state == Player.STATES.hanging then
         sprite = "sHangLeft"
     elseif self.state == Player.STATES.climbing then
@@ -920,6 +1014,40 @@ function Player:step(world, input)
     if self.dropThroughTimer > 0 then self.dropThroughTimer = self.dropThroughTimer - 1 end
     if self.invincibleTimer > 0 then self.invincibleTimer = self.invincibleTimer - 1 end
 
+    if self.burnTimer > 0 then
+        self.burnTimer = self.burnTimer - 1
+    end
+    if self.webTimer > 0 then self.webTimer = self.webTimer - 1 end
+    self:refreshStatus()
+
+    if self:isDead() then
+        self.state = Player.STATES.dead
+        self:updateAnimation(world)
+        return
+    end
+
+    if self.stunTimer > 0 then
+        self.stunTimer = self.stunTimer - 1
+        self.vy = math.min(self.yVelocityLimit, self.vy + 0.6)
+        if self.webTimer > 0 then
+            self.vx = self.vx * 0.5
+            self.vy = self.vy * 0.5
+        end
+        if self:moveHorizontal(world, self.vx) then self.vx = -self.vx * 0.25 end
+        local landed = self:moveVertical(world, self.vy, false)
+        if landed then
+            self.vy = 0
+            self.vx = self.vx * 0.75
+        end
+        if self.stunTimer == 0 then
+            self:setState(landed and Player.STATES.standing or Player.STATES.falling)
+            self:refreshStatus()
+        end
+        self:updateAnimation(world)
+        self:updateWhip({})
+        return
+    end
+
     if self.state == Player.STATES.hanging then
         self:updateHanging(world, input, jumpPressed)
     elseif self.state == Player.STATES.climbing then
@@ -928,6 +1056,30 @@ function Player:step(world, input)
         self:updateDuckToHang()
     else
         self:updateNormal(world, input, jumpPressed, jumpReleased)
+    end
+
+    if self.equipment.jetpack and input.jump and self:isAirState() and self.jumpTime >= 10 then
+        self.vy = math.max(-4, self.vy - 1.25)
+        self.jetpackFuel = self.jetpackFuel + 1
+    elseif self.vy > 0 and self:isAirState() then
+        if self.equipment.cape and input.jump then self.vy = math.min(self.vy, 2) end
+        if self.equipment.parachute and self.vy >= 7 then
+            self.parachuteOpen = true
+            self.vy = math.min(self.vy, 2)
+        end
+    end
+
+    if self:isAirState() and self.vy > 0 then
+        self.fallPeak = math.max(self.fallPeak, self.vy)
+    elseif self:isGroundState() and self.fallPeak > 0 then
+        if self.fallPeak >= 9 and not self.parachuteOpen then
+            local damage = self.fallPeak >= 12 and 2 or 1
+            self.invincibleTimer = 0
+            self:hurt(self.x, damage, "fall")
+        end
+        if self.parachuteOpen then self.equipment.parachute = false end
+        self.fallPeak = 0
+        self.parachuteOpen = false
     end
 
     if not wasHanging and decrementHangCooldown then

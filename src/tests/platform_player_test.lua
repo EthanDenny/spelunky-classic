@@ -339,6 +339,23 @@ function Test.run()
         assert(player.y > 8 * 16,
             "Holding down while airborne must ignore one-way platforms during movement")
     end
+
+    do
+        local world = flatWorld()
+        local player = groundedPlayer(world)
+        player.invincibleTimer = 30
+        assert(not player:burn(player.x) and player.burnTimer == 0 and player.health == 4,
+            "Invincibility must block magma contact before the burn timer starts")
+        player.invincibleTimer = 0
+        assert(player:burn(player.x) and player.health == 2 and player.burnTimer == 100,
+            "Magma contact must cause the original two-life injury and 100-step burn")
+        repeatStep(player, world, {}, 30)
+        assert(player.health == 2 and player.status == "burning" and player.stunTimer == 0,
+            "Burning must persist after stun without causing periodic damage")
+        repeatStep(player, world, {}, 70)
+        assert(player.health == 2 and player.status == "normal" and player.burnTimer == 0,
+            "Burning status must clear when the source timer expires")
+    end
 end
 
 return Test

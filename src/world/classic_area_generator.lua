@@ -788,8 +788,34 @@ function ClassicAreaGenerator.generate(area, seed, options)
     if area == "olmec" then
         generateOlmec(level, rng)
     else
-        generatePath(level, rng)
-        addShop(level, rng)
+        if options.special == "black_market" then
+            level.blackMarket = true
+            level.startRoomX, level.startRoomY = 0, 0
+            level.endRoomX, level.endRoomY = 3, 3
+            local rows = {
+                { 2, 4, 4, 2 },
+                { 2, 4, 4, 2 },
+                { 2, 4, 5, 4 },
+                { 3, 1, 1, 3 },
+            }
+            for y = 0, 3 do for x = 0, 3 do setRoom(level, x, y, rows[y + 1][x + 1]) end end
+        else
+            generatePath(level, rng)
+            if options.special == "city_of_gold" then
+                level.cityOfGold = true
+                setRoom(level, rng:integer(0, 3), 2, 6)
+            elseif options.special == "alien_craft" then
+                level.alienCraft = true
+                local startX = rng:integer(0, 2)
+                local row = rng:integer(1, 2)
+                for x = startX, 3 do
+                    setRoom(level, x, row, x == startX and 7 or x == 3 and 9 or 8)
+                end
+            elseif options.special == "yeti_lair" then
+                level.yetiLair = true
+            end
+            addShop(level, rng)
+        end
         if area == "jungle" then
             level.hasCemetery = rng:integer(1, 10) == 1
             generateRooms(level, rng, chooseJungle, placeJungle)

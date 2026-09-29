@@ -30,6 +30,7 @@ local function runSmokeTest()
     require("src.tests.entity_population_test").run()
     require("src.tests.generated_world_test").run()
     require("src.tests.dynamic_world_test").run()
+    require("src.tests.gameplay_systems_test").run()
 
     local screenNames = {
         "menu",
@@ -77,6 +78,9 @@ local function runSmokeTest()
     local fullLevel = app.screens.full_level_playtest
     assert(fullLevel.world and fullLevel.player, "Full level playtest did not build its simulation")
     assert(fullLevel.level.entrance, "Full level playtest generated no entrance")
+    assert(fullLevel.hud and fullLevel.hud.images
+        and fullLevel.hud.glyphs[0] and fullLevel.hud.glyphs[58],
+        "Full level playtest must load the original sprite HUD and font")
     do
         local Item = require("src.platform.item")
         local pickup = Item.new({
@@ -88,6 +92,49 @@ local function runSmokeTest()
         assert(fullLevel:pickupNearestItem() and fullLevel.heldItem == pickup and pickup.held,
             "Full level playtest must pick up the nearest carry object")
         fullLevel:buildSimulation()
+    end
+    do
+        local tileX, tileY
+        fullLevel.world:each("solid", function(x, y)
+            if not tileX then tileX, tileY = x, y end
+        end)
+        assert(tileX, "Generated level needs a solid cell for the crush regression")
+        fullLevel.player.x, fullLevel.player.y = tileX * 16 + 8, tileY * 16 + 8
+        fullLevel.player.invincibleTimer = 60
+        fullLevel:simulationStep()
+        assert(fullLevel.player.health == 0 and fullLevel.player.state == "dead",
+            "Solid overlap must crush even an invincible player")
+        fullLevel.run.health = 4
+        fullLevel:buildSimulation()
+
+        local player = fullLevel.player
+        local liquidX, liquidY = math.floor(player.x / 16), math.floor(player.y / 16)
+        fullLevel.world:set("liquid", liquidX, liquidY)
+        fullLevel.world:set("lava", liquidX, liquidY)
+        player.invincibleTimer = 60
+        fullLevel:simulationStep()
+        assert(player.health == 0 and player.state == "dead"
+            and player.status == "dead", "Lava contact must be immediately lethal")
+        fullLevel.run.health = 4
+        fullLevel:buildSimulation()
+    end
+    do
+        local SpecialGeneration = require("src.world.special_generation")
+        for areaIndex = 1, 5 do
+            fullLevel.areaIndex = areaIndex
+            fullLevel.levelNumber = 1
+            fullLevel:generateLevel(44000 + areaIndex)
+            fullLevel:simulationStep()
+            fullLevel:draw()
+        end
+        for _, kind in ipairs({ "black_market", "city_of_gold", "alien_craft", "yeti_lair", "moai" }) do
+            fullLevel.level = SpecialGeneration.interior(kind, 55000 + #kind)
+            fullLevel:buildSimulation()
+            fullLevel:simulationStep()
+            fullLevel:draw()
+        end
+        fullLevel.areaIndex, fullLevel.levelNumber = 1, 1
+        fullLevel:generateLevel(8675309)
     end
     assert(#app.screens.menu.items == 5
         and app.screens.menu.items[5].screen == "full_level_playtest",

@@ -17,6 +17,7 @@ LUA_OUTPUT = ROOT / "src/world/original_entity_sprites.lua"
 
 OBJECTS = {
     "player": "oPlayer1", "shopkeeper": "oShopkeeper", "chest": "oChest",
+    "tunnel_man": "oTunnelMan",
     "crate": "oCrate", "damsel": "oDamsel", "bat": "oBat",
     "spider": "oSpiderHang", "giant_spider": "oGiantSpiderHang", "snake": "oSnake",
     "caveman": "oCaveman", "mantrap": "oManTrap", "frog": "oFrog",
@@ -24,6 +25,8 @@ OBJECTS = {
     "monkey": "oMonkey", "piranha": "oPiranha", "dead_fish": "oDeadFish",
     "ufo": "oUFO", "yeti": "oYeti", "scarab": "oScarab", "hawkman": "oHawkman",
     "tomb_lord": "oTombLord", "alien_boss": "oAlienBoss", "jaws": "oJaws",
+    "alien": "oAlien", "ghost": "oGhost", "magma_man": "oMagmaMan",
+    "yeti_king": "oYetiKing",
     "arrow_trap_left": "oArrowTrapLeft", "arrow_trap_right": "oArrowTrapRight",
     "spear_trap_top": "oSpearTrapTop", "spear_trap_bottom": "oSpearTrapBottom",
     "spring_trap": "oSpringTrap", "smash_trap": "oSmashTrap",
@@ -49,6 +52,7 @@ OBJECTS = {
     "lamp": "oLamp", "lamp_red": "oLampRed", "fake_bones": "oFakeBones",
     "thwomp_trap": "oThwompTrap",
     "locked_chest": "oLockedChest", "key": "oKey", "crown": "oCrown",
+    "ankh": "oAnkh", "kapala": "oKapala", "udjat_eye": "oUdjatEye",
     "moai2": "oMoai2", "moai3": "oMoai3", "moai_inside": "oMoaiInside",
 }
 

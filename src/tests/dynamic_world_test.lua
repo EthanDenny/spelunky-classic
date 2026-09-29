@@ -3,6 +3,7 @@ local GeneratedWorld = require("src.platform.generated_world")
 local Player = require("src.platform.player")
 local ToolSystem = require("src.platform.tool_system")
 local TrapSystem = require("src.platform.trap_system")
+local World = require("src.platform.world")
 
 local Test = {}
 
@@ -27,6 +28,19 @@ function Test.run()
         for _ = 1, 16 do DynamicTerrain.update(world, player) end
         local block = world.dynamicSolids[1]
         assert(block.x == 4 * 16, "Push blocks must travel exactly one tile per push")
+    end
+
+    do
+        local world = World.new(20, 14, 16)
+        world:fill("solid", 0, 10, 20, 4)
+        local player = Player.new(88, 152)
+        local block = world:addDynamicSolid({
+            x = 80, y = 96, width = 16, height = 16,
+            kind = "falling", falling = true, vy = 0,
+        })
+        for _ = 1, 20 do DynamicTerrain.update(world, player) end
+        assert(player.health == 4 and block.alive and block.y == 128,
+            "A falling oMovingSolid must stop before pushing the player into the floor")
     end
 
     do

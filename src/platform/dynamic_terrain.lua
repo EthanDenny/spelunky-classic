@@ -25,6 +25,26 @@ local function moveHorizontal(world, block)
     end
 end
 
+local function playerWouldOverlap(player, block, blockY)
+    local halfWidth = player:getCollisionHalfWidth()
+    local topOffset, bottomOffset = player:getVerticalBounds()
+    return blockY + block.height > player.y + topOffset
+        and blockY < player.y + bottomOffset
+        and block.x + block.width > player.x - halfWidth
+        and block.x < player.x + halfWidth
+end
+
+local function playerCanMoveVertically(world, player, direction, ignoredBlock)
+    local halfWidth = player:getCollisionHalfWidth()
+    local topOffset, bottomOffset = player:getVerticalBounds()
+    local left = player.x - halfWidth
+    local top = player.y + direction + topOffset
+    local right = player.x + halfWidth
+    local bottom = player.y + direction + bottomOffset
+    return not world:staticSolidRect(left, top, right, bottom)
+        and not world:dynamicSolidAt(left, top, right, bottom, false, ignoredBlock)
+end
+
 local function moveVertical(world, block, player)
     block.vy = math.min(10, (block.vy or 0) + (block.falling and 1 or 0))
     local pixels = math.floor(math.abs(block.vy))
@@ -39,11 +59,16 @@ local function moveVertical(world, block, player)
             block.vy = 0
             return
         end
-        if player and nextY + block.height > player.y - 8
-            and nextY < player.y + 8
-            and block.x + block.width > player.x - player:getCollisionHalfWidth()
-            and block.x < player.x + player:getCollisionHalfWidth() then
-            player:hurt(block.x + block.width / 2)
+        -- Dark falling platforms inherit oMovingSolid. The original engine
+        -- pushes the character one pixel and stops the solid if that push
+        -- would collide with another solid. Gravity-driven oMoveableSolid
+        -- blocks do not use this path; their overlap is handled as crushing.
+        if player and block.kind == "falling" and playerWouldOverlap(player, block, nextY) then
+            if not playerCanMoveVertically(world, player, direction, block) then
+                block.vy = 0
+                return
+            end
+            player.y = player.y + direction
         end
         block.y = nextY
     end
