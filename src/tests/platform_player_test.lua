@@ -252,14 +252,44 @@ function Test.run()
         assert(player.facing == 1 and player.vx == 0 and player.vy == 0,
             "A right-side ledge grab must face and hold against the wall")
         player:step(world, { jump = true })
-        assert(player.state == Player.STATES.jumping and player.vy == -4,
+        assert(player.state == Player.STATES.falling and player.vy == -5,
             string.format("Jump while hanging must jump above the ledge (state=%s, vy=%s, x=%s)",
                 tostring(player.state), tostring(player.vy), tostring(player.x)))
         assert(player.x == 5 * 16 - 7,
             "Right-facing ledge jumps must preserve the original two-pixel offset")
         player:step(world, { jump = true })
-        assert(player.vy == -4 and player.y == 8 * 16,
+        assert(player.vy == -5 and player.y == 8 * 16 - 2,
             "The first airborne ledge-jump step must retain hanging's zero gravity")
+    end
+
+    do
+        for _, case in ipairs({
+            { name = "left", x = 309, direction = -1, firstTile = 16, lastTile = 18, sprint = true },
+            { name = "right", x = 187, direction = 1, firstTile = 12, lastTile = 14 },
+        }) do
+            local world = World.makeTestCourse()
+            local player = Player.new(case.x, 278)
+            player.vy = 1
+            local toward = { left = case.direction < 0, right = case.direction > 0,
+                sprint = case.sprint }
+            player:step(world, toward)
+            assert(player.state == Player.STATES.hanging and player.y == 280,
+                case.name .. " ledge must be reachable before the jump")
+            repeatStep(player, world, toward, 4)
+
+            local jumpToward = { left = toward.left, right = toward.right,
+                sprint = toward.sprint, jump = true }
+            local apex = player.y
+            for _ = 1, 22 do
+                player:step(world, jumpToward)
+                apex = math.min(apex, player.y)
+                if player:isGroundState() then break end
+            end
+            assert(apex <= 260 and player:isGroundState() and player.y == 264
+                and player.x >= case.firstTile * 16 and player.x < (case.lastTile + 1) * 16,
+                string.format("Holding %s and jump from a hang must clear and land on the ledge (x=%s, y=%s, apex=%s)",
+                    case.name, tostring(player.x), tostring(player.y), tostring(apex)))
+        end
     end
 
     do
@@ -269,7 +299,7 @@ function Test.run()
         player.state = Player.STATES.falling
         player.vy = 1
         player:step(world, { right = true, jump = true })
-        assert(player.state == Player.STATES.jumping and player.vy == -4,
+        assert(player.state == Player.STATES.falling and player.vy == -5,
             "Jump pressed on a ledge-grab step must immediately jump from that ledge")
     end
 

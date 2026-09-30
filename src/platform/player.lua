@@ -651,10 +651,22 @@ function Player:updateHanging(world, input, jumpPressed)
             self.hangCooldown = 3
             self.gravity = 1
             self.ay = self.ay - 4
-            -- Spelunky 1.1 moves two pixels away from the ledge before the
-            -- upward impulse, leaving the player close enough to clear it.
+            -- Spelunky 1.1 checks ledge support again after this offset.
             self.x = self.x - self.facing * 2
             self:setState(Player.STATES.jumping)
+        end
+
+        local halfWidth = self:getCollisionHalfWidth()
+        local topOffset, bottomOffset = self:getVerticalBounds()
+        -- isCollisionLeft(2) probes lb-2; isCollisionRight(2) probes rb+2-1.
+        local sideX = self.facing < 0 and self.x - halfWidth - 2
+            or self.x + halfWidth + 1
+        if not world:overlaps("solid", sideX, self.y + topOffset,
+            sideX + 1, self.y + bottomOffset) then
+            self.gravity = 1
+            self:setState(Player.STATES.falling)
+            self.ay = self.ay - self.gravity
+            self.hangCooldown = 4
         end
     end
 
