@@ -1,0 +1,23 @@
+README.md
+  s_d6797c77d20971::t_e2a77136af6af3 173-179,185
+  s_d6797c77d20971::t_dc445d298a862f 39-44,46-58,111,194
+  s_d6797c77d20971::t_56f3840d3ca4df 37,45
+  s_d6797c77d20971::t_5315ff51c64a97 1-36,38,59-110,112-166,169-172,180-184,186-193,195-212
+  s_d6797c77d20971::t_a5cbd548073a52 167-168
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "e391b293b244615a8db9202cfa8c03bcb5089119",
+  "prompts": {},
+  "sessions": {
+    "s_d6797c77d20971": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0aff5-fc5f-7363-8ccb-4df05fa2c073",
+        "model": "gpt-6-sol"
+      },
+      "human_author": "Ethan Denny <ethandenny@protonmail.com>"
+    }
+  }
+}
