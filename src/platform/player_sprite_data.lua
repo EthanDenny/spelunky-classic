@@ -45,6 +45,21 @@ return {
         width = 16, height = 16,
         frames = { "assets/original/platform/player/sStunL/000.png", "assets/original/platform/player/sStunL/001.png", "assets/original/platform/player/sStunL/002.png", "assets/original/platform/player/sStunL/003.png", "assets/original/platform/player/sStunL/004.png" },
     },
+    sDieL = {
+        originX = 8, originY = 8,
+        width = 16, height = 16,
+        frames = { "assets/original/platform/player/sDieL/000.png" },
+    },
+    sDieLL = {
+        originX = 8, originY = 8,
+        width = 16, height = 16,
+        frames = { "assets/original/platform/player/sDieLL/000.png" },
+    },
+    sDieLR = {
+        originX = 8, originY = 8,
+        width = 16, height = 16,
+        frames = { "assets/original/platform/player/sDieLR/000.png" },
+    },
     sHangLeft = {
         originX = 8, originY = 8,
         width = 16, height = 16,

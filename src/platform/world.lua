@@ -17,8 +17,6 @@ function World.new(width, height, tileSize)
         ladder = {},
         ladderTop = {},
         rope = {},
-        liquid = {},
-        lava = {},
         web = {},
         dynamicSolids = {},
         labels = {},
@@ -306,6 +304,9 @@ end
 function World.makeTestCourse()
     local world = World.new(40, 24, 16)
     world:fill("solid", 0, 22, 40, 2)
+    world:fill("solid", 0, 0, world.width, 1)
+    world:fill("solid", 0, 1, 1, world.height - 1)
+    world:fill("solid", world.width - 1, 1, 1, world.height - 1)
 
     world:fill("solid", 2, 18, 7, 1)
     world:fill("solid", 9, 19, 2, 3)

@@ -13,8 +13,6 @@ local DEFAULT_EQUIPMENT = {
     spike_shoes = false,
     spring_shoes = false,
     udjat_eye = false,
-    ankh = false,
-    crown = false,
     kapala = false,
 }
 
@@ -42,14 +40,6 @@ function RunState.new(seed)
         murderer = false,
         favor = 0,
         blood = 0,
-        blackMarketLevel = 5 + (seed % 4),
-        lakeLevel = 9 + (math.floor(seed / 7) % 4),
-        alienLevel = 9 + (math.floor(seed / 13) % 4),
-        yetiLevel = 9 + (math.floor(seed / 19) % 4),
-        visited = {},
-        tunnel1 = 100000,
-        tunnel2 = 200000,
-        shortcuts = {},
         hadDarkLevel = false,
         messages = {},
         heldItem = nil,
@@ -92,15 +82,6 @@ end
 
 function RunState:finishLevel()
     self.shopkeeperAnger = math.max(0, self.shopkeeperAnger - 1)
-end
-
-function RunState:resurrect(player)
-    if not self.equipment.ankh then return false end
-    self.equipment.ankh = false
-    player.equipment.ankh = false
-    player.health = 4
-    self.health = 4
-    return true
 end
 
 return RunState

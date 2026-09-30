@@ -4,7 +4,7 @@ local PlaytestLog = {}
 PlaytestLog.__index = PlaytestLog
 
 local DIRECTORY = "playtest-logs"
-local CELL_KINDS = { "solid", "moveableSolid", "platform", "ladder", "ladderTop", "rope", "liquid", "lava", "web" }
+local CELL_KINDS = { "solid", "moveableSolid", "platform", "ladder", "ladderTop", "rope", "web" }
 local PLAYER_FIELDS = {
     "x", "y", "vx", "vy", "ax", "ay", "xRemainder", "yRemainder", "tick",
     "state", "statePrev", "statePrevPrev", "status", "health", "maxHealth", "facing",
@@ -12,14 +12,14 @@ local PLAYER_FIELDS = {
     "gravity", "gravityIntensity", "xVelocityLimit", "yVelocityLimit", "climbKind",
     "climbTileX", "hangTileX", "hangTileY", "transitionTicks", "transitionTarget",
     "hangCooldown", "ladderCooldown", "dropThroughTimer", "invincibleTimer", "stunTimer",
-    "burnTimer", "webTimer", "fallTimer", "parachuteOpen", "jetpackFuel", "whipping",
+    "webTimer", "fallTimer", "parachuteOpen", "jetpackFuel", "whipping",
     "whipCracked", "whipJustCracked", "attackPressedThisStep", "spriteName",
     "animationFrame", "wideCollision", "collisionTopOffset",
 }
 local ENTITY_FIELDS = {
-    "kind", "x", "y", "vx", "vy", "state", "health", "alive", "facing", "timer",
+    "kind", "x", "y", "vx", "vy", "state", "phase", "frame", "health", "hp", "alive", "facing", "timer",
     "stunTimer", "safeTimer", "cooldown", "held", "opened", "targetX", "falling",
-    "moveable", "width", "height", "age", "radius", "damage", "stuck", "sticky",
+    "moveable", "width", "height", "age", "life", "radius", "damage", "stuck", "sticky",
     "durability", "attackTimer", "alertTimer", "angry", "heavy",
 }
 local RUN_FIELDS = {
@@ -32,7 +32,10 @@ local function copyFields(source, fields)
     if not source then return nil end
     local result = {}
     for _, field in ipairs(fields) do
-        if source[field] ~= nil then result[field] = source[field] end
+        local value = source[field]
+        if type(value) == "number" or type(value) == "boolean" or type(value) == "string" then
+            result[field] = value
+        end
     end
     return result
 end
@@ -118,7 +121,6 @@ function PlaytestLog.capture(screen)
     local player, world = screen.player, screen.world
     local result = {
         seed = screen.seed,
-        areaIndex = screen.areaIndex,
         levelNumber = screen.levelNumber,
         levelTime = screen.levelTime,
         deathTimer = screen.deathTimer,
@@ -156,12 +158,22 @@ function PlaytestLog.capture(screen)
     end
     if screen.enemies then result.enemies = entityList(screen.enemies) end
     if screen.items then result.items = entityList(screen.items) end
+    if screen.fakeBones then result.fakeBones = entityList(screen.fakeBones) end
+    if screen.spikeEntities then
+        result.spikes = {}
+        for index, spike in ipairs(screen.spikeEntities) do
+            result.spikes[index] = { x = spike.x, y = spike.y, bloody = not not spike.bloody }
+        end
+    end
+    if screen.effects then result.effects = entityList(screen.effects.particles) end
     if screen.collectibles then
         result.collectibles = {}
         for index, collectible in ipairs(screen.collectibles) do
             result.collectibles[index] = {
                 kind = collectible.entity.kind, x = collectible.entity.x,
                 y = collectible.entity.y, alive = collectible.alive,
+                vx = collectible.vx, vy = collectible.vy,
+                active = collectible.active, pickupDelay = collectible.pickupDelay,
             }
         end
     end
@@ -228,9 +240,7 @@ function PlaytestLog:level(screenName, screen)
         screen = screenName,
         seed = screen.seed,
         area = level and level.area,
-        areaIndex = screen.areaIndex,
         depth = screen.levelNumber,
-        special = level and level.special,
         width = screen.world.width,
         height = screen.world.height,
         tileSize = screen.world.tileSize,

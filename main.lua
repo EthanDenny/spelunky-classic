@@ -38,9 +38,9 @@ local function runSmokeTest()
     require("src.tests.animation_catalog_test").run()
     require("src.tests.platform_player_test").run()
     require("src.tests.platform_item_test").run()
+    require("src.tests.platforming_engine_test").run(app)
     require("src.tests.enemy_ai_test").run()
     require("src.tests.mines_generator_test").run()
-    require("src.tests.classic_area_generator_test").run()
     require("src.tests.entity_population_test").run()
     require("src.tests.generated_world_test").run()
     require("src.tests.dynamic_world_test").run()
@@ -92,6 +92,8 @@ local function runSmokeTest()
 
     local fullLevel = app.screens.full_level_playtest
     assert(fullLevel.world and fullLevel.player, "Full level playtest did not build its simulation")
+    require("src.tests.playtest_feedback_test").run(app)
+    fullLevel:buildSimulation()
     assert(fullLevel.level.entrance, "Full level playtest generated no entrance")
     assert(fullLevel.hud and fullLevel.hud.images
         and fullLevel.hud.glyphs[0] and fullLevel.hud.glyphs[58],
@@ -122,33 +124,28 @@ local function runSmokeTest()
         fullLevel.run.health = 4
         fullLevel:buildSimulation()
 
-        local player = fullLevel.player
-        local liquidX, liquidY = math.floor(player.x / 16), math.floor(player.y / 16)
-        fullLevel.world:set("liquid", liquidX, liquidY)
-        fullLevel.world:set("lava", liquidX, liquidY)
-        player.invincibleTimer = 60
-        fullLevel:simulationStep()
-        assert(player.health == 0 and player.state == "dead"
-            and player.status == "dead", "Lava contact must be immediately lethal")
-        fullLevel.run.health = 4
-        fullLevel:buildSimulation()
     end
     do
-        local SpecialGeneration = require("src.world.special_generation")
-        for areaIndex = 1, 5 do
-            fullLevel.areaIndex = areaIndex
-            fullLevel.levelNumber = 1
-            fullLevel:generateLevel(44000 + areaIndex)
+        for depth = 1, 4 do
+            fullLevel.levelNumber = depth
+            fullLevel:generateLevel(44000 + depth)
             fullLevel:simulationStep()
             fullLevel:draw()
         end
-        for _, kind in ipairs({ "black_market", "city_of_gold", "alien_craft", "yeti_lair", "moai" }) do
-            fullLevel.level = SpecialGeneration.interior(kind, 55000 + #kind)
-            fullLevel:buildSimulation()
-            fullLevel:simulationStep()
-            fullLevel:draw()
-        end
-        fullLevel.areaIndex, fullLevel.levelNumber = 1, 1
+        fullLevel.levelNumber = 1
+        fullLevel:generateLevel(8675309)
+        fullLevel.levelNumber = 4
+        fullLevel:generateLevel(8675309)
+        local finalMinesLevel = fullLevel.level
+        fullLevel:advanceLevel()
+        assert(fullLevel.levelNumber == 4 and fullLevel.level == finalMinesLevel,
+            "The Mines exit must not advance into an unimplemented area")
+        fullLevel.run = require("src.game.run_state").new(2)
+        fullLevel.levelNumber = 2
+        fullLevel:generateLevel(2)
+        assert(fullLevel.level.dark, "The dark Mines sample must still generate")
+        fullLevel:draw()
+        fullLevel.levelNumber = 1
         fullLevel:generateLevel(8675309)
     end
     assert(#app.screens.menu.items == 5

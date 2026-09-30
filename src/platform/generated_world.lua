@@ -16,12 +16,7 @@ local SOLID_TILES = {
 local SOLID_ENTITIES = {
     arrow_trap_left = true,
     arrow_trap_right = true,
-    barrier_emitter = true,
-    ceiling_trap = true,
     giant_tiki_head = true,
-    smash_trap = true,
-    thwomp_trap = true,
-    trap_block = true,
 }
 
 function GeneratedWorld.fromLevel(level)
@@ -36,7 +31,7 @@ function GeneratedWorld.fromLevel(level)
     for y = 0, level.height - 1 do
         for x = 0, level.width - 1 do
             local tile = level.tiles[y + 1][x + 1]
-            if tile.kind == "push_block" or tile.kind == "falling" then
+            if tile.kind == "push_block" then
                 level._dynamicCells[#level._dynamicCells + 1] = { x = x, y = y, tile = tile }
                 world:addDynamicSolid({
                     x = x * world.tileSize,
@@ -48,8 +43,6 @@ function GeneratedWorld.fromLevel(level)
                     baseStyle = tile.baseStyle,
                     properties = tile.properties or {},
                     moveable = tile.kind == "push_block",
-                    thinIce = tile.style == "thin_ice",
-                    trigger = tile.style == "dark_fall" and 20 or nil,
                     vx = 0,
                     vy = 0,
                 })
@@ -60,13 +53,6 @@ function GeneratedWorld.fromLevel(level)
                 world:set("ladder", x, y)
             elseif tile.kind == "ladder_top" then
                 world:set("ladderTop", x, y)
-            elseif tile.kind == "liquid" then
-                world:set("liquid", x, y, tile.style or "water")
-                if tile.style == "lava" then world:set("lava", x, y) end
-            end
-            if tile.properties and tile.properties.liquid then
-                world:set("liquid", x, y, tile.properties.liquid)
-                if tile.properties.liquid == "lava" then world:set("lava", x, y) end
             end
         end
     end

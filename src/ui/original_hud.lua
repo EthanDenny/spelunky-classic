@@ -22,7 +22,7 @@ local HUD_SPRITES = {
 
 local EQUIPMENT_ORDER = {
     "spectacles", "compass", "parachute", "paste", "gloves", "mitt", "cape",
-    "jetpack", "spike_shoes", "spring_shoes", "udjat_eye", "ankh", "crown", "kapala",
+    "jetpack", "spike_shoes", "spring_shoes", "udjat_eye", "kapala",
 }
 
 local function loadImage(path)

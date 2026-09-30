@@ -9,7 +9,6 @@ local CARRYABLE = {
     locked_chest = true,
     crate = true,
     gold_idol = true,
-    crystal_skull = true,
     key = true,
     die = true,
     bow = true,
@@ -26,13 +25,11 @@ local HEAVY = {
     locked_chest = true,
     crate = true,
     gold_idol = true,
-    crystal_skull = true,
     die = true,
 }
 
 local CARRIED_AT_BODY = {
     gold_idol = true,
-    crystal_skull = true,
 }
 
 local WEAPON = {
@@ -52,7 +49,6 @@ local COLLECTIBLE_VALUE = {
     sapphire_big = 1800,
     ruby_big = 2000,
     gold_idol = 5000,
-    crystal_skull = 5000,
     scarab = 5000,
 }
 
@@ -67,8 +63,6 @@ local EQUIPMENT = {
     jetpack = true,
     spike_shoes = true,
     spring_shoes = true,
-    ankh = true,
-    crown = true,
     kapala = true,
     udjat_eye = true,
 }
@@ -86,7 +80,6 @@ local PRICES = {
     spring_shoes = 4000, spike_shoes = 4000, spectacles = 2500,
     compass = 2500, gloves = 8000, mitt = 8000, cape = 12000,
     jetpack = 20000, paste = 3000, parachute = 2500,
-    ankh = 50000, crown = 50000,
 }
 
 -- oItem uses depth 101 while loose; oSolid uses depth 100. GameMaker draws
@@ -100,8 +93,6 @@ local BEHIND_TERRAIN = {
     chest = true,
     compass = true,
     crate = true,
-    crown = true,
-    crystal_skull = true,
     die = true,
     emerald_big = true,
     gloves = true,
@@ -353,14 +344,20 @@ function Item:update(world, player)
     end
     if self.safeTimer > 0 then self.safeTimer = self.safeTimer - 1 end
     self.vy = math.min(8, self.vy + 0.6)
-    if self:moveHorizontal(world, self.vx) then self.vx = -self.vx * 0.5 end
+    local horizontalHit = self:moveHorizontal(world, self.vx)
+    if horizontalHit then
+        if self.kind == "jar" and math.abs(self.vx) > 3 then self.justHit = true end
+        self.vx = -self.vx * 0.5
+    end
     local impactSpeed = math.abs(self.vy)
     local verticalHit = self:moveVertical(world, self.vy)
     if verticalHit == "floor" then
-        self.justHit = impactSpeed >= 4
+        self.justHit = self.justHit or (self.kind == "jar" and impactSpeed > 3)
+            or (self.kind ~= "jar" and impactSpeed >= 4)
         self.vy = math.abs(self.vy) > 1 and -self.vy * 0.5 or 0
         self.vx = math.abs(self.vx) < 0.1 and 0 or self.vx * 0.3
     elseif verticalHit == "ceiling" then
+        if self.kind == "jar" and self.vy < -3 then self.justHit = true end
         self.vy = math.abs(self.vy) * 0.5
     end
 end

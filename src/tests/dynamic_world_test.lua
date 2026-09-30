@@ -25,22 +25,9 @@ function Test.run()
         local player = Player.new(3 * 16 - 5, 5 * 16 - 8)
         player.state = Player.STATES.standing
         assert(world:tryPush(player, 1), "A clear push block must begin moving")
-        for _ = 1, 16 do DynamicTerrain.update(world, player) end
+        for _ = 1, 16 do DynamicTerrain.update(world) end
         local block = world.dynamicSolids[1]
         assert(block.x == 4 * 16, "Push blocks must travel exactly one tile per push")
-    end
-
-    do
-        local world = World.new(20, 14, 16)
-        world:fill("solid", 0, 10, 20, 4)
-        local player = Player.new(88, 152)
-        local block = world:addDynamicSolid({
-            x = 80, y = 96, width = 16, height = 16,
-            kind = "falling", falling = true, vy = 0,
-        })
-        for _ = 1, 20 do DynamicTerrain.update(world, player) end
-        assert(player.health == 4 and block.alive and block.y == 128,
-            "A falling oMovingSolid must stop before pushing the player into the floor")
     end
 
     do
@@ -84,7 +71,7 @@ function Test.run()
         local world = GeneratedWorld.fromLevel(level)
         local traps = TrapSystem.new(world, level, {})
         local player = Player.new(5 * 16, 6 * 16)
-        traps:triggerIdol(player, "mines")
+        traps:triggerIdol(player)
         for _ = 1, 100 do traps:update(player, {}, {}) end
         assert(#traps.boulders == 1, "Mines idols must release their giant-tiki boulder after 100 ticks")
     end

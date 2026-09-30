@@ -1,5 +1,4 @@
 local MinesGenerator = require("src.world.mines_generator")
-local ClassicAreaGenerator = require("src.world.classic_area_generator")
 local EntitySpriteData = require("src.world.original_entity_sprites")
 local SegmentedSelector = require("src.ui.segmented_selector")
 
@@ -7,11 +6,7 @@ local WorldGeneration = {}
 WorldGeneration.__index = WorldGeneration
 
 local LEVEL_TYPES = {
-    { label = "Mines", area = 1, key = "mines", depthCount = 4, levelOffset = 0, implemented = true },
-    { label = "Jungle", area = 2, key = "jungle", depthCount = 4, levelOffset = 4, implemented = true },
-    { label = "Ice Caves", area = 3, key = "ice", depthCount = 4, levelOffset = 8, implemented = true },
-    { label = "Temple", area = 4, key = "temple", depthCount = 3, levelOffset = 12, implemented = true },
-    { label = "Olmec", area = 5, key = "olmec", depthCount = 1, levelOffset = 15, implemented = true },
+    { label = "Mines", key = "mines", depthCount = 4, implemented = true },
 }
 
 local TILE_IMAGES = {
@@ -22,60 +17,6 @@ local TILE_IMAGES = {
     brick_down = "brick_down",
     cave_up = "cave_up",
     cave_up2 = "cave_up2",
-    jungle = "jungle",
-    jungle_up = "jungle_up",
-    jungle_up2 = "jungle_up2",
-    jungle_down = "jungle_down",
-    jungle_smooth = "jungle_smooth",
-    jungle_gold = "jungle_gold",
-    jungle_gold_big = "jungle_gold_big",
-    dark = "dark",
-    dark_up = "dark_up",
-    dark_up2 = "dark_up2",
-    dark_down = "dark_down",
-    dark_smooth = "dark_smooth",
-    dark_fall = "dark_fall",
-    dark_gold = "dark_gold",
-    dark_gold_big = "dark_gold_big",
-    thin_ice = "thin_ice",
-    ice = "ice",
-    ice_up = "ice_up",
-    ice_up2 = "ice_up2",
-    ice_down = "ice_down",
-    ice_left = "ice_left",
-    ice_right = "ice_right",
-    ice_ul = "ice_ul",
-    ice_ur = "ice_ur",
-    ice_dl = "ice_dl",
-    ice_dr = "ice_dr",
-    ice_udl = "ice_udl",
-    ice_udr = "ice_udr",
-    ice_ulr = "ice_ulr",
-    ice_dlr = "ice_dlr",
-    ice_lr = "ice_lr",
-    ice_block = "ice_block",
-    temple = "temple",
-    temple_up = "temple_up",
-    temple_up2 = "temple_up2",
-    temple_up3 = "temple_up3",
-    temple_up4 = "temple_up4",
-    temple_up5 = "temple_up5",
-    temple_up6 = "temple_up6",
-    temple_up7 = "temple_up7",
-    temple_up8 = "temple_up8",
-    temple_down = "temple_down",
-    temple_gold = "temple_gold",
-    temple_gold_big = "temple_gold_big",
-    water = "water",
-    water_top = "water_top",
-    water_bottom = "water_bottom",
-    water_bottom2 = "water_bottom2",
-    water_bottom3 = "water_bottom3",
-    water_bottom4 = "water_bottom4",
-    water_bottom_tall1 = "water_bottom_tall1",
-    water_bottom_tall2 = "water_bottom_tall2",
-    lava = "lava",
-    lava_top = "lava_top",
 }
 
 function WorldGeneration.new(app)
@@ -127,24 +68,6 @@ function WorldGeneration:loadAssets()
         self.images[name]:setFilter("nearest", "nearest")
     end
 
-    local areaDirectory = "assets/original/areas/"
-    local areaNames = {
-        "bg_cave", "bg_temple", "jungle", "jungle_up", "jungle_up2", "jungle_down",
-        "jungle_smooth", "jungle_gold", "jungle_gold_big", "dark", "dark_up", "dark_up2", "dark_down", "dark_smooth",
-        "dark_fall", "dark_gold", "dark_gold_big", "thin_ice", "ice", "ice_up", "ice_up2", "ice_down", "ice_left",
-        "ice_right", "ice_ul", "ice_ur", "ice_dl", "ice_dr", "ice_udl", "ice_udr",
-        "ice_ulr", "ice_dlr", "ice_lr", "ice_block", "temple", "temple_up", "temple_up2",
-        "temple_up3", "temple_up4", "temple_up5", "temple_up6", "temple_up7",
-        "temple_up8", "temple_down", "temple_gold", "temple_gold_big", "water", "water_top",
-        "water_bottom", "water_bottom2", "water_bottom3", "water_bottom4",
-        "water_bottom_tall1", "water_bottom_tall2", "lava",
-        "lava_top", "vine", "vine_top", "olmec",
-    }
-    for _, name in ipairs(areaNames) do
-        self.images[name] = love.graphics.newImage(areaDirectory .. name .. ".png")
-        self.images[name]:setFilter("nearest", "nearest")
-    end
-
     for key, metadata in pairs(EntitySpriteData) do
         local image = love.graphics.newImage("assets/original/entities/" .. metadata.image .. ".png")
         image:setFilter("nearest", "nearest")
@@ -152,7 +75,6 @@ function WorldGeneration:loadAssets()
     end
 
     self.images.bg_cave:setWrap("repeat", "repeat")
-    self.images.bg_temple:setWrap("repeat", "repeat")
     self.caveTopQuads = {
         love.graphics.newQuad(0, 0, 16, 16, self.images.bg_cave_top:getDimensions()),
         love.graphics.newQuad(16, 0, 16, 16, self.images.bg_cave_top:getDimensions()),
@@ -169,13 +91,8 @@ end
 
 function WorldGeneration:generate(seed)
     self.seed = seed
-    local area = self.selector:getSelected()
-    if area.key == "mines" then
-        self.level = MinesGenerator.generate(seed, { levelNumber = self.levelNumber })
-        self.level.area = "mines"
-    else
-        self.level = ClassicAreaGenerator.generate(area.key, seed, { levelNumber = self.levelNumber })
-    end
+    self.level = MinesGenerator.generate(seed, { levelNumber = self.levelNumber })
+    self.level.area = "mines"
     if self.app.playtestLog then
         self.app.playtestLog:generatedLevel("world_generation", self.level, self.levelNumber)
     end
@@ -192,24 +109,12 @@ function WorldGeneration:changeLevelNumber(direction)
     self:generate(self.seed)
 end
 
-function WorldGeneration:areaChanged()
-    local selected = self.selector:getSelected()
-    self.levelNumber = math.min(self.levelNumber, selected.depthCount)
-    self:generate(self.seed)
-end
-
 function WorldGeneration:keypressed(key, _, isRepeat)
     if isRepeat then
         return
     end
 
-    if key == "left" or key == "a" then
-        self.selector:move(-1)
-        self:areaChanged()
-    elseif key == "right" or key == "d" then
-        self.selector:move(1)
-        self:areaChanged()
-    elseif key == "up" or key == "w" then
+    if key == "up" or key == "w" then
         if self.selector:getSelected().implemented then
             self:changeLevelNumber(1)
         end
@@ -223,12 +128,6 @@ function WorldGeneration:keypressed(key, _, isRepeat)
         end
     elseif key == "tab" then
         self.showRoomPath = not self.showRoomPath
-    else
-        local number = tonumber(key)
-        if number and LEVEL_TYPES[number] then
-            self.selector:select(number)
-            self:areaChanged()
-        end
     end
 end
 
@@ -259,15 +158,7 @@ local function contains(bounds, x, y)
 end
 
 function WorldGeneration:mousepressed(x, y, button)
-    local previousSelection = self.selector.selectedIndex
-    if self.selector:mousepressed(x, y, button) then
-        if previousSelection ~= self.selector.selectedIndex then
-            self:areaChanged()
-            return
-        end
-    end
-
-    if button ~= 1 or not self.selector:getSelected().implemented then
+    if button ~= 1 then
         return
     end
 
@@ -292,20 +183,17 @@ function WorldGeneration:drawTile(tile, x, y)
     if tile.kind == "brick" then
         local imageName = TILE_IMAGES[tile.style] or "brick"
         love.graphics.draw(self.images[imageName], x, y)
-    elseif tile.kind == "solid" or tile.kind == "liquid" or tile.kind == "falling" then
+    elseif tile.kind == "solid" then
         local imageName = TILE_IMAGES[tile.style] or TILE_IMAGES[tile.baseStyle] or "block"
         love.graphics.draw(self.images[imageName], x, y)
-        if tile.properties and tile.properties.liquid then
-            love.graphics.draw(self.images[tile.properties.liquid], x, y)
-        end
     elseif tile.kind == "block" or tile.kind == "push_block" then
         love.graphics.draw(self.images.block, x, y)
     elseif tile.kind == "smooth_brick" then
         love.graphics.draw(self.images.cave_smooth, x, y)
     elseif tile.kind == "ladder" then
-        love.graphics.draw(tile.style == "vine" and self.images.vine or self.images.ladder, x, y)
+        love.graphics.draw(self.images.ladder, x, y)
     elseif tile.kind == "ladder_top" then
-        love.graphics.draw(tile.style == "vine" and self.images.vine_top or self.images.ladder_top, x, y)
+        love.graphics.draw(self.images.ladder_top, x, y)
     end
 end
 
@@ -315,8 +203,6 @@ function WorldGeneration:drawEntity(entity)
     local spriteKey = entity.kind
     if entity.kind == "shop_sign" then
         spriteKey = "shop_sign_" .. string.lower(entity.properties.shopType or "general")
-    elseif entity.kind == "worshipper" then
-        spriteKey = entity.properties.role == "hawkman" and "hawkman" or "caveman"
     end
 
     local sprite = self.entitySprites[spriteKey]
@@ -386,8 +272,7 @@ function WorldGeneration:drawLevel(viewport)
     love.graphics.scale(scale, scale)
 
     love.graphics.setColor(1, 1, 1, 1)
-    local background = (self.level.area == "temple" or self.level.area == "olmec")
-        and self.images.bg_temple or self.images.bg_cave
+    local background = self.images.bg_cave
     local backgroundQuad = love.graphics.newQuad(0, 0, worldWidth, worldHeight,
         background:getDimensions())
     love.graphics.draw(background, backgroundQuad, 0, 0)
@@ -421,23 +306,9 @@ function WorldGeneration:drawLevel(viewport)
     love.graphics.rectangle("line", drawX, drawY, drawWidth, drawHeight)
 end
 
-function WorldGeneration:drawUnavailable(viewport, levelType)
-    love.graphics.setColor(0.085, 0.075, 0.062)
-    love.graphics.rectangle("fill", viewport.x, viewport.y, viewport.width, viewport.height, 5, 5)
-    love.graphics.setFont(self.app.fonts.menu)
-    love.graphics.setColor(0.56, 0.50, 0.40)
-    love.graphics.printf(levelType.label .. " generator", viewport.x, viewport.y + viewport.height / 2 - 33,
-        viewport.width, "center")
-    love.graphics.setFont(self.app.fonts.small)
-    love.graphics.printf("Not implemented yet", viewport.x, viewport.y + viewport.height / 2 + 7,
-        viewport.width, "center")
-end
-
 function WorldGeneration:draw()
     local width, height = love.graphics.getDimensions()
     local layout = self:getLayout()
-    local selected = self.selector:getSelected()
-
     love.graphics.clear(0.045, 0.04, 0.035)
     love.graphics.setColor(0.065, 0.057, 0.048)
     love.graphics.rectangle("fill", layout.sidebar.x, layout.sidebar.y,
@@ -451,40 +322,30 @@ function WorldGeneration:draw()
         layout.selector.height, self.app.fonts.small, true)
 
     love.graphics.setFont(self.app.fonts.small)
-    local active = selected.implemented
-    self:drawButton(layout.depthDown, "<", active)
-    self:drawButton(layout.depthUp, ">", active)
-    love.graphics.setColor(active and 0.86 or 0.42, active and 0.80 or 0.38, active and 0.67 or 0.33)
-    local absoluteLevel = selected.levelOffset + self.levelNumber
-    local depthLabel = selected.key == "olmec" and "4-4" or
-        (math.floor((absoluteLevel - 1) / 4) + 1) .. "-" .. (((absoluteLevel - 1) % 4) + 1)
-    love.graphics.printf(active and depthLabel or ("AREA " .. selected.area),
+    self:drawButton(layout.depthDown, "<", true)
+    self:drawButton(layout.depthUp, ">", true)
+    love.graphics.setColor(0.86, 0.80, 0.67)
+    local depthLabel = "1-" .. self.levelNumber
+    love.graphics.printf(depthLabel,
         58, layout.depthDown.y + 7, 76, "center")
-    self:drawButton(layout.generate, "GENERATE", active)
+    self:drawButton(layout.generate, "GENERATE", true)
 
-    if active then
-        love.graphics.setColor(0.56, 0.50, 0.40)
-        local features = {}
-        if self.level.hasSnakePit then features[#features + 1] = "SNAKE PIT" end
-        if self.level.hasShop then features[#features + 1] = "SHOP" end
-        if self.level.hasIdol then features[#features + 1] = "IDOL" end
-        if self.level.hasCemetery then features[#features + 1] = "CEMETERY" end
-        if self.level.hasMoai then features[#features + 1] = "MOAI" end
-        if self.level.hasSacrificePit then features[#features + 1] = "SACRIFICE PIT" end
-        local featureText = #features > 0 and table.concat(features, " · ") or "STANDARD"
-        love.graphics.printf("SEED " .. self.seed, layout.info.x, layout.info.y,
-            layout.info.width, "center")
-        love.graphics.setColor(0.72, 0.64, 0.50)
-        love.graphics.printf(featureText, layout.info.x, layout.info.y + 30,
-            layout.info.width, "center")
-        self:drawLevel(layout.viewport)
-    else
-        self:drawUnavailable(layout.viewport, selected)
-    end
+    love.graphics.setColor(0.56, 0.50, 0.40)
+    local features = {}
+    if self.level.hasSnakePit then features[#features + 1] = "SNAKE PIT" end
+    if self.level.hasShop then features[#features + 1] = "SHOP" end
+    if self.level.hasIdol then features[#features + 1] = "IDOL" end
+    local featureText = #features > 0 and table.concat(features, " · ") or "STANDARD"
+    love.graphics.printf("SEED " .. self.seed, layout.info.x, layout.info.y,
+        layout.info.width, "center")
+    love.graphics.setColor(0.72, 0.64, 0.50)
+    love.graphics.printf(featureText, layout.info.x, layout.info.y + 30,
+        layout.info.width, "center")
+    self:drawLevel(layout.viewport)
 
     love.graphics.setFont(self.app.fonts.small)
     love.graphics.setColor(0.56, 0.50, 0.40)
-    love.graphics.printf("LEFT/RIGHT  AREA\nUP/DOWN  DEPTH\nR  GENERATE\nTAB  ROOM PATH\nESC  BACK",
+    love.graphics.printf("UP/DOWN  DEPTH\nR  GENERATE\nTAB  ROOM PATH\nESC  BACK",
         layout.sidebar.x + 16, height - 126, layout.sidebar.width - 32, "left")
 end
 

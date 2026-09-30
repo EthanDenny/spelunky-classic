@@ -1,33 +1,31 @@
 local Creature = {}
 Creature.__index = Creature
 
+local skeletonSprites
+
+local function loadSkeletonSprites()
+    if skeletonSprites then return skeletonSprites end
+    skeletonSprites = { walk = {} }
+    local idle = love.graphics.newImage(
+        "original-game-reference/source/extracted/spelunky/Sprites/Enemies/Skeleton/sSkeletonLeft.images/image 0.png")
+    idle:setFilter("nearest", "nearest")
+    skeletonSprites.idle = idle
+    for index = 0, 4 do
+        local image = love.graphics.newImage(string.format(
+            "assets/original/animations/sSkeletonWalkLeft/%03d.png", index))
+        image:setFilter("nearest", "nearest")
+        skeletonSprites.walk[#skeletonSprites.walk + 1] = image
+    end
+    return skeletonSprites
+end
+
 local CONFIG = {
     caveman = { ai = "ground", hp = 3, speed = 1.1 },
     skeleton = { ai = "ground", hp = 1, speed = 1.0 },
-    zombie = { ai = "ground", hp = 1, speed = 0.7 },
-    hawkman = { ai = "ground", hp = 4, speed = 1.5, aggressive = true },
-    yeti = { ai = "ground", hp = 5, speed = 1.0, aggressive = true },
-    frog = { ai = "hopper", hp = 1, speed = 2.0 },
-    fire_frog = { ai = "hopper", hp = 1, speed = 2.2, explosive = true },
-    vampire = { ai = "flyer", hp = 6, speed = 1.5, aggressive = true },
-    ufo = { ai = "flyer", hp = 1, speed = 1.0, shooter = true },
     ghost = { ai = "flyer", hp = 999, speed = 0.75, aggressive = true, lethal = true },
-    alien = { ai = "ground", hp = 1, speed = 1.1, aggressive = true },
-    magma_man = { ai = "hopper", hp = 200, speed = 2.0, aggressive = true, burning = true },
-    piranha = { ai = "aquatic", hp = 1, speed = 1.4, aggressive = true, width = 8, height = 8 },
-    dead_fish = { ai = "aquatic", hp = 1, speed = 0 },
-    monkey = { ai = "ground", hp = 1, speed = 1.4, aggressive = true },
-    mantrap = { ai = "stationary", hp = 3, aggressive = true },
-    jaws = { ai = "stationary", hp = 4, aggressive = true },
     giant_spider = { ai = "hopper", hp = 10, speed = 3, aggressive = true, width = 32 },
-    tomb_lord = { ai = "boss", hp = 20, speed = 1.2, aggressive = true, width = 32, height = 32 },
-    alien_boss = { ai = "boss", hp = 10, speed = 1.1, aggressive = true, width = 32, height = 32 },
-    yeti_king = { ai = "boss", hp = 30, speed = 1.0, aggressive = true, width = 32, height = 32 },
-    olmec = { ai = "olmec", hp = 1, speed = 0, aggressive = true, invincible = true, width = 64, height = 64 },
     damsel = { ai = "damsel", hp = 4, speed = 1.2, npc = true },
     shopkeeper = { ai = "shopkeeper", hp = 20, speed = 2.8, aggressive = true, npc = true },
-    tunnel_man = { ai = "stationary", hp = 20, speed = 0, npc = true },
-    worshipper = { ai = "ground", hp = 3, speed = 0.8 },
 }
 
 function Creature.supports(kind)
@@ -71,7 +69,8 @@ function Creature.new(entity, metadata, options)
         hp = config.hp,
         alive = true,
         facing = options.facing or -1,
-        timer = 15 + ((options.seed or 1) % 30),
+        timer = entity.kind == "skeleton" and 20 or 15 + ((options.seed or 1) % 30),
+        animation = 0,
         cooldown = 0,
         stunned = 0,
         webbed = 0,
@@ -149,7 +148,7 @@ end
 
 function Creature:damage(amount, sourceX)
     if not self.alive then return false end
-    if self.kind == "ghost" or self.config.invincible then return false end
+    if self.kind == "ghost" then return false end
     self.hp = self.hp - (amount or 1)
     self.stunned = self.hp > 0 and 20 or 0
     if sourceX then self.vx = self.x < sourceX and -3 or 3 end
@@ -186,15 +185,16 @@ end
 function Creature:updateAI(world, player, context)
     local ai = self.config.ai
     local dist2 = player and distanceSquared(self, player) or math.huge
-    if ai == "stationary" then
-        self.vx = 0
-    elseif ai == "aquatic" then
-        local target = player and player.x or self.x
-        self.facing = target < self.x and -1 or 1
-        self.vx = self.facing * self.config.speed
-        self:moveHorizontal(world, self.vx)
-        if not world:cellAt("liquid", self.x, self.y - 3) then self.vy = self.vy + 0.3 end
-        self:moveVertical(world, self.vy)
+    if ai == "ground" and self.kind == "skeleton" then
+        if self.timer > 0 then
+            self.timer = self.timer - 1
+            self.vx = 0
+        else
+            self.vx = self.facing * self.config.speed
+        end
+        local before = self.vx
+        self:groundPhysics(world)
+        if before ~= 0 and self.vx ~= before then self.facing = -self.facing end
         return
     elseif ai == "flyer" then
         if player and dist2 < 180 * 180 then
@@ -203,12 +203,6 @@ function Creature:updateAI(world, player, context)
             self.vy = self.vy * 0.8 + sign(player.y - self.y) * self.config.speed * 0.15
             self:moveHorizontal(world, self.vx)
             self:moveVertical(world, self.vy)
-            if self.config.shooter and self.cooldown == 0 and context and context.projectiles then
-                context.projectiles:spawn("bullet", self.x, self.y - 5,
-                    sign(player.x - self.x) * 7, sign(player.y - self.y) * 0.5, self,
-                    { damage = 1, life = 50 })
-                self.cooldown = 60
-            end
         end
         return
     elseif ai == "hopper" then
@@ -217,26 +211,8 @@ function Creature:updateAI(world, player, context)
         if grounded and self.timer <= 0 then
             self.facing = player and player.x < self.x and -1 or 1
             self.vx = self.facing * self.config.speed
-            self.vy = self.kind == "giant_spider" and -5 or -4
+            self.vy = -5
             self.timer = 20
-        end
-        return
-    elseif ai == "olmec" then
-        self.timer = self.timer - 1
-        if player and self.vy <= 0 then
-            self.vx = sign(player.x - self.x) * 0.8
-            self:moveHorizontal(world, self.vx)
-        end
-        if player and math.abs(player.x - self.x) < 40 and self.timer <= 0 then
-            self.vy = 8
-            self.timer = 45
-        end
-        local landed = self:moveVertical(world, self.vy)
-        if landed == "floor" then
-            world:destroyTerrain(self.x, self.y, 28)
-            self.vy = -2
-        else
-            self.vy = self.vy + 0.5
         end
         return
     elseif ai == "shopkeeper" then
@@ -262,23 +238,6 @@ function Creature:updateAI(world, player, context)
             self.timer = 90
         end
         self.vx = self.facing * 0.35
-    elseif ai == "boss" then
-        self.facing = player and player.x < self.x and -1 or 1
-        self.vx = self.facing * self.config.speed
-        if player and dist2 < 70 * 70 and self.cooldown == 0 then
-            if self.kind == "alien_boss" and context and context.projectiles then
-                for spread = -1, 1 do
-                    context.projectiles:spawn("bullet", self.x, self.y - 12,
-                        self.facing * 7, spread * 0.6, self, { damage = 1, life = 60 })
-                end
-            elseif self.kind == "tomb_lord" and context and context.projectiles then
-                context.projectiles:spawn("bullet", self.x, self.y - 12,
-                    self.facing * 5, -1.5, self, { damage = 2, gravity = 0.15, life = 80 })
-            else
-                self.vy = -5
-            end
-            self.cooldown = 40
-        end
     else
         if player and (self.config.aggressive or dist2 < 80 * 80) then
             self.facing = player.x < self.x and -1 or 1
@@ -294,11 +253,7 @@ end
 
 function Creature:step(world, player, context)
     if not self.alive then return end
-    if self.kind == "olmec" and world:cellAt("lava", self.x, self.y - 2) then
-        self.alive = false
-        self.state = "defeated"
-        return
-    end
+    if self.kind == "skeleton" then self.animation = self.animation + 1 end
     if self.cooldown > 0 then self.cooldown = self.cooldown - 1 end
     if self.webbed > 0 then self.webbed = self.webbed - 1 return end
     if self.held then self:updateHeldPosition(player) return end
@@ -325,15 +280,21 @@ function Creature:resolvePlayerContact(player, previousY)
         player.invincibleTimer = 0
         return player:hurt(self.x, player.health, "ghost") and "hurt" or "invincible"
     end
-    if self.config.burning then
-        return player:burn(self.x) and "hurt" or "invincible"
-    end
-    local amount = (self.kind == "giant_spider" or self.config.ai == "boss") and 2 or 1
+    local amount = self.kind == "giant_spider" and 2 or 1
     return player:hurt(self.x, amount, self.kind) and "hurt" or "invincible"
 end
 
 function Creature:draw(renderer)
     if not self.alive then return end
+    if self.kind == "skeleton" then
+        local sprites = loadSkeletonSprites()
+        local image = self.vx == 0 and sprites.idle
+            or sprites.walk[(math.floor(self.animation * 0.5) % #sprites.walk) + 1]
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.draw(image, math.floor(self.x), math.floor(self.y - self.height),
+            0, self.facing < 0 and 1 or -1, 1, 8, 0)
+        return
+    end
     renderer:drawEntity({
         kind = self.kind,
         x = (self.x - self.width / 2 + self.drawOriginX) / 16,

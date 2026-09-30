@@ -373,18 +373,21 @@ function Test.run()
     do
         local world = flatWorld()
         local player = groundedPlayer(world)
-        player.invincibleTimer = 30
-        assert(not player:burn(player.x) and player.burnTimer == 0 and player.health == 4,
-            "Invincibility must block magma contact before the burn timer starts")
-        player.invincibleTimer = 0
-        assert(player:burn(player.x) and player.health == 2 and player.burnTimer == 100,
-            "Magma contact must cause the original two-life injury and 100-step burn")
-        repeatStep(player, world, {}, 30)
-        assert(player.health == 2 and player.status == "burning" and player.stunTimer == 0,
-            "Burning must persist after stun without causing periodic damage")
-        repeatStep(player, world, {}, 70)
-        assert(player.health == 2 and player.status == "normal" and player.burnTimer == 0,
-            "Burning status must clear when the source timer expires")
+        assert(player:hurt(player.x - 10), "The stun regression requires an actual knockback")
+        local duration = player.stunTimer
+        player:step(world, {})
+        assert(player.spriteName == "sDieLR" and player.stunTimer == duration,
+            "Source stun must show the rightward knockback pose without advancing its timer")
+        local sawStunAnimation = false
+        for _ = 1, 40 do
+            player:step(world, {})
+            if player.spriteName == "sStunL" then
+                sawStunAnimation = true
+                break
+            end
+        end
+        assert(sawStunAnimation and player.vx == 0 and player.stunTimer < duration,
+            "Landing friction must settle knockback so the stun animation can actually play")
     end
 
     do

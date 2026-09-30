@@ -100,7 +100,6 @@ function Player.new(x, y)
         equipment = {},
         status = "normal",
         stunTimer = 0,
-        burnTimer = 0,
         webTimer = 0,
         fallTimer = 0,
         parachuteOpen = false,
@@ -154,7 +153,6 @@ function Player:reset()
     self.attackPressedThisStep = false
     self.status = "normal"
     self.stunTimer = 0
-    self.burnTimer = 0
     self.webTimer = 0
     self.fallTimer = 0
     self.parachuteOpen = false
@@ -168,8 +166,6 @@ end
 function Player:refreshStatus()
     if self:isDead() then
         self.status = "dead"
-    elseif self.burnTimer > 0 then
-        self.status = "burning"
     elseif self.webTimer > 0 then
         self.status = "webbed"
     elseif self.stunTimer > 0 then
@@ -237,17 +233,6 @@ function Player:hurt(sourceX, amount, cause, stunDuration)
     return true
 end
 
-function Player:burn(sourceX)
-    if self:isDead() or self.invincibleTimer > 0 then return false end
-    -- oMagma/oMagmaMan set burning to 100, stun for 20 steps, and remove
-    -- two life. Burning itself is presentation state and does no periodic
-    -- damage in oPlayer1's step event.
-    self.burnTimer = math.max(self.burnTimer, 100)
-    local hurt = self:hurt(sourceX, 2, "burning", 20)
-    self:refreshStatus()
-    return hurt
-end
-
 function Player:landHard()
     -- oPlayer1 measures descending steps, not peak speed. A long drop
     -- subtracts life and bounces vertically without horizontal knockback.
@@ -270,14 +255,6 @@ function Player:landHard()
         healthAfter = self.health, x = self.x, y = self.y, tick = self.tick,
         fallTimer = duration,
     }) end
-end
-
-function Player:enterLava()
-    if self:isDead() then return false end
-    -- oPlayer1: collision_point(x, y+6, oLava) removes 99 life, zeroes
-    -- horizontal movement, and leaves a tiny downward velocity.
-    self.burnTimer = math.max(self.burnTimer, 100)
-    return self:kill("lava", 0, 0.1)
 end
 
 function Player:web(duration)
@@ -1012,10 +989,10 @@ function Player:selectSprite(world)
             sprite = self.spriteName
         end
     elseif self.state == Player.STATES.stunned then
-        sprite = self.vx == 0 and "sStunL" or "sFallLeft"
-        speed = 0.4 * Player.TICK_RATE
+        sprite = self.vx == 0 and "sStunL" or (self.vx < 0 and "sDieLL" or "sDieLR")
+        if self.vx == 0 then speed = 0.4 * Player.TICK_RATE end
     elseif self.state == Player.STATES.dead then
-        sprite = "sFallLeft"
+        sprite = self.vx == 0 and "sDieL" or (self.vx < 0 and "sDieLL" or "sDieLR")
     elseif self.state == Player.STATES.hanging then
         sprite = "sHangLeft"
     elseif self.state == Player.STATES.climbing then
@@ -1085,9 +1062,6 @@ function Player:step(world, input)
     if self.dropThroughTimer > 0 then self.dropThroughTimer = self.dropThroughTimer - 1 end
     if self.invincibleTimer > 0 then self.invincibleTimer = self.invincibleTimer - 1 end
 
-    if self.burnTimer > 0 then
-        self.burnTimer = self.burnTimer - 1
-    end
     if self.webTimer > 0 then self.webTimer = self.webTimer - 1 end
     self:refreshStatus()
 
@@ -1107,7 +1081,6 @@ function Player:step(world, input)
     end
 
     if self.stunTimer > 0 then
-        self.stunTimer = self.stunTimer - 1
         self.vy = math.min(self.yVelocityLimit, self.vy + 0.6)
         if self.webTimer > 0 then
             self.vx = self.vx * 0.5
@@ -1118,7 +1091,10 @@ function Player:step(world, input)
         if landed then
             self.vy = 0
             self.vx = self.vx * 0.75
+            if math.abs(self.vx) < 0.1 then self.vx = 0 end
         end
+        -- oPlayer1 only counts down stun while the stationary stun sprite is showing.
+        if self.vx == 0 then self.stunTimer = self.stunTimer - 1 end
         if self.stunTimer == 0 then
             self:setState(landed and Player.STATES.standing or Player.STATES.falling)
             self:refreshStatus()

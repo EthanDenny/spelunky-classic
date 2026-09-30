@@ -1,5 +1,6 @@
 local Item = require("src.platform.item")
 local Player = require("src.platform.player")
+local World = require("src.platform.world")
 
 local Test = {}
 
@@ -49,6 +50,24 @@ function Test.run()
     pistol:dropWeapon(player)
     assert(not pistol.held and pistol.vx == (8 + player.vx) * 0.4 and pistol.vy == 0.5,
         "Down plus attack must use the source's weapon drop velocities")
+
+    local wallWorld = World.new(12, 12, 16)
+    wallWorld:fill("solid", 5, 0, 1, 12)
+    local thrownJar = Item.new({ kind = "jar", x = 4.5, y = 4.5 },
+        { width = 16, height = 16 })
+    thrownJar.vx = 8
+    thrownJar:update(wallWorld, player)
+    assert(thrownJar.justHit,
+        "A jar thrown faster than three pixels per step must break on a wall")
+
+    local ceilingWorld = World.new(12, 12, 16)
+    ceilingWorld:fill("solid", 0, 3, 12, 1)
+    local risingJar = Item.new({ kind = "jar", x = 4.5, y = 4.5 },
+        { width = 16, height = 16 })
+    risingJar.vy = -9
+    risingJar:update(ceilingWorld, player)
+    assert(risingJar.justHit,
+        "A jar thrown upward faster than three pixels per step must break on a ceiling")
 end
 
 return Test

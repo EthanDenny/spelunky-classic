@@ -3,17 +3,12 @@ local Item = require("src.platform.item")
 local Player = require("src.platform.player")
 local ProjectileSystem = require("src.platform.projectile_system")
 local RunState = require("src.game.run_state")
-local SpecialGeneration = require("src.world.special_generation")
 local World = require("src.platform.world")
 
 local Test = {}
 
 local CREATURES = {
-    "caveman", "skeleton", "zombie", "hawkman", "yeti", "frog", "fire_frog",
-    "vampire", "ufo", "piranha", "dead_fish", "monkey", "mantrap",
-    "alien", "ghost", "magma_man", "jaws", "yeti_king",
-    "giant_spider", "tomb_lord", "alien_boss", "olmec", "damsel", "shopkeeper",
-    "worshipper", "tunnel_man",
+    "caveman", "skeleton", "ghost", "giant_spider", "damsel", "shopkeeper",
 }
 
 function Test.run()
@@ -51,44 +46,6 @@ function Test.run()
     projectiles:update({ target }, player)
     assert(target.hp == 1, "Projectile damage must reach live enemies")
 
-    local interiorKinds = { "black_market", "city_of_gold", "alien_craft", "yeti_lair", "moai" }
-    for _, kind in ipairs(interiorKinds) do
-        local level = SpecialGeneration.interior(kind, 99)
-        assert(level.special == kind and level.entrance and level.exit,
-            "Special interior is not playable: " .. kind)
-        assert(#level.entities >= 3, "Special interior is empty: " .. kind)
-        if kind == "black_market" then
-            local expected = {
-                { 2, 4, 4, 2 }, { 2, 4, 4, 2 }, { 2, 4, 5, 4 }, { 3, 1, 1, 3 },
-            }
-            for y = 1, 4 do for x = 1, 4 do
-                assert(level.roomPath[y][x] == expected[y][x],
-                    "Black Market room path differs from scrLevelGen.gml")
-            end end
-        elseif kind == "city_of_gold" then
-            assert(level.cityOfGold, "City of Gold generation flag was lost")
-        elseif kind == "alien_craft" then
-            assert(level.alienCraft, "Alien Craft room strip was not generated")
-        elseif kind == "yeti_lair" then
-            assert(level.yetiLair, "Yeti Lair generation flag was lost")
-        end
-    end
-
-    local probe = {
-        area = "jungle", seed = 1234, absoluteLevel = run.blackMarketLevel,
-        levelNumber = run.blackMarketLevel - 4, width = 12, height = 12,
-        entities = {}, tiles = {},
-    }
-    for y = 0, 11 do
-        probe.tiles[y + 1] = {}
-        for x = 0, 11 do
-            probe.tiles[y + 1][x + 1] = { kind = y == 10 and "solid" or "empty" }
-        end
-    end
-    run.equipment.udjat_eye = true
-    SpecialGeneration.apply(probe, run)
-    assert(probe.blackMarket and #probe.specialEntrances == 1,
-        "Udjat Eye must reveal the run's Black Market entrance")
 end
 
 return Test

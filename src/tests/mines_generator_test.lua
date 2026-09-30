@@ -1,4 +1,6 @@
 local MinesGenerator = require("src.world.mines_generator")
+local MinesVariants = require("src.world.mines_variants")
+local RunState = require("src.game.run_state")
 
 local MinesGeneratorTest = {}
 
@@ -71,6 +73,30 @@ function MinesGeneratorTest.run()
     local first = MinesGenerator.generate(8675309, { levelNumber = 4 })
     local repeated = MinesGenerator.generate(8675309, { levelNumber = 4 })
     assert(signature(first) == signature(repeated), "Mines generation is not deterministic")
+
+    local darkSeed
+    for seed = 1, 100 do
+        local level = MinesGenerator.generate(seed, { levelNumber = 2 })
+        local run = RunState.new(seed)
+        MinesVariants.apply(level, run)
+        if level.dark then
+            darkSeed = seed
+            assert(run.hadDarkLevel, "A dark Mines level must mark the run")
+            local lamp, scarab = false, false
+            for _, entity in ipairs(level.entities) do
+                lamp = lamp or entity.kind == "lamp"
+                scarab = scarab or entity.kind == "scarab"
+            end
+            assert(lamp and scarab, "Dark Mines must retain the lamp and scarab")
+            break
+        end
+    end
+    assert(darkSeed, "The seed sample must include a dark Mines level")
+    local run = RunState.new(darkSeed)
+    run.hadDarkLevel = true
+    local level = MinesGenerator.generate(darkSeed, { levelNumber = 2 })
+    MinesVariants.apply(level, run)
+    assert(not level.dark, "A run must not repeat a dark Mines level")
 end
 
 return MinesGeneratorTest

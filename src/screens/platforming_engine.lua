@@ -1,5 +1,6 @@
 local Player = require("src.platform.player")
 local World = require("src.platform.world")
+local Item = require("src.platform.item")
 
 local PlatformingEngine = {}
 PlatformingEngine.__index = PlatformingEngine
@@ -22,8 +23,12 @@ function PlatformingEngine.new(app)
         app = app,
         world = nil,
         player = nil,
+        items = {},
+        heldItem = nil,
+        actionHeld = false,
         accumulator = 0,
         images = {},
+        throwSound = nil,
         debugCollision = false,
     }, PlatformingEngine)
 end
@@ -45,6 +50,8 @@ function PlatformingEngine:loadAssets()
     self.images.background = load("assets/original/mines/bg_cave.png")
     self.images.rope = load("assets/original/platform/rope/sRope.png")
     self.images.ropeTop = load("assets/original/platform/rope/sRopeTop.png")
+    self.images.rock = load("assets/original/entities/rock.png")
+    self.throwSound = love.audio.newSource("original-game-reference/sound/throw.wav", "static")
     self.images.background:setWrap("repeat", "repeat")
 end
 
@@ -55,6 +62,9 @@ function PlatformingEngine:resetCourse()
     self.player.spriteName = "sStandLeft"
     self.player.playtestLog = self.app.playtestLog
     self.player:loadAssets()
+    self.items = { Item.new({ kind = "rock", x = 7.5, y = 17.75 }, { width = 8, height = 8 }) }
+    self.heldItem = nil
+    self.actionHeld = false
     self.accumulator = 0
     if self.app.playtestLog then self.app.playtestLog:level("platforming_engine", self) end
 end
@@ -79,15 +89,43 @@ function PlatformingEngine:getInput()
     }
 end
 
+function PlatformingEngine:simulationStep(input)
+    local log = self.app.playtestLog
+    local before = log and log.capture(self)
+    if log then log:tickStart("platforming_engine", input, before) end
+
+    local actionPressed = input.attack and not self.actionHeld
+    self.actionHeld = input.attack
+    if self.heldItem then input.suppressWhip = true end
+    self.player:step(self.world, input)
+
+    if actionPressed then
+        if self.heldItem then
+            self.heldItem:throw(self.player, input)
+            self.heldItem = nil
+            if self.throwSound then self.throwSound:clone():play() end
+        elseif input.down and self.player.state == Player.STATES.ducking then
+            local left, top = self.player.x - 8, self.player.y
+            local right, bottom = self.player.x + 8, self.player.y + 8
+            for _, item in ipairs(self.items) do
+                if not item.held and item:overlapsRectangle(left, top, right, bottom)
+                    and not self.world:solidAtPoint(item.x, item.y)
+                    and item:pickup(self.player) then
+                    self.heldItem = item
+                    break
+                end
+            end
+        end
+    end
+    for _, item in ipairs(self.items) do item:update(self.world, self.player) end
+
+    if log then log:tick("platforming_engine", input, before, self) end
+end
+
 function PlatformingEngine:update(dt)
     self.accumulator = math.min(self.accumulator + dt, STEP * 5)
     while self.accumulator >= STEP do
-        local input = self:getInput()
-        local log = self.app.playtestLog
-        local before = log and log.capture(self)
-        if log then log:tickStart("platforming_engine", input, before) end
-        self.player:step(self.world, input)
-        if log then log:tick("platforming_engine", input, before, self) end
+        self:simulationStep(self:getInput())
         self.accumulator = self.accumulator - STEP
         if self.player.y > self.world.height * self.world.tileSize + 32 then
             self:resetCourse()
@@ -150,6 +188,11 @@ function PlatformingEngine:drawWorld(viewport)
 
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.draw(self.images.background, backgroundQuad, 0, 0)
+    for _, item in ipairs(self.items) do
+        if not item.held then
+            love.graphics.draw(self.images.rock, item.x - 4, item.y - 4)
+        end
+    end
     self.world:each("platform", function(x, y)
         love.graphics.draw(self.images.brickDown, x * 16, y * 16)
     end)
@@ -168,6 +211,12 @@ function PlatformingEngine:drawWorld(viewport)
     end)
 
     self.player:draw()
+    for _, item in ipairs(self.items) do
+        if item.held then
+            love.graphics.setColor(1, 1, 1, 1)
+            love.graphics.draw(self.images.rock, item.x - 4, item.y - 4)
+        end
+    end
 
     if self.debugCollision then
         local halfWidth = self.player:getCollisionHalfWidth()
@@ -210,7 +259,7 @@ function PlatformingEngine:drawFooter(width, height)
     love.graphics.rectangle("fill", 0, height - FOOTER_HEIGHT, width, 1)
     love.graphics.setFont(self.app.fonts.small)
     love.graphics.setColor(COLORS.muted)
-    love.graphics.printf("A/D MOVE   SHIFT SPRINT   Z/SPACE JUMP   X WHIP   W/S CLIMB & LOOK/CROUCH   B COLLIDER   R RESET   ESC MENU",
+    love.graphics.printf("A/D MOVE   SHIFT SPRINT   Z/SPACE JUMP   S+X PICK UP   X THROW/WHIP   W/S CLIMB   B COLLIDER   R RESET   ESC MENU",
         12, height - 28, width - 24, "center")
 end
 
