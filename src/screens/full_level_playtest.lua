@@ -142,6 +142,7 @@ function FullLevelPlaytest:buildSimulation()
     self.world = GeneratedWorld.fromLevel(self.level)
     local spawnX, spawnY = GeneratedWorld.spawnPoint(self.level)
     self.player = Player.new(spawnX, spawnY)
+    self.player.playtestLog = self.app.playtestLog
     self.run:applyToPlayer(self.player)
     self.player.state = Player.STATES.standing
     self.player.spriteName = "sStandLeft"
@@ -231,6 +232,7 @@ function FullLevelPlaytest:buildSimulation()
     self.weaponCooldown = 0
     self.levelTime = 0
     self.ghostSpawned = false
+    if self.app.playtestLog then self.app.playtestLog:level("full_level_playtest", self) end
 end
 
 function FullLevelPlaytest:enter()
@@ -742,7 +744,7 @@ function FullLevelPlaytest:applyEnvironment(input)
     end
 end
 
-function FullLevelPlaytest:simulationStep()
+function FullLevelPlaytest:simulationStepBody(input)
     if self.player:isDead() then
         if self.run:resurrect(self.player) then
             self.player.x, self.player.y = GeneratedWorld.spawnPoint(self.level)
@@ -763,7 +765,6 @@ function FullLevelPlaytest:simulationStep()
         return
     end
 
-    local input = self:getInput()
     local actionPressed = input.attack and not self.actionHeld
     self.actionHeld = input.attack
     if self.heldItem or self.heldNpc then input.suppressWhip = true end
@@ -883,6 +884,15 @@ function FullLevelPlaytest:simulationStep()
     end
     self.exitReady = self:isNearExit()
     self.specialEntrance = self:nearSpecialEntrance()
+end
+
+function FullLevelPlaytest:simulationStep()
+    local input = self:getInput()
+    local log = self.app.playtestLog
+    local before = log and log.capture(self)
+    if log then log:tickStart("full_level_playtest", input, before) end
+    self:simulationStepBody(input)
+    if log then log:tick("full_level_playtest", input, before, self) end
 end
 
 function FullLevelPlaytest:update(dt)

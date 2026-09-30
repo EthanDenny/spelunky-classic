@@ -1,7 +1,9 @@
 local App = require("src.app")
 local Startup = require("src.startup")
+local PlaytestLog = require("src.observability.playtest_log")
 
 local app
+local playtestLog
 local startup = {
     phase = "splash",
     elapsed = 0,
@@ -18,6 +20,18 @@ local function hasArgument(args, expected)
     return false
 end
 
+local function observed(callback, ...)
+    local arguments = { ... }
+    local count = select("#", ...)
+    local ok, result = xpcall(function() return callback(unpack(arguments, 1, count)) end, debug.traceback)
+    if not ok then
+        if playtestLog then playtestLog:record("error", { traceback = result,
+            screen = app and app.currentScreenName }) end
+        error(result, 0)
+    end
+    return result
+end
+
 local function runSmokeTest()
     require("src.tests.startup_test").run()
     require("src.tests.font_test").run(app)
@@ -31,6 +45,7 @@ local function runSmokeTest()
     require("src.tests.generated_world_test").run()
     require("src.tests.dynamic_world_test").run()
     require("src.tests.gameplay_systems_test").run()
+    require("src.tests.playtest_log_test").run(app)
 
     local screenNames = {
         "menu",
@@ -176,49 +191,70 @@ function love.load(args)
         return
     end
 
-    startup.image = Startup.loadSplashImage()
+    playtestLog = PlaytestLog.start()
+    startup.image = observed(Startup.loadSplashImage)
 end
 
 function love.update(dt)
     if startup.phase == "splash" then
         startup.elapsed = startup.elapsed + dt
         if startup.drawn and not startup.ready then
-            app = App.new()
-            app:load()
-            app:preload()
+            app = App.new(playtestLog)
+            observed(app.load, app)
+            observed(app.preload, app)
             startup.ready = true
         end
         if startup.ready and startup.elapsed >= startup.minimumTime then
-            Startup.openMainWindow(true)
+            observed(Startup.openMainWindow, true)
             startup.image = nil
             startup.phase = "running"
         end
         return
     end
-    if app then app:update(dt) end
+    if app then observed(app.update, app, dt) end
 end
 
 function love.draw()
     if startup.phase == "splash" then
-        Startup.drawSplash(startup.image)
+        observed(Startup.drawSplash, startup.image)
         startup.drawn = true
         return
     end
-    if app then app:draw() end
+    if app then observed(app.draw, app) end
 end
 
 function love.keypressed(key, scancode, isRepeat)
-    if startup.phase == "running" and app then app:keypressed(key, scancode, isRepeat) end
+    if startup.phase == "running" and app then observed(app.keypressed, app, key, scancode, isRepeat) end
+end
+
+function love.keyreleased(key, scancode)
+    if startup.phase == "running" and app then observed(app.keyreleased, app, key, scancode) end
 end
 
 function love.mousemoved(x, y, dx, dy)
-    if startup.phase == "running" and app then app:mousemoved(x, y, dx, dy) end
+    if startup.phase == "running" and app then observed(app.mousemoved, app, x, y, dx, dy) end
 end
 
 function love.mousepressed(x, y, button)
-    if startup.phase == "running" and app then app:mousepressed(x, y, button) end
+    if startup.phase == "running" and app then observed(app.mousepressed, app, x, y, button) end
+end
+
+function love.mousereleased(x, y, button)
+    if startup.phase == "running" and app then observed(app.mousereleased, app, x, y, button) end
 end
 
 function love.wheelmoved(x, y)
-    if startup.phase == "running" and app then app:wheelmoved(x, y) end
+    if startup.phase == "running" and app then observed(app.wheelmoved, app, x, y) end
+end
+
+function love.quit()
+    if playtestLog then playtestLog:close() end
+end
+
+function love.focus(focused)
+    if playtestLog then playtestLog:record("focus", { focused = focused }) end
+end
+
+function love.resize(width, height)
+    if playtestLog then playtestLog:record("resize", { width = width, height = height }) end
 end

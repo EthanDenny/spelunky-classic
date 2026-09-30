@@ -356,6 +356,37 @@ function Test.run()
         assert(player.health == 2 and player.status == "normal" and player.burnTimer == 0,
             "Burning status must clear when the source timer expires")
     end
+
+    do
+        local world = World.makeTestCourse()
+        local player = Player.new(248, 190)
+        player.state = Player.STATES.falling
+        for _ = 1, 30 do
+            player:step(world, {})
+            if player:isGroundState() or player:isStunned() then break end
+        end
+        if player:isGroundState() then player:step(world, {}) end
+        assert(player.y == 264 and player.health == 4 and player.vx == 0
+            and player:isGroundState(),
+            "A short drop onto a ladder top must land without damage or sideways knockback")
+
+        local longWorld = World.new(20, 24, 16)
+        longWorld:fill("solid", 0, 20, 20, 4)
+        local longFall = Player.new(64, 160)
+        longFall.state = Player.STATES.falling
+        for _ = 1, 40 do
+            longFall:step(longWorld, {})
+            if longFall:isGroundState() or longFall:isStunned() then break end
+        end
+        if longFall:isGroundState() then longFall:step(longWorld, {}) end
+        assert(longFall.health == 3 and longFall.vx == 0 and longFall.vy < 0
+            and longFall:isStunned() and longFall.spriteName == "sStunL",
+            "A 17-32-step fall must show the original stun pose while bouncing vertically")
+        longFall:step(longWorld, { right = true })
+        assert(longFall.x == 64, "A long-fall stun must temporarily block movement input")
+        repeatStep(longFall, longWorld, { right = true }, 65)
+        assert(longFall.x > 64, "Horizontal movement must return after the fall stun expires")
+    end
 end
 
 return Test

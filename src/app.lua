@@ -11,8 +11,9 @@ local function newUIFont(size)
     return font, symbols
 end
 
-function App.new()
+function App.new(playtestLog)
     return setmetatable({
+        playtestLog = playtestLog,
         currentScreen = nil,
         currentScreenName = nil,
         screens = {},
@@ -65,11 +66,19 @@ function App:showScreen(name)
     if self.currentScreen.enter then
         self.currentScreen:enter(previousName)
     end
+    if self.playtestLog then
+        self.playtestLog:record("screen", { from = previousName, to = name })
+    end
 end
 
 function App:update(dt)
     if self.currentScreen and self.currentScreen.update then
         self.currentScreen:update(dt)
+    end
+    if self.playtestLog then
+        self.playtestLog:record("frame", { screen = self.currentScreenName, dt = dt,
+            state = self.currentScreen and not self.currentScreen.world
+                and self.playtestLog.capture(self.currentScreen) or nil })
     end
 end
 
@@ -80,6 +89,14 @@ function App:draw()
 end
 
 function App:keypressed(key, scancode, isRepeat)
+    if self.playtestLog then
+        self.playtestLog:record("key", { screen = self.currentScreenName,
+            key = key, scancode = scancode, repeated = isRepeat })
+        if key == "f9" and not isRepeat then
+            self.playtestLog:mark(self.currentScreenName, self.currentScreen)
+            return
+        end
+    end
     if key == "escape" then
         if self.currentScreenName == "menu" then
             love.event.quit()
@@ -95,18 +112,43 @@ function App:keypressed(key, scancode, isRepeat)
 end
 
 function App:mousemoved(x, y, dx, dy)
+    if self.playtestLog then
+        self.playtestLog:record("mouse_move", { screen = self.currentScreenName,
+            x = x, y = y, dx = dx, dy = dy })
+    end
     if self.currentScreen and self.currentScreen.mousemoved then
         self.currentScreen:mousemoved(x, y, dx, dy)
     end
 end
 
+function App:keyreleased(key, scancode)
+    if self.playtestLog then
+        self.playtestLog:record("key_release", { screen = self.currentScreenName,
+            key = key, scancode = scancode })
+    end
+end
+
 function App:mousepressed(x, y, button)
+    if self.playtestLog then
+        self.playtestLog:record("mouse_press", { screen = self.currentScreenName,
+            x = x, y = y, button = button })
+    end
     if self.currentScreen and self.currentScreen.mousepressed then
         self.currentScreen:mousepressed(x, y, button)
     end
 end
 
+function App:mousereleased(x, y, button)
+    if self.playtestLog then
+        self.playtestLog:record("mouse_release", { screen = self.currentScreenName,
+            x = x, y = y, button = button })
+    end
+end
+
 function App:wheelmoved(x, y)
+    if self.playtestLog then
+        self.playtestLog:record("wheel", { screen = self.currentScreenName, x = x, y = y })
+    end
     if self.currentScreen and self.currentScreen.wheelmoved then
         self.currentScreen:wheelmoved(x, y)
     end

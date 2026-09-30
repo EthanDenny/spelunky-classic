@@ -40,6 +40,11 @@ return {
         width = 16, height = 16,
         frames = { "assets/original/platform/player/sFallLeft/000.png" },
     },
+    sStunL = {
+        originX = 8, originY = 8,
+        width = 16, height = 16,
+        frames = { "assets/original/platform/player/sStunL/000.png", "assets/original/platform/player/sStunL/001.png", "assets/original/platform/player/sStunL/002.png", "assets/original/platform/player/sStunL/003.png", "assets/original/platform/player/sStunL/004.png" },
+    },
     sHangLeft = {
         originX = 8, originY = 8,
         width = 16, height = 16,

@@ -53,8 +53,10 @@ function PlatformingEngine:resetCourse()
     self.player = Player.new(5 * 16 + 8, 18 * 16 - 8)
     self.player.state = Player.STATES.standing
     self.player.spriteName = "sStandLeft"
+    self.player.playtestLog = self.app.playtestLog
     self.player:loadAssets()
     self.accumulator = 0
+    if self.app.playtestLog then self.app.playtestLog:level("platforming_engine", self) end
 end
 
 function PlatformingEngine:enter()
@@ -80,7 +82,12 @@ end
 function PlatformingEngine:update(dt)
     self.accumulator = math.min(self.accumulator + dt, STEP * 5)
     while self.accumulator >= STEP do
-        self.player:step(self.world, self:getInput())
+        local input = self:getInput()
+        local log = self.app.playtestLog
+        local before = log and log.capture(self)
+        if log then log:tickStart("platforming_engine", input, before) end
+        self.player:step(self.world, input)
+        if log then log:tick("platforming_engine", input, before, self) end
         self.accumulator = self.accumulator - STEP
         if self.player.y > self.world.height * self.world.tileSize + 32 then
             self:resetCourse()

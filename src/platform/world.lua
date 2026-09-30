@@ -28,11 +28,18 @@ end
 function World:set(kind, x, y, value)
     assert(self[kind], "Unknown platform-world cell kind: " .. tostring(kind))
     self[kind][key(x, y)] = value == nil and true or value
+    if self.playtestLog then self.playtestLog:record("world_cell", {
+        action = "set", kind = kind, x = x, y = y, value = self[kind][key(x, y)], worldTime = self.time,
+    }) end
 end
 
 function World:remove(kind, x, y)
     assert(self[kind], "Unknown platform-world cell kind: " .. tostring(kind))
+    local existed = self[kind][key(x, y)] ~= nil
     self[kind][key(x, y)] = nil
+    if existed and self.playtestLog then self.playtestLog:record("world_cell", {
+        action = "remove", kind = kind, x = x, y = y, worldTime = self.time,
+    }) end
 end
 
 function World:fill(kind, x, y, width, height)
@@ -105,11 +112,18 @@ function World:addDynamicSolid(block)
     block.height = block.height or self.tileSize
     block.alive = block.alive ~= false
     self.dynamicSolids[#self.dynamicSolids + 1] = block
+    if self.playtestLog then self.playtestLog:record("dynamic_solid_added", {
+        index = #self.dynamicSolids, kind = block.kind, x = block.x, y = block.y,
+        width = block.width, height = block.height, worldTime = self.time,
+    }) end
     return block
 end
 
 function World:removeDynamicSolid(block)
     block.alive = false
+    if self.playtestLog then self.playtestLog:record("dynamic_solid_removed", {
+        kind = block.kind, x = block.x, y = block.y, worldTime = self.time,
+    }) end
 end
 
 function World:dynamicSolidAt(left, top, right, bottom, moveableOnly, ignored)

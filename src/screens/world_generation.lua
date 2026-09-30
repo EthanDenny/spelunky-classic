@@ -176,6 +176,9 @@ function WorldGeneration:generate(seed)
     else
         self.level = ClassicAreaGenerator.generate(area.key, seed, { levelNumber = self.levelNumber })
     end
+    if self.app.playtestLog then
+        self.app.playtestLog:generatedLevel("world_generation", self.level, self.levelNumber)
+    end
 end
 
 function WorldGeneration:regenerate()

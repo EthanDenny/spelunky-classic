@@ -95,13 +95,14 @@ function Player.new(x, y)
         whipHits = {},
         whipImages = nil,
         whipSound = nil,
+        thudSound = nil,
         attackPressedThisStep = false,
         equipment = {},
         status = "normal",
         stunTimer = 0,
         burnTimer = 0,
         webTimer = 0,
-        fallPeak = 0,
+        fallTimer = 0,
         parachuteOpen = false,
         jetpackFuel = 0,
     }, Player)
@@ -155,7 +156,7 @@ function Player:reset()
     self.stunTimer = 0
     self.burnTimer = 0
     self.webTimer = 0
-    self.fallPeak = 0
+    self.fallTimer = 0
     self.parachuteOpen = false
     self.jetpackFuel = 0
 end
@@ -195,13 +196,21 @@ function Player:kill(cause, vx, vy)
     self.stunTimer = 0
     self.status = "dead"
     self:setState(Player.STATES.dead)
+    if self.playtestLog then self.playtestLog:record("player_killed", {
+        cause = cause, x = self.x, y = self.y, vx = self.vx, vy = self.vy, tick = self.tick,
+    }) end
     return true
 end
 
 function Player:hurt(sourceX, amount, cause, stunDuration)
     if self.invincibleTimer > 0 or self:isDead() then
+        if self.playtestLog then self.playtestLog:record("damage_blocked", {
+            sourceX = sourceX, amount = amount or 1, cause = cause,
+            invincibleTimer = self.invincibleTimer, health = self.health, tick = self.tick,
+        }) end
         return false
     end
+    local previousHealth = self.health
     self.health = math.max(0, self.health - (amount or 1))
     self.invincibleTimer = 30
     self.vx = self.x < sourceX and -6 or 6
@@ -220,6 +229,11 @@ function Player:hurt(sourceX, amount, cause, stunDuration)
         self:setState(Player.STATES.stunned)
         self:refreshStatus()
     end
+    if self.playtestLog then self.playtestLog:record("player_hurt", {
+        sourceX = sourceX, amount = amount or 1, cause = cause,
+        healthBefore = previousHealth, healthAfter = self.health,
+        x = self.x, y = self.y, tick = self.tick,
+    }) end
     return true
 end
 
@@ -232,6 +246,30 @@ function Player:burn(sourceX)
     local hurt = self:hurt(sourceX, 2, "burning", 20)
     self:refreshStatus()
     return hurt
+end
+
+function Player:landHard()
+    -- oPlayer1 measures descending steps, not peak speed. A long drop
+    -- subtracts life and bounces vertically without horizontal knockback.
+    local duration = self.fallTimer
+    local damage = duration > 48 and 10 or (duration > 32 and 2 or 1)
+    local previousHealth = self.health
+    self.health = math.max(0, self.health - damage)
+    self.vy = -3
+    self.fallTimer = 0
+    if self.health <= 0 then
+        self:kill("fall", self.vx, self.vy)
+    else
+        self.stunTimer = self.stunTimer + 60
+        self:setState(Player.STATES.stunned)
+        self:refreshStatus()
+    end
+    if self.thudSound then self.thudSound:clone():play() end
+    if self.playtestLog then self.playtestLog:record("player_hurt", {
+        amount = damage, cause = "fall", healthBefore = previousHealth,
+        healthAfter = self.health, x = self.x, y = self.y, tick = self.tick,
+        fallTimer = duration,
+    }) end
 end
 
 function Player:enterLava()
@@ -270,6 +308,7 @@ function Player:loadAssets()
         self.whipImages[name] = image
     end
     self.whipSound = love.audio.newSource("original-game-reference/sound/whip.wav", "static")
+    self.thudSound = love.audio.newSource("original-game-reference/sound/thud.wav", "static")
 end
 
 function Player:startWhip()
@@ -387,7 +426,14 @@ function Player:moveHorizontal(world, distance)
     local direction = sign(pixels)
     local hitWall = false
     for _ = 1, math.abs(pixels) do
-        if world:collidesSolid(self, self.x + direction, self.y) then
+        local hit, hitX, hitY = world:collidesSolid(self, self.x + direction, self.y)
+        if hit then
+            if self.playtestLog then self.playtestLog:record("collision", {
+                axis = "horizontal", x = self.x + direction, y = self.y,
+                cellX = type(hitX) == "number" and hitX or nil,
+                cellY = hitY, dynamicKind = type(hitX) == "table" and hitX.kind or nil,
+                tick = self.tick,
+            }) end
             self.xRemainder = 0
             hitWall = true
             break
@@ -404,7 +450,14 @@ function Player:moveVertical(world, distance, ignorePlatforms)
     local hitCeiling = false
     for _ = 1, math.abs(pixels) do
         local nextY = self.y + direction
-        if world:collidesSolid(self, self.x, nextY) then
+        local hit, hitX, hitY = world:collidesSolid(self, self.x, nextY)
+        if hit then
+            if self.playtestLog then self.playtestLog:record("collision", {
+                axis = "vertical", x = self.x, y = nextY,
+                cellX = type(hitX) == "number" and hitX or nil,
+                cellY = hitY, dynamicKind = type(hitX) == "table" and hitX.kind or nil,
+                tick = self.tick,
+            }) end
             self.yRemainder = 0
             if direction > 0 then landed = true else hitCeiling = true end
             break
@@ -412,6 +465,9 @@ function Player:moveVertical(world, distance, ignorePlatforms)
         if direction > 0 and not ignorePlatforms then
             local platformY = world:platformLanding(self, self.y, nextY)
             if platformY then
+                if self.playtestLog then self.playtestLog:record("collision", {
+                    axis = "platform", x = self.x, y = platformY, tick = self.tick,
+                }) end
                 self.y = platformY
                 self.yRemainder = 0
                 landed = true
@@ -943,7 +999,10 @@ function Player:selectSprite(world)
         else
             sprite = self.spriteName
         end
-    elseif self.state == Player.STATES.stunned or self.state == Player.STATES.dead then
+    elseif self.state == Player.STATES.stunned then
+        sprite = self.vx == 0 and "sStunL" or "sFallLeft"
+        speed = 0.4 * Player.TICK_RATE
+    elseif self.state == Player.STATES.dead then
         sprite = "sFallLeft"
     elseif self.state == Player.STATES.hanging then
         sprite = "sHangLeft"
@@ -1020,6 +1079,15 @@ function Player:step(world, input)
     if self.webTimer > 0 then self.webTimer = self.webTimer - 1 end
     self:refreshStatus()
 
+    if self.vy > 0 and self.state ~= Player.STATES.climbing then
+        self.fallTimer = self.fallTimer + 1
+    elseif self:isGroundState() then
+        if self.fallTimer > 16 and not self.parachuteOpen then self:landHard() end
+        self.fallTimer = 0
+    else
+        self.fallTimer = 0
+    end
+
     if self:isDead() then
         self.state = Player.STATES.dead
         self:updateAnimation(world)
@@ -1062,24 +1130,21 @@ function Player:step(world, input)
         self.vy = math.max(-4, self.vy - 1.25)
         self.jetpackFuel = self.jetpackFuel + 1
     elseif self.vy > 0 and self:isAirState() then
-        if self.equipment.cape and input.jump then self.vy = math.min(self.vy, 2) end
+        if self.equipment.cape and input.jump then
+            self.vy = math.min(self.vy, 2)
+            self.fallTimer = 0
+        end
         if self.equipment.parachute and self.vy >= 7 then
             self.parachuteOpen = true
             self.vy = math.min(self.vy, 2)
+            self.fallTimer = 0
         end
     end
 
-    if self:isAirState() and self.vy > 0 then
-        self.fallPeak = math.max(self.fallPeak, self.vy)
-    elseif self:isGroundState() and self.fallPeak > 0 then
-        if self.fallPeak >= 9 and not self.parachuteOpen then
-            local damage = self.fallPeak >= 12 and 2 or 1
-            self.invincibleTimer = 0
-            self:hurt(self.x, damage, "fall")
-        end
-        if self.parachuteOpen then self.equipment.parachute = false end
-        self.fallPeak = 0
+    if self:isGroundState() and self.parachuteOpen then
+        self.equipment.parachute = false
         self.parachuteOpen = false
+        self.fallTimer = 0
     end
 
     if not wasHanging and decrementHangCooldown then

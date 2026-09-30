@@ -90,6 +90,7 @@ function EnemyAI:resetArena()
     self.player = Player.new(5 * 16 + 8, 22 * 16 - 8)
     self.player.state = Player.STATES.standing
     self.player.spriteName = "sStandLeft"
+    self.player.playtestLog = self.app.playtestLog
     self.player:loadAssets()
     self.enemies = {
         Enemy.new("snake", 12 * 16 + 8, 22 * 16, { facing = -1, seed = 11 }),
@@ -101,6 +102,7 @@ function EnemyAI:resetArena()
     self.kills = 0
     self.gameOverTimer = 0
     self.effects = {}
+    if self.app.playtestLog then self.app.playtestLog:level("enemy_ai", self) end
 end
 
 function EnemyAI:enter()
@@ -170,8 +172,7 @@ function EnemyAI:updateEnemies(previousPlayerY)
     end
 end
 
-function EnemyAI:simulationStep()
-    local input = self:getInput()
+function EnemyAI:simulationStepBody(input)
     if self.player:isDead() then
         self.gameOverTimer = self.gameOverTimer - 1
         if self.gameOverTimer <= 0 then self:resetArena() end
@@ -185,6 +186,15 @@ function EnemyAI:simulationStep()
     self:updateEffects()
     if self.player:isDead() then self.gameOverTimer = 75 end
     if self.player.y > self.world.height * self.world.tileSize + 32 then self:resetArena() end
+end
+
+function EnemyAI:simulationStep()
+    local input = self:getInput()
+    local log = self.app.playtestLog
+    local before = log and log.capture(self)
+    if log then log:tickStart("enemy_ai", input, before) end
+    self:simulationStepBody(input)
+    if log then log:tick("enemy_ai", input, before, self) end
 end
 
 function EnemyAI:update(dt)

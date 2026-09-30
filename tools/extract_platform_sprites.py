@@ -18,7 +18,7 @@ OUTPUT = ROOT / "src/platform/player_sprite_data.lua"
 
 PLAYER_SPRITES = (
     "sStandLeft", "sRunLeft", "sLookRunL", "sDuckLeft", "sCrawlLeft",
-    "sLookLeft", "sJumpLeft", "sFallLeft", "sHangLeft", "sPushLeft",
+    "sLookLeft", "sJumpLeft", "sFallLeft", "sStunL", "sHangLeft", "sPushLeft",
     "sClimbUp", "sClimbUp2", "sClimbUp3", "sDuckToHangL", "sWhoaLeft",
     "sAttackLeft",
 )
