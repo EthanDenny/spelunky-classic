@@ -1,0 +1,24 @@
+src/tests/platform_player_test.lua
+  s_d6797c77d20971::t_09195520087f04 266-294
+  s_d6797c77d20971::t_68c2e7fd36e9c1 255,261,302
+  s_d6797c77d20971::t_6ec6b0a0146e78 265
+src/platform/player.lua
+  s_d6797c77d20971::t_68c2e7fd36e9c1 654,658-669
+  s_d6797c77d20971::t_6d949945c471ad 670
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "cdf5bb348c3ed45a331936b59e8c3f8011f3eaea",
+  "prompts": {},
+  "sessions": {
+    "s_d6797c77d20971": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0aff5-fc5f-7363-8ccb-4df05fa2c073",
+        "model": "gpt-6-sol"
+      },
+      "human_author": "Ethan Denny <ethandenny@protonmail.com>"
+    }
+  }
+}
