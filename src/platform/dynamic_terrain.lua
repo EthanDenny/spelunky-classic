@@ -1,4 +1,5 @@
 local DynamicTerrain = {}
+local Depth = require("src.render.classic_depth")
 
 local function moveHorizontal(world, block)
     if not block.targetX then return end
@@ -48,15 +49,13 @@ function DynamicTerrain.update(world)
     end
 end
 
-function DynamicTerrain.draw(world, renderer)
+function DynamicTerrain.submit(queue, world, renderer)
     for _, block in ipairs(world.dynamicSolids) do
-        if block.alive ~= false then
-            renderer:drawTile({
-                kind = block.kind,
-                style = block.style,
-                baseStyle = block.baseStyle,
-                properties = block.properties,
-            }, math.floor(block.x), math.floor(block.y))
+        if block.alive ~= false and block.kind ~= "boulder" then
+            local current = block
+            queue:add(Depth.tile(current.kind), function()
+                renderer:drawTile(current, math.floor(current.x), math.floor(current.y))
+            end)
         end
     end
 end

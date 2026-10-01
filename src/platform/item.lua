@@ -2,6 +2,7 @@ local Item = {}
 Item.__index = Item
 
 local CARRYABLE = {
+    arrow = true,
     rock = true,
     jar = true,
     skull = true,
@@ -42,6 +43,17 @@ local WEAPON = {
     web_cannon = true,
 }
 
+-- Source Create-event setCollisionBounds, relative to each item's origin.
+-- Carryables not listed here use (-4, -4, 4, 4).
+local COLLISION_BOUNDS = {
+    jar = { 4, -6, 6 },
+    mattock = { 4, -6, 6 },
+    chest = { 6, 0, 8 },
+    locked_chest = { 6, -2, 8 },
+    crate = { 6, 0, 8 },
+    die = { 6, 0, 8 },
+}
+
 local COLLECTIBLE_VALUE = {
     gold_bar = 500,
     gold_bars = 1500,
@@ -80,46 +92,6 @@ local PRICES = {
     spring_shoes = 4000, spike_shoes = 4000, spectacles = 2500,
     compass = 2500, gloves = 8000, mitt = 8000, cape = 12000,
     jetpack = 20000, paste = 3000, parachute = 2500,
-}
-
--- oItem uses depth 101 while loose; oSolid uses depth 100. GameMaker draws
--- higher depths first, allowing the foreground pixels of terrain to occlude
--- every loose item. Held items switch to depth 1 and are drawn in front.
-local BEHIND_TERRAIN = {
-    bomb_bag = true,
-    bomb_box = true,
-    bow = true,
-    cape = true,
-    chest = true,
-    compass = true,
-    crate = true,
-    die = true,
-    emerald_big = true,
-    gloves = true,
-    gold_bar = true,
-    gold_bars = true,
-    gold_idol = true,
-    jar = true,
-    jetpack = true,
-    key = true,
-    locked_chest = true,
-    machete = true,
-    mattock = true,
-    mitt = true,
-    parachute = true,
-    paste = true,
-    pistol = true,
-    rock = true,
-    rope_pile = true,
-    ruby_big = true,
-    sapphire_big = true,
-    shotgun = true,
-    skull = true,
-    spectacles = true,
-    spike_shoes = true,
-    spring_shoes = true,
-    teleporter = true,
-    web_cannon = true,
 }
 
 local function sign(value)
@@ -163,10 +135,6 @@ function Item.collect(kind, run, player)
     end
 end
 
-function Item.rendersBehindTerrain(kind)
-    return BEHIND_TERRAIN[kind] or false
-end
-
 function Item.new(entity, metadata)
     assert(Item.isCarryable(entity.kind), "Non-carryable entity: " .. tostring(entity.kind))
     metadata = metadata or {}
@@ -190,16 +158,20 @@ function Item.new(entity, metadata)
         cooldown = 0,
         durability = entity.kind == "mattock" and 50 or nil,
         opened = false,
+        facing = 1,
+        stuck = false,
     }, Item)
 end
 
 function Item:getCollisionHalfWidth()
-    return math.min(self.width / 2, self.heavy and 6 or 4)
+    local bounds = COLLISION_BOUNDS[self.kind]
+    return bounds and bounds[1] or 4
 end
 
 function Item:getVerticalBounds()
-    if self.heavy then return -8, 8 end
-    return -math.min(4, self.height / 2), math.min(4, self.height / 2)
+    local bounds = COLLISION_BOUNDS[self.kind]
+    if bounds then return bounds[2], bounds[3] end
+    return -4, 4
 end
 
 function Item:overlapsRectangle(left, top, right, bottom)
@@ -212,6 +184,7 @@ end
 function Item:pickup(player)
     if self.held then return false end
     self.held = true
+    self.stuck = false
     self.vx, self.vy = 0, 0
     self.xRemainder, self.yRemainder = 0, 0
     self:updateHeldPosition(player)
@@ -235,6 +208,8 @@ end
 function Item:throw(player, input)
     input = input or {}
     self.held = false
+    self.stuck = false
+    self.facing = player.facing
     self.safeTimer = 10
     self.vx = player.facing * (self.heavy and 4 or 8) + player.vx
     self.vy = self.heavy and -2 or -3
@@ -337,27 +312,56 @@ end
 
 function Item:update(world, player)
     self.justHit = false
+    self.impactSide = nil
     if self.cooldown > 0 then self.cooldown = self.cooldown - 1 end
     if self.held then
         self:updateHeldPosition(player)
         return
     end
+    if self.stuck then return end
     if self.safeTimer > 0 then self.safeTimer = self.safeTimer - 1 end
-    self.vy = math.min(8, self.vy + 0.6)
+    local grounded = self.vy >= 0 and self.vy < 1
+        and world:collidesSolid(self, self.x, self.y + 1)
+    self.vy = grounded and 0 or math.min(8, self.vy + 0.6)
     local horizontalHit = self:moveHorizontal(world, self.vx)
     if horizontalHit then
-        if self.kind == "jar" and math.abs(self.vx) > 3 then self.justHit = true end
+        local impactVx = self.vx
         self.vx = -self.vx * 0.5
+        if self.kind == "arrow" and math.abs(self.vx) > 6 then
+            self.stuck = true
+            self.x = self.x + sign(impactVx) * 2
+            self.vx, self.vy = 0, 0
+            return
+        end
+        if (self.kind == "jar" and math.abs(impactVx) > 3)
+            or (self.kind == "skull" and math.abs(impactVx) > 2) then
+            self.justHit = true
+            self.impactSide = impactVx > 0 and "right" or "left"
+        end
     end
     local impactSpeed = math.abs(self.vy)
     local verticalHit = self:moveVertical(world, self.vy)
+    local onFloor = verticalHit == "floor"
+        or (self.vy >= 0 and (world:collidesSolid(self, self.x, self.y + 1)
+            or world:platformLanding(self, self.y, self.y + 1)))
     if verticalHit == "floor" then
-        self.justHit = self.justHit or (self.kind == "jar" and impactSpeed > 3)
+        self.justHit = self.justHit or ((self.kind == "jar" or self.kind == "skull")
+            and impactSpeed > 3)
             or (self.kind ~= "jar" and impactSpeed >= 4)
+        if self.justHit and not self.impactSide then self.impactSide = "floor" end
         self.vy = math.abs(self.vy) > 1 and -self.vy * 0.5 or 0
+    end
+    if onFloor then
+        -- oItem applies friction whenever colBot is true, including ticks on
+        -- which the item is already resting and no vertical collision occurs.
         self.vx = math.abs(self.vx) < 0.1 and 0 or self.vx * 0.3
-    elseif verticalHit == "ceiling" then
-        if self.kind == "jar" and self.vy < -3 then self.justHit = true end
+    end
+    if verticalHit == "ceiling" then
+        if (self.kind == "jar" and self.vy < -3)
+            or (self.kind == "skull" and self.vy < 0) then
+            self.justHit = true
+            if not self.impactSide then self.impactSide = "ceiling" end
+        end
         self.vy = math.abs(self.vy) * 0.5
     end
 end

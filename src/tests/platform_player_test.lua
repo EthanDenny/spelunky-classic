@@ -171,21 +171,79 @@ function Test.run()
 
     do
         local world = flatWorld()
+        local player = Player.new(64, 120)
+        player:kill("enemy", 2, 0)
+        local unsteeredWorld = flatWorld()
+        local unsteered = Player.new(64, 120)
+        unsteered:kill("enemy", 2, 0)
+        local roseAfterImpact = false
+        local showedBounceBody = false
+        local showedFallingBody = false
+        for _ = 1, 45 do
+            player:step(world, { right = true, jump = true })
+            unsteered:step(unsteeredWorld, {})
+            if player.deadBounced and player.vy < 0 then roseAfterImpact = true end
+            if player.spriteName == "sDieLBounce" then showedBounceBody = true end
+            if player.spriteName == "sDieLFall" then showedFallingBody = true end
+        end
+        assert(roseAfterImpact and showedBounceBody and showedFallingBody,
+            "A dead player must fall, rebound, and show both tumbling sprites")
+        assert(player.x == unsteered.x and player.y == unsteered.y,
+            "Movement input must not steer the dead body during its fall and bounce")
+
+        local platformWorld = World.new(12, 14, 16)
+        platformWorld:fill("platform", 0, 10, 12, 1)
+        local platformBody = Player.new(64, 120)
+        platformBody:kill("enemy", 0, 0)
+        repeatStep(platformBody, platformWorld, { down = true }, 30)
+        assert(platformBody.deadBounced and platformBody.y <= 152,
+            "A dead body must bounce on a one-way platform even while Down is held")
+
+        local fatalWorld = flatWorld()
+        local fatalFall = groundedPlayer(fatalWorld)
+        fatalFall.health = 1
+        fatalFall.fallTimer = 17
+        fatalFall:step(fatalWorld, { right = true })
+        assert(fatalFall:isDead() and fatalFall.deadBounced and fatalFall.vy == 0
+            and fatalFall.state == Player.STATES.dead,
+            "A fatal long drop must enter the source's grounded corpse response immediately")
+    end
+
+    do
+        local world = flatWorld()
+        world:fill("ladder", 4, 7, 1, 3)
+        local player = groundedPlayer(world, 72)
+        repeatStep(player, world, { down = true }, 4)
+        assert(player.state == Player.STATES.ducking and player.climbKind == nil,
+            "Down at a ladder base must crouch, not alternate between crouching and climbing")
+    end
+
+    do
+        local world = flatWorld()
         local player = groundedPlayer(world)
         player.facing = -1
         player:step(world, { attack = true })
         assert(player.whipping and player.spriteName == "sAttackLeft"
             and player.animationFrame == 0,
             "Attack press must start the original whip animation on frame zero")
+        assert(player:getWhipHitbox() == nil,
+            "The original creates the backswing object on the step after attack begins")
+        player:step(world, { attack = true })
         local left, top, right, bottom, phase = player:getWhipHitbox()
-        assert(phase == "back" and left == player.x + 8 and right == player.x + 24
-            and top == player.y - 8 and bottom == player.y + 8,
-            "The whip backswing must begin sixteen pixels behind a left-facing player")
+        assert(phase == "back" and left == player.x + 8 and right == player.x + 18
+            and top == player.y - 8 and bottom == player.y + 4,
+            "The backswing bounds must follow the original sprite's opaque pixels")
 
-        repeatStep(player, world, { attack = true }, 8)
+        repeatStep(player, world, { attack = true }, 7)
         left, top, right, bottom, phase = player:getWhipHitbox()
-        assert(phase == "front" and left == player.x - 24 and right == player.x - 8,
-            "After original frame four, the whip must move sixteen pixels in front")
+        assert(phase == "front" and left == player.x - 21 and right == player.x - 8
+            and top == player.y - 2 and bottom == player.y + 3,
+            "After frame four, the front whip bounds must follow its visible stroke")
+        assert(not player:whipOverlapsRectangle(player.x - 16, player.y - 1,
+                player.x - 15, player.y)
+            and player:whipOverlapsRectangle(player.x - 16, player.y,
+                player.x - 15, player.y + 1),
+            "Transparent holes in the precise front whip mask must not damage targets")
 
         repeatStep(player, world, { attack = true }, 11)
         assert(not player.whipping,

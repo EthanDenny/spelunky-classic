@@ -2,220 +2,541 @@
 
 This is a coverage inventory for the original **Spelunky Classic (1.1)**, not a claim that the game is finished. The original source in [`original-game-reference`](original-game-reference/SOURCE_OF_TRUTH.md) is the behavioral authority; the [Classic wiki's places](https://spelunky.fandom.com/wiki/Places_%28Classic%29), [level feelings](https://spelunky.fandom.com/wiki/Level_Feeling_%28Classic%29), [enemies](https://spelunky.fandom.com/wiki/Enemies_%28Classic%29), [items](https://spelunky.fandom.com/wiki/Items_%28Classic%29), [traps](https://spelunky.fandom.com/wiki/Traps_%28Classic%29), and [unlockable rooms](https://spelunky.fandom.com/wiki/Unlockable_rooms) are cross-checks for omissions. HD and Spelunky 2 content is out of scope.
 
-The playable implementation currently focuses on **Mines 1–4 only**. World Generation and Full Level Playtest generate Mines levels; the playtest stops at the 1–4 exit. Jungle, Ice Caves, Temple, Olmec, and special-level generation/gameplay were removed for this focused pass. Their entries below remain as future coverage goals, not active implementations. The animation viewer, original-source archive, and image/sound assets still cover the wider Classic game. Run the project with Love 11.5 (`love .`); run its smoke suite with `love . --smoke-test`.
+The playable implementation currently focuses on **Mines 1–4 only**. World Generation and Full Level Playtest generate Mines levels; the playtest stops at the 1–4 exit. Jungle, Ice Caves, Temple, Olmec, and special-level generation/gameplay were removed for this focused pass. Their entries below remain as future coverage goals, not active implementations. The animation viewer, original-source archive, and image/sound assets still cover the wider Classic game. Run the project with Love 11.5 (`love .`); run its smoke suite with `love . --smoke-test`. The smoke suite mutes application audio before loading screens; normal playtest audio is unchanged.
 
 Normal playtest sessions log automatically to `playtest-logs/` in Love's save directory. `latest.txt` points to the most recent JSONL session; press F9 during a test to add a bookmark for later diagnosis. The smoke suite does not create a playtest session.
+
+Gameplay controls load the original 12-line `keys.cfg` and seven-line `settings.cfg` format. A file in Love's save directory takes priority; otherwise the real files in `original-game-reference/` are used. The shipped keyboard bindings are arrows to move/climb, Z jump, X action/pickup/throw, Shift run, A bomb, and S rope—WASD does not move the player. Hold Up+A for a high bomb throw or Down+A for a short grounded drop; Down+S drops a rope beside a ledge. Blocked placements do not spend a rope. R resets the Platforming Engine room's supply and restarts the selected Mines level with full health, four bombs, and no gold. The loaded `downToRun` setting affects movement. Other settings are parsed but not yet applied to the Love display/audio adapters; the C switch, F flare, and P purchase actions are not yet implemented.
+
+To test a particular Mines level type, use Left/Right (or click a type) in World Generation, or `[`/`]` in Full Level Playtest. Choices are Random, Standard, Idol, Kali Altar, Snake Pit, Shop, and Dark. Selecting Shop, Kali Altar, or Dark from 1–1 moves to 1–2, where those types can generate. The selector searches forward for a seed that naturally produces the type. Generate finds the next matching seed in the preview; in the playtest, N finds the next match and R restarts the current seed. Manual type changes and filtered rerolls start a fresh test run; ordinary exit progression returns to Random. The selected type and actual seed are recorded in playtest logs.
+
+Mines gameplay screens share the [source-based render-depth rules](src/render/README.md); add new visible objects there rather than introducing a screen-specific draw band.
 
 Legend: **`[ ]`** not started; **`[ ] … [WIP]`** started, but incomplete or not yet validated; **`[x]`** explicitly confirmed by the player in a playtest. Code, assets, and automated tests alone never promote an entry to `[x]`. A confirmed narrow behavior does not confirm its whole category. Update these markers as playtests and source comparisons establish more.
 
 ## Coverage inventory
 
 - **Areas and level types**
-  - [ ] Cave / Mines (levels 1–4) [WIP]
-  - [ ] Lush / Jungle (levels 5–8)
+  - [ ] Mines (levels 1–4) [WIP]
+  - [ ] Jungle (levels 5–8)
   - [ ] Ice Caves (levels 9–12)
   - [ ] Temple (levels 13–15)
   - [ ] Olmec's Lair (level 16)
   - [ ] Black Market
   - [ ] City of Gold
   - [ ] Moai interior
-  - [ ] Entrance lobby and tutorial as complete playable spaces
+  - [ ] Entrance lobby as a complete playable space
+  - [ ] Tutorial as a complete playable space
 
 - **Level feelings and variants**
-  - [ ] Darkness and light sources [WIP]
+  - [ ] Darkness [WIP]
+  - [ ] Light sources [WIP]
   - [ ] Snake Pit [WIP]
-  - [ ] Restless Dead / cemetery, including skeletal piranhas
+  - [ ] Restless Dead / cemetery
+  - [ ] Skeletal piranhas in cemetery water
   - [ ] Flooded Cavern / lake
   - [ ] Yeti Kingdom feeling
   - [ ] UFO crash-site feeling
   - [ ] Sacrificial Pit
-  - [ ] Stacked feelings and their announcement messages
+  - [ ] Stacked feelings
+  - [ ] Feeling announcement messages
 
 - **Generation and progression**
-  - [ ] Room templates, guaranteed route, entrances, and exits [WIP]
-  - [ ] Mines terrain, enemies, traps, treasure, and item placement [WIP]
-  - [ ] Mines shops, altars, and idols [WIP]
-  - [ ] Hidden entrances to special levels
-  - [ ] Mines 1–4 transitions and in-memory run state [WIP]
-  - [ ] Tunnel Man and shortcuts
-  - [ ] Udjat Eye → Black Market → Ankh → Moai → Hedjet/crown → sceptre → City of Gold route
-  - [ ] Olmec encounter and final-level exit
+  - **Level layout**
+    - [ ] Room templates [WIP]
+    - [ ] Guaranteed route through a level [WIP]
+    - [ ] Entrance placement [WIP]
+    - [ ] Exit placement [WIP]
+  - **Mines placement**
+    - [ ] Terrain [WIP]
+    - [ ] Enemies [WIP]
+    - [ ] Traps [WIP]
+    - [ ] Treasure [WIP]
+    - [ ] Items [WIP]
+    - [ ] Shops [WIP]
+    - [ ] Altars [WIP]
+    - [ ] Idols [WIP]
+  - **Hidden special-level entrances**
+    - [ ] Black Market
+    - [ ] City of Gold
+    - [ ] Moai interior
+  - [ ] Mines 1–4 level transitions [WIP]
+  - [ ] In-memory run state [WIP]
+  - [ ] Tunnel Man encounters
+  - [ ] Shortcut construction
+  - **City of Gold route**
+    - [ ] Udjat Eye reveals the Black Market entrance
+    - [ ] Enter the Black Market
+    - [ ] Acquire the Ankh
+    - [ ] Find the Moai
+    - [ ] Resurrect inside the Moai
+    - [ ] Hedjet / crown
+    - [ ] Sceptre
+    - [ ] Open the Golden Door
+    - [ ] Enter the City of Gold
+  - [ ] Olmec encounter
+  - [ ] Final-level exit
 
 - **Game shell, story, and screens**
   - [ ] Intro cinematic (`rIntro`)
-  - [ ] Original main/title screen and playable entrance lobby (`rTitle`), distinct from the prototype menu
-  - [ ] Playable tutorial and return to the main screen (`rTutorial`)
-  - [ ] Between-area transition scenes and Tunnel Man encounters (`rTransition*`)
-  - [ ] Shortcut House and entrances to unlocked rooms
-  - [ ] Title-hub score-room entrance and high-score screen (`rHighscores`)
-  - [ ] Death, game-over, and retry flow outside the playtest screen
-  - [ ] Olmec victory sequence, ending cinematics, and credits (`rEnd*`, `rCredits*`)
-  - [ ] All screen transitions, skip behavior, and return paths
+  - [ ] Original main/title screen (`rTitle`)
+  - [ ] Playable entrance lobby (`rTitle`)
+  - [ ] Playable tutorial (`rTutorial`)
+  - [ ] Return from tutorial to main screen
+  - [ ] Between-area transition scenes (`rTransition*`)
+  - [ ] Tunnel Man encounters in transition scenes
+  - [ ] Shortcut House
+  - [ ] Entrances to unlocked rooms
+  - [ ] Title-hub score-room entrance
+  - [ ] High-score screen (`rHighscores`)
+  - [ ] Death flow outside the playtest screen
+  - [ ] Game-over flow outside the playtest screen
+  - [ ] Retry flow outside the playtest screen
+  - [ ] Olmec victory sequence
+  - [ ] Ending cinematics (`rEnd*`)
+  - [ ] Credits (`rCredits*`)
+  - [ ] Screen transitions
+  - [ ] Screen skip behavior
+  - [ ] Return paths between screens
 
 - **Settings, saves, and persistent progress**
-  - [ ] Original settings integration: fullscreen, graphics quality, down-to-run, gamepad, scale, and music/sound volume (`settings.cfg`)
-  - [ ] Keyboard and gamepad binding configuration, including the original config screens (`keys.cfg`, `gamepad.cfg`)
-  - [ ] Read and write existing player statistics (`stats.txt`)
-  - [ ] Preserve and update existing high scores, records, trophies, and unlocks
-  - [ ] Persist Tunnel Man payments and unlocked shortcuts across runs and restarts
-  - [ ] Reconcile the original save data with Love's save location without silently discarding or resetting it
-  - [ ] In-memory run state for health, money, inventory, and current-level progression [WIP]
+  - **Original settings (`settings.cfg`)**
+    - [ ] Fullscreen
+    - [ ] Graphics quality
+    - [ ] Down-to-run [WIP]
+    - [ ] Gamepad enablement
+    - [ ] Display scale
+    - [ ] Music volume
+    - [ ] Sound volume
+  - [ ] Keyboard binding configuration (`keys.cfg`) [WIP]
+  - [ ] Gamepad binding configuration (`gamepad.cfg`)
+  - [ ] Original keyboard configuration screen
+  - [ ] Original gamepad configuration screen
+  - [ ] Read existing player statistics (`stats.txt`)
+  - [ ] Write player statistics (`stats.txt`)
+  - [ ] Preserve and update high scores
+  - [ ] Preserve and update records
+  - [ ] Preserve and update trophies
+  - [ ] Preserve and update unlocks
+  - [ ] Persist Tunnel Man payments across runs and restarts
+  - [ ] Persist unlocked shortcuts across runs and restarts
+  - [ ] Reconcile original save data with Love's save location without discarding or resetting it
+  - **In-memory run state**
+    - [ ] Health [WIP]
+    - [ ] Money [WIP]
+    - [ ] Inventory [WIP]
+    - [ ] Current-level progression [WIP]
 
 - **Terrain and traversal**
-  - [ ] Solid and destructible blocks, including material-specific behavior [WIP]
-  - [ ] One-way platforms and ladder tops [WIP]
-  - [ ] Ladders and deployed ropes [WIP]
+  - [ ] Solid blocks [WIP]
+  - [ ] Destructible blocks [WIP]
+  - [ ] Material-specific block behavior [WIP]
+  - [ ] One-way platforms [WIP]
+  - [ ] Ladder tops [WIP]
+  - [ ] Ladders [WIP]
+  - [ ] Deployed ropes [WIP]
   - [ ] Vines
-  - [ ] Ledges and hanging surfaces [WIP]
-  - [ ] Push blocks, crush interactions, and terrain destruction [WIP]
-  - [ ] Falling platforms and blocks outside the Mines
-  - [ ] Thin ice and slippery ice surfaces
-  - [ ] Foreground tile decorations and correct draw occlusion [WIP]
+  - [ ] Ledges [WIP]
+  - [ ] Hanging surfaces [WIP]
+  - [ ] Push blocks [WIP]
+  - [ ] Crush interactions [WIP]
+  - [ ] Terrain destruction [WIP]
+  - [ ] Falling platforms outside the Mines
+  - [ ] Falling blocks outside the Mines
+  - [ ] Thin ice
+  - [ ] Slippery ice surfaces
+  - [ ] Foreground tile decorations [WIP]
+  - [ ] Foreground draw occlusion [WIP]
 
 - **Environment**
-  - [ ] Water and submerged movement
-  - [ ] Lava and burning
-  - [ ] Webs and entanglement [WIP]
-  - [ ] Darkness and carried/placed light [WIP]
-  - [ ] Pits and the Ice Caves abyss
-  - [ ] Flares and boxes of flares as usable light sources
+  - [ ] Water
+  - [ ] Submerged movement
+  - [ ] Lava
+  - [ ] Burning from lava
+  - [ ] Webs [WIP]
+  - [ ] Web entanglement [WIP]
+  - [ ] Darkness [WIP]
+  - [ ] Carried light [WIP]
+  - [ ] Placed light [WIP]
+  - [ ] Pits
+  - [ ] Ice Caves abyss
+  - [ ] Flares as usable light sources
+  - [ ] Boxes of flares
 
 - **Player movement and animation states**
-  - [ ] Standing, walking, sprinting, and turning [WIP]
-  - [ ] Crouching, crawling, and looking up [WIP]
-  - [ ] Jumping, variable-height jump, and falling [WIP]
-  - [ ] Ladder and rope climbing; jumping off them [WIP]
+  - [ ] Standing [WIP]
+  - [ ] Walking [WIP]
+  - [ ] Sprinting [WIP]
+  - [ ] Turning [WIP]
+  - [ ] Crouching [WIP]
+  - [ ] Crawling [WIP]
+  - [ ] Looking up [WIP]
+  - [ ] Jumping [WIP]
+  - [ ] Variable-height jump [WIP]
+  - [ ] Falling [WIP]
+  - [ ] Ladder climbing [WIP]
+  - [ ] Rope climbing [WIP]
+  - [ ] Jumping off ladders [WIP]
+  - [ ] Jumping off ropes [WIP]
   - [ ] Vine climbing
-  - [ ] Automatic ledge grab, hanging, and drop [WIP]
-  - [x] Jumping from a ledge hang onto the ledge (player-confirmed)
-  - [ ] Crouch-to-hang and drop-through platforms [WIP]
-  - [ ] Landing, wall pushing, knockback, and bouncing [WIP]
-  - [ ] Carrying, dropping, and throwing [WIP]
-  - [ ] Whip timing and attack pose [WIP]
+  - [ ] Automatic ledge grab [WIP]
+  - [ ] Ledge hanging [WIP]
+  - [ ] Dropping from a ledge [WIP]
+  - [x] Jumping from a ledge hang onto the ledge
+  - [ ] Crouch-to-hang [WIP]
+  - [ ] Drop-through platforms [WIP]
+  - [ ] Landing [WIP]
+  - [ ] Wall pushing [WIP]
+  - [ ] Knockback [WIP]
+  - [ ] Bouncing [WIP]
+  - [ ] Carrying [WIP]
+  - [ ] Dropping carried objects [WIP]
+  - [ ] Throwing [WIP]
+  - [ ] Whip timing [WIP]
+  - [ ] Whip attack pose [WIP]
 
 - **Player survival and conditions**
-  - [ ] Health, healing, and fall damage [WIP]
-  - [ ] Stun, recovery, and temporary invulnerability [WIP]
+  - [ ] Health [WIP]
+  - [ ] Healing [WIP]
+  - [ ] Fall damage [WIP]
+  - [ ] Stun [WIP]
+  - [ ] Stun recovery [WIP]
+  - [ ] Temporary invulnerability [WIP]
   - [ ] Webbed state [WIP]
   - [ ] Burning state
-  - [ ] Death and death animation [WIP]
-  - [ ] Spike impalement, crushing, and other instant deaths [WIP]
+  - [ ] Death [WIP]
+  - [ ] Death animation [WIP]
+  - [ ] Spike impalement [WIP]
+  - [ ] Crushing death [WIP]
+  - [ ] Other instant deaths [WIP]
   - [ ] Ankh resurrection
 
 - **Enemies and bosses**
-  - [ ] Snake, bat, spider, giant spider, caveman, skeleton [WIP]
-  - [ ] Frog, fire frog, monkey, mantrap, piranha, Megamouth
-  - [ ] Zombie / Jiang Shi, vampire, skeletal piranha
-  - [ ] Ghost [WIP]
-  - [ ] Yeti, alien, UFO
-  - [ ] Hawkman, magma man, Tomb Lord / mummy, worshipper
-  - [ ] Yeti King, Alien Lord / alien boss, Olmec
-  - [ ] Per-enemy AI: idle, patrol, detection, pursuit, attack, and contact [WIP]
-  - [ ] Per-enemy damage, stun, carry/throw, death, drops, and animation [WIP]
-  - [ ] Ghost spawn timer and pursuit [WIP]
+  - **Mines**
+    - [ ] Snake [WIP]
+    - [ ] Bat [WIP]
+    - [ ] Spider [WIP]
+    - [ ] Giant spider [WIP]
+    - [ ] Caveman [WIP]
+    - [ ] Skeleton [WIP]
+  - **Jungle**
+    - [ ] Frog
+    - [ ] Fire frog
+    - [ ] Monkey
+    - [ ] Mantrap
+    - [ ] Piranha
+    - [ ] Megamouth
+    - [ ] Zombie / Jiang Shi
+    - [ ] Vampire
+    - [ ] Skeletal piranha
+  - **Ice Caves**
+    - [ ] Yeti
+    - [ ] UFO
+    - [ ] Alien
+    - [ ] Yeti King
+    - [ ] Alien Lord
+  - **Temple**
+    - [ ] Hawkman
+    - [ ] Magma man
+    - [ ] Tomb Lord
+  - **Olmec's Lair**
+    - [ ] Worshippers
+    - [ ] Olmec
+  - **Across areas**
+    - **Per-enemy AI**
+      - [ ] Idle behavior [WIP]
+      - [ ] Patrol [WIP]
+      - [ ] Detection [WIP]
+      - [ ] Pursuit [WIP]
+      - [ ] Attack [WIP]
+      - [ ] Contact [WIP]
+    - **Per-enemy reactions**
+      - [ ] Damage [WIP]
+      - [ ] Stun [WIP]
+      - [ ] Carrying [WIP]
+      - [ ] Throwing [WIP]
+      - [ ] Death [WIP]
+      - [ ] Drops [WIP]
+      - [ ] Animation [WIP]
+    - [ ] Ghost [WIP]
+    - [ ] Ghost spawn timer [WIP]
+    - [ ] Ghost pursuit [WIP]
 
 - **NPCs, shops, and services**
-  - [ ] Damsel: rescue, damage, carrying, and exit reward [WIP]
-  - [ ] Shopkeeper: inventory, buying, anger, theft, and pursuit [WIP]
-  - [ ] Tunnel Man as an in-level NPC: dialogue, payments, and shortcuts
-  - [ ] General, bomb, weapon, clothing, and specialty shops [WIP]
-  - [ ] Dice house / gambling and kissing parlor [WIP]
+  - **Damsel**
+    - [ ] Rescue [WIP]
+    - [ ] Damage [WIP]
+    - [ ] Carrying [WIP]
+    - [ ] Exit reward [WIP]
+  - **Shopkeeper**
+    - [ ] Inventory [WIP]
+    - [ ] Buying [WIP]
+    - [ ] Anger [WIP]
+    - [ ] Theft [WIP]
+    - [ ] Pursuit [WIP]
+  - **Tunnel Man as an in-level NPC**
+    - [ ] Dialogue
+    - [ ] Payments
+    - [ ] Shortcuts
+  - **Shop types**
+    - [ ] General shop [WIP]
+    - [ ] Bomb shop [WIP]
+    - [ ] Weapon shop [WIP]
+    - [ ] Clothing shop [WIP]
+    - [ ] Specialty shop [WIP]
+    - [ ] Dice house / gambling [WIP]
+    - [ ] Kissing parlor [WIP]
   - [ ] Black Market artifact stall
-  - [ ] Complete shop ownership, pricing, and run-long wanted behavior
+  - [ ] Shop ownership
+  - [ ] Shop pricing
+  - [ ] Run-long wanted behavior
 
 - **Carryable objects and containers**
-  - [ ] Rock, skull, arrow, and die [WIP]
-  - [ ] Pot / jar and its breakable contents [WIP]
-  - [ ] Crate and chest [WIP]
-  - [ ] Locked chest and key [WIP]
+  - [ ] Rock [WIP]
+  - [ ] Skull [WIP]
+  - [ ] Arrow [WIP]
+  - [ ] Die [WIP]
+  - [ ] Pot / jar [WIP]
+  - [ ] Breakable pot contents [WIP]
+  - [ ] Crate [WIP]
+    - [ ] Open a nearby or held crate with Up+Attack [WIP]
+  - [ ] Chest [WIP]
+  - [ ] Locked chest [WIP]
+  - [ ] Key [WIP]
   - [ ] Golden Idol [WIP]
   - [ ] Crystal Skull
   - [ ] Giant Idol
-  - [ ] Corpse, piranha skeleton, and detached mattock head as distinct carryables
+  - [ ] Corpse as a carryable
+  - [ ] Piranha skeleton as a carryable
+  - [ ] Detached mattock head as a carryable
   - [ ] Lantern as a carryable object
-  - [ ] Pickup, carry, release, throw, collisions, and breakage [WIP]
-  - [ ] Physics for spawned treasure and container contents [WIP]
+  - **Object interactions**
+    - [ ] Pickup [WIP]
+    - [ ] Carry [WIP]
+    - [ ] Release [WIP]
+    - [ ] Throw [WIP]
+    - [ ] Collisions [WIP]
+    - [ ] Breakage [WIP]
+    - [ ] Spawned treasure physics [WIP]
+    - [ ] Container-content physics [WIP]
 
 - **Weapons, tools, and projectiles**
-  - [ ] Whip, bombs, and ropes [WIP]
-  - [ ] Bow and arrows [WIP]
-  - [ ] Machete and mattock [WIP]
-  - [ ] Pistol and shotgun [WIP]
-  - [ ] Teleporter and web gun [WIP]
-  - [ ] Sceptre and its projectile
-  - [ ] Bullets, pellets, webs, explosions, and blast damage [WIP]
-  - [ ] Weapon timing, trajectories, recoil, enemy damage, and terrain effects [WIP]
+  - [ ] Whip [WIP]
+  - [ ] Bombs [WIP]
+  - [ ] Ropes [WIP]
+  - [ ] Bow [WIP]
+  - [ ] Arrows [WIP]
+    - [ ] Wall rebound for normal-speed arrows, high-speed sticking, and trap/bow handoff outside terrain [WIP]
+  - [ ] Machete [WIP]
+  - [ ] Mattock [WIP]
+  - [ ] Pistol [WIP]
+  - [ ] Shotgun [WIP]
+  - [ ] Teleporter [WIP]
+  - [ ] Web gun [WIP]
+  - [ ] Sceptre
+  - [ ] Sceptre projectile
+  - [ ] Bullets [WIP]
+  - [ ] Pellets [WIP]
+  - [ ] Web projectiles [WIP]
+  - [ ] Explosions [WIP]
+  - [ ] Blast damage [WIP]
+  - **Weapon behavior**
+    - [ ] Timing [WIP]
+    - [ ] Trajectories [WIP]
+    - [ ] Recoil [WIP]
+    - [ ] Enemy damage [WIP]
+    - [ ] Terrain effects [WIP]
 
 - **Equipment, artifacts, and power-ups**
-  - [ ] Spectacles, compass, and parachute [WIP]
-  - [ ] Bomb paste, climbing gloves, and pitcher's mitt [WIP]
-  - [ ] Cape, jetpack, spike shoes, and spring shoes [WIP]
+  - [ ] Spectacles [WIP]
+  - [ ] Compass [WIP]
+  - [ ] Parachute [WIP]
+  - [ ] Bomb paste [WIP]
+  - [ ] Climbing gloves [WIP]
+  - [ ] Pitcher's mitt [WIP]
+  - [ ] Cape [WIP]
+  - [ ] Jetpack [WIP]
+  - [ ] Spike shoes [WIP]
+  - [ ] Spring shoes [WIP]
   - [ ] Udjat Eye [WIP]
   - [ ] Kapala effects [WIP]
-  - [ ] Ankh and Hedjet/crown
-  - [ ] Acquisition, passive effects, consumption, visual feedback, and interactions [WIP]
+  - [ ] Ankh
+  - [ ] Hedjet / crown
+  - **Equipment behavior**
+    - [ ] Acquisition [WIP]
+    - [ ] Passive effects [WIP]
+    - [ ] Consumption [WIP]
+    - [ ] Visual feedback [WIP]
+    - [ ] Interactions with other systems [WIP]
 
 - **Treasure and resources**
-  - [ ] Gold bars/piles, emeralds, sapphires, and rubies [WIP]
-  - [ ] Scarabs and idols as valuables [WIP]
+  - [ ] Gold bars [WIP]
+  - [ ] Gold piles [WIP]
+  - [ ] Emeralds [WIP]
+  - [ ] Sapphires [WIP]
+  - [ ] Rubies [WIP]
+  - [ ] Scarabs as valuables [WIP]
+  - [ ] Idols as valuables [WIP]
   - [ ] Crystal skulls as valuables
-  - [ ] Money and Mines treasure values [WIP]
+  - [ ] Money collection [WIP]
+  - [ ] Mines treasure values [WIP]
   - [ ] Area-dependent treasure values beyond the Mines
-  - [ ] Health, bomb, and rope supplies [WIP]
-  - [ ] Kapala blood collection and health reward [WIP]
-  - [ ] Spawn physics, collection, and run persistence [WIP]
+  - [ ] Health supplies [WIP]
+  - [ ] Bomb supplies [WIP]
+  - [ ] Rope supplies [WIP]
+  - [ ] Kapala blood collection [WIP]
+  - [ ] Kapala health reward [WIP]
+  - [ ] Spawn physics [WIP]
+  - [ ] Collection [WIP]
+  - [ ] Run persistence [WIP]
 
 - **Traps and hazards**
-  - [ ] Spikes and bloody impalement [WIP]
+  - [ ] Spikes [WIP]
+  - [ ] Bloody impalement [WIP]
   - [ ] Arrow traps [WIP]
-  - [ ] Spear/tiki, spring, smash/crush, and ceiling traps
-  - [ ] Boulders and idol-triggered destruction [WIP]
-  - [ ] Push blocks and webs [WIP]
-  - [ ] Falling platforms, thin ice, lava, and later-area pits
-  - [ ] Barrier emitters / forcefields
+  - [ ] Spear / tiki traps
+  - [ ] Spring traps
+  - [ ] Smash / crush traps
+  - [ ] Ceiling traps
+  - [ ] Boulders [WIP]
+    - [ ] Source-guided movement, bounces, terrain crushing, solid collision, and player carry/push [WIP]
+  - [ ] Idol-triggered destruction [WIP]
+  - [ ] Push blocks [WIP]
+  - [ ] Webs [WIP]
+  - [ ] Falling platforms
+  - [ ] Thin ice
+  - [ ] Lava
+  - [ ] Later-area pits
+  - [ ] Barrier emitters
+  - [ ] Forcefields
   - [ ] Rigged chest
   - [ ] Unused Thwomp trap: document source behavior before deciding whether playable coverage is needed
-  - [ ] Trigger conditions, warning/animation, collision, damage, and reset behavior [WIP]
+  - **Trap behavior**
+    - [ ] Trigger conditions [WIP]
+    - [ ] Warnings [WIP]
+    - [ ] Animation [WIP]
+    - [ ] Collision [WIP]
+    - [ ] Damage [WIP]
+    - [ ] Reset behavior [WIP]
 
 - **Structures and interactions**
-  - [ ] Ordinary doors and exits [WIP]
-  - [ ] Hidden Black Market entrance and Golden Door
+  - [ ] Ordinary doors [WIP]
+  - [ ] Exits [WIP]
+  - [ ] Hidden Black Market entrance
+  - [ ] Golden Door
   - [ ] Altar placement [WIP]
-  - [ ] Sacrifices, Kali favor, rewards, and punishments
-  - [ ] Moai and Ankh-triggered resurrection
-  - [ ] Idol structures and their traps [WIP]
-  - [ ] Lamps, torches, shop signs, and contextual messages [WIP]
+  - [ ] Sacrifices
+  - [ ] Kali favor
+  - [ ] Kali rewards
+  - [ ] Kali punishments
+  - [ ] Moai
+  - [ ] Ankh-triggered resurrection
+  - [ ] Idol structures [WIP]
+  - [ ] Idol traps [WIP]
+  - [ ] Lamps [WIP]
+  - [ ] Torches [WIP]
+  - [ ] Shop signs [WIP]
+  - [ ] Contextual messages [WIP]
 
 - **Cross-system interactions**
-  - [ ] Thrown objects versus enemies, traps, terrain, and other objects [WIP]
-  - [ ] Enemies and NPCs versus Mines spikes, explosions, and push blocks [WIP]
-  - [ ] Enemies and NPCs versus lava and later-area moving terrain
-  - [ ] Bombs versus terrain, traps, items, and chain reactions [WIP]
-  - [ ] Fire frogs versus terrain, traps, items, and chain reactions
-  - [ ] Carried enemies/NPCs versus shops, exits, altars, and hazards [WIP]
-  - [ ] Equipment changing movement, combat, or environmental rules [WIP]
+  - **Thrown objects versus**
+    - [ ] Enemies [WIP]
+    - [ ] Traps [WIP]
+    - [ ] Terrain [WIP]
+    - [ ] Other objects [WIP]
+  - **Enemies and NPCs versus**
+    - [ ] Mines spikes [WIP]
+    - [ ] Explosions [WIP]
+    - [ ] Push blocks [WIP]
+    - [ ] Lava
+    - [ ] Later-area moving terrain
+  - **Bombs versus**
+    - [ ] Terrain [WIP]
+    - [ ] Traps [WIP]
+    - [ ] Items [WIP]
+    - [ ] Chain reactions [WIP]
+  - **Fire frogs versus**
+    - [ ] Terrain
+    - [ ] Traps
+    - [ ] Items
+    - [ ] Chain reactions
+  - **Carried enemies and NPCs versus**
+    - [ ] Shops [WIP]
+    - [ ] Exits [WIP]
+    - [ ] Altars [WIP]
+    - [ ] Hazards [WIP]
+  - **Equipment changes to**
+    - [ ] Movement rules [WIP]
+    - [ ] Combat rules [WIP]
+    - [ ] Environmental rules [WIP]
 
 - **Presentation and feedback**
-  - [ ] Player, enemy, item, and terrain sprites and animation timing [WIP]
-  - [ ] Terrain/player/item draw order and occlusion [WIP]
-  - [ ] Blood, debris, breakage, and other particles [WIP]
-  - [ ] Hit, death, pickup, purchase, discovery, and exit sounds [WIP]
-  - [ ] Area music and music changes for special levels or the ghost
-  - [ ] HUD, camera, darkness, and level messages [WIP]
-  - [ ] Breakage, damage, stun, and impalement feedback [WIP]
+  - **Sprites and animation**
+    - [ ] Player sprites [WIP]
+    - [ ] Enemy sprites [WIP]
+    - [ ] Item sprites [WIP]
+    - [ ] Terrain sprites [WIP]
+    - [ ] Animation timing [WIP]
+  - [ ] Terrain draw order [WIP]
+  - [ ] Player draw order [WIP]
+  - [ ] Item draw order [WIP]
+  - [ ] Draw occlusion [WIP]
+  - **Particles**
+    - [ ] Blood [WIP]
+    - [ ] Debris [WIP]
+    - [ ] Breakage [WIP]
+    - [ ] Other particles [WIP]
+  - **Sounds**
+    - [ ] Hit [WIP]
+    - [ ] Death [WIP]
+    - [ ] Pickup [WIP]
+    - [ ] Purchase [WIP]
+    - [ ] Discovery [WIP]
+    - [ ] Exit [WIP]
+  - [ ] Area music
+  - [ ] Music changes for special levels
+  - [ ] Ghost music
+  - [ ] HUD [WIP]
+    - [ ] Classic held-item slot sprites; crates, idols, and chests leave the slot blank [WIP]
+  - [ ] Camera [WIP]
+  - [ ] Darkness presentation [WIP]
+  - [ ] Level messages [WIP]
+  - [ ] Breakage feedback [WIP]
+  - [ ] Damage feedback [WIP]
+  - [ ] Stun feedback [WIP]
+  - [ ] Impalement feedback [WIP]
 
 - **Controls and interface**
-  - [ ] Movement, jump, sprint, duck, look, and climb [WIP]
-  - [ ] Attack, pickup, throw, use, bomb, and rope [WIP]
-  - [ ] Context-sensitive inputs, including doors, shops, and hanging [WIP]
-  - [ ] Menu and playtest-screen controls [WIP]
+  - [ ] Movement input [WIP]
+  - [ ] Jump input [WIP]
+  - [ ] Sprint input [WIP]
+  - [ ] Duck input [WIP]
+  - [ ] Look input [WIP]
+  - [ ] Climb input [WIP]
+  - [ ] Attack input [WIP]
+  - [ ] Pickup input [WIP]
+  - [ ] Throw input [WIP]
+  - [ ] Use input [WIP]
+  - [ ] Bomb input [WIP]
+  - [ ] Rope input [WIP]
+  - **Context-sensitive inputs**
+    - [ ] Doors [WIP]
+    - [ ] Shops [WIP]
+    - [ ] Hanging [WIP]
+  - [ ] Menu controls [WIP]
+  - [ ] Playtest-screen controls [WIP]
   - [ ] Complete original-game menus (the prototype menu is not a replacement)
 
 - **Modes, unlocks, and records**
   - [ ] Sun Room survival challenge
   - [ ] Moon Room archery challenge
   - [ ] Stars Room shopkeeper challenge
-  - [ ] Changing Room / playable Damsel
+  - [ ] Changing Room
+  - [ ] Playable Damsel
   - [ ] Playable Tunnel Man unlock
-  - [ ] Level editor and custom-level import/export
-  - [ ] High scores, records, and challenge trophies
+  - [ ] Level editor
+  - [ ] Custom-level import
+  - [ ] Custom-level export
+  - [ ] High scores
+  - [ ] Records
+  - [ ] Challenge trophies

@@ -1,47 +1,55 @@
+local Effects = require("src.platform.effects")
 local Enemy = require("src.platform.enemy")
+local Creature = require("src.platform.creature")
+local Item = require("src.platform.item")
 local Player = require("src.platform.player")
+local ProjectileSystem = require("src.platform.projectile_system")
+local ToolSystem = require("src.platform.tool_system")
+local TrapSystem = require("src.platform.trap_system")
 local World = require("src.platform.world")
+local Depth = require("src.render.classic_depth")
+local DepthQueue = require("src.render.depth_queue")
 
 local EnemyAI = {}
 EnemyAI.__index = EnemyAI
 
-local HEADER_HEIGHT = 96
-local FOOTER_HEIGHT = 48
+local SIDEBAR_WIDTH = 250
+local HEADER_HEIGHT = 90
+local FOOTER_HEIGHT = 34
+local CARD_MIN_WIDTH = 460
+local CARD_HEIGHT = 420
+local GAP = 14
 local STEP = 1 / Enemy.TICK_RATE
 
+local PAGES = {
+    { name = "Snake", scenarios = true },
+    { name = "Bat", scenarios = true },
+    { name = "Spider", scenarios = true },
+    { name = "Giant Spider", scenarios = true },
+    { name = "Caveman", scenarios = true },
+    { name = "Skeleton", scenarios = true },
+    { name = "Ropes", scenarios = true },
+    { name = "Bombs", scenarios = true },
+    { name = "Boulder", scenarios = true },
+    { name = "Statue", scenarios = true },
+}
+
 local COLORS = {
-    background = { 0.035, 0.031, 0.027 },
-    panel = { 0.075, 0.064, 0.052 },
+    background = { 0.045, 0.04, 0.035 },
+    panel = { 0.095, 0.08, 0.065 },
+    panelDark = { 0.065, 0.057, 0.049 },
+    card = { 0.12, 0.102, 0.082 },
     border = { 0.28, 0.22, 0.16 },
     text = { 0.92, 0.86, 0.72 },
     muted = { 0.56, 0.50, 0.40 },
-    accent = { 0.55, 0.25, 0.62 },
-    alert = { 0.95, 0.28, 0.16 },
-    sense = { 0.85, 0.62, 0.20, 0.42 },
+    accent = { 0.72, 0.18, 0.10 },
+    selectedText = { 1, 0.94, 0.78 },
+    success = { 0.40, 0.76, 0.42 },
+    danger = { 0.95, 0.28, 0.16 },
 }
 
-local STATE_COLORS = {
-    IDLE = { 0.62, 0.56, 0.45 },
-    WALK = { 0.40, 0.76, 0.42 },
-    HANG = { 0.42, 0.62, 0.82 },
-    ATTACK = { 0.95, 0.28, 0.16 },
-    RECOVER = { 0.88, 0.65, 0.22 },
-    BOUNCE = { 0.72, 0.34, 0.76 },
-}
-
-local function makeCourse()
-    local world = World.new(40, 24, 16)
-    world:fill("solid", 0, 22, 40, 2)
-    world:fill("solid", 0, 0, 40, 1)
-    world:fill("solid", 18, 15, 5, 1)
-    world:fill("solid", 27, 15, 5, 1)
-    world:fill("solid", 38, 18, 1, 4)
-    world.labels = {
-        { x = 12 * 16 + 8, y = 21 * 16, text = "PATROL" },
-        { x = 20 * 16 + 8, y = 14 * 16, text = "PROXIMITY" },
-        { x = 29 * 16 + 8, y = 14 * 16, text = "AMBUSH" },
-    }
-    return world
+local function clamp(value, minimum, maximum)
+    return math.max(minimum, math.min(maximum, value))
 end
 
 local function loadImage(path)
@@ -50,20 +58,587 @@ local function loadImage(path)
     return image
 end
 
+local function makeWorld(gap)
+    local world = World.new(14, 9, 16)
+    world:fill("solid", 0, 0, 14, 1)
+    world:fill("solid", 0, 1, 1, 8)
+    world:fill("solid", 13, 1, 1, 8)
+    world:fill("solid", 1, 7, 12, 2)
+    if gap then
+        for y = 7, 8 do
+            world:remove("solid", 6, y)
+            world:remove("solid", 7, y)
+        end
+    end
+    return world
+end
+
+local function makePlayer(x, assets)
+    local player = Player.new(x, 7 * 16 - 8)
+    player.state = Player.STATES.standing
+    player.spriteName = "sStandLeft"
+    player.facing = 1
+    if assets then
+        player.images = assets.images
+        player.whipImages = assets.whipImages
+    else
+        player:loadAssets()
+    end
+    return player
+end
+
+local function makeGiantSpider(tileX, tileY, seed)
+    return Creature.new({ kind = "giant_spider", x = tileX, y = tileY, properties = {} },
+        { width = 32, height = 16 }, { seed = seed })
+end
+
+local SNAKE_SCENARIOS = {
+    {
+        title = "Patrol and gap",
+        description = "No player. The snake patrols and turns before the gap.",
+        duration = 180,
+        seed = 11,
+        build = function()
+            local world = makeWorld(true)
+            local snake = Enemy.new("snake", 4 * 16 + 8, 7 * 16, { facing = 1, seed = 11 })
+            snake:setState(Enemy.STATES.walk)
+            return world, snake
+        end,
+    },
+    {
+        title = "Contact",
+        description = "The snake starts walking toward a player in a short corridor.",
+        duration = 150,
+        seed = 22,
+        build = function(assets)
+            local world = makeWorld()
+            world:fill("solid", 2, 5, 1, 2)
+            world:fill("solid", 10, 5, 1, 2)
+            local snake = Enemy.new("snake", 3 * 16 + 8, 7 * 16, { facing = 1, seed = 22 })
+            snake:setState(Enemy.STATES.walk)
+            -- Keep this run directed at the player. Random idle pauses appear
+            -- in the patrol demonstration.
+            snake.random = function(_, maximum) return maximum end
+            return world, snake, makePlayer(7 * 16 + 8, assets)
+        end,
+    },
+    {
+        title = "Whip an idle snake",
+        description = "The player waits, then whips while the snake is idling.",
+        duration = 95,
+        attackTick = 18,
+        seed = 67, -- keeps this short replay's blood in the source's midrange gravity rolls
+        build = function(assets)
+            local world = makeWorld()
+            local snake = Enemy.new("snake", 6 * 16, 7 * 16, { facing = -1, seed = 33 })
+            snake:setState(Enemy.STATES.idle, 110)
+            return world, snake, makePlayer(4 * 16 + 8, assets)
+        end,
+    },
+    {
+        title = "Blocked on one block",
+        description = "No safe step: speed is zero, but the original WALK sprite still animates slowly.",
+        duration = 120,
+        seed = 44,
+        build = function()
+            local world = makeWorld()
+            for x = 1, 12 do
+                if x ~= 6 then
+                    world:remove("solid", x, 7)
+                    world:remove("solid", x, 8)
+                end
+            end
+            local snake = Enemy.new("snake", 6 * 16 + 8, 7 * 16, { facing = -1, seed = 44 })
+            snake:setState(Enemy.STATES.idle, 0)
+            return world, snake
+        end,
+    },
+}
+
+local BAT_SCENARIOS = {
+    {
+        title = "Hanging ambush",
+        description = "A player approaches beneath a hanging bat, drawing it into pursuit.",
+        duration = 150,
+        eventDuration = 25,
+        seed = 41,
+        input = function(tick) return { right = tick <= 30 } end,
+        build = function(assets)
+            local world = makeWorld()
+            world:set("solid", 7, 2)
+            local bat = Enemy.new("bat", 7 * 16 + 8, 4 * 16, { seed = 41 })
+            return world, bat, makePlayer(2 * 16 + 8, assets)
+        end,
+    },
+    {
+        title = "Return to ceiling",
+        description = "With no player nearby, the bat rises and hangs from the ceiling again.",
+        duration = 100,
+        seed = 42,
+        build = function()
+            local world = makeWorld()
+            world:set("solid", 6, 2)
+            local bat = Enemy.new("bat", 6 * 16 + 8, 6 * 16, { seed = 42 })
+            bat:setState(Enemy.STATES.attack)
+            return world, bat
+        end,
+    },
+    {
+        title = "Whip a diving bat",
+        description = "The bat leaves its perch as the player times a whip into its dive.",
+        duration = 95,
+        attackTick = 13,
+        seed = 43,
+        build = function(assets)
+            local world = makeWorld()
+            world:set("solid", 5, 4)
+            local bat = Enemy.new("bat", 5 * 16, 6 * 16, { seed = 43 })
+            return world, bat, makePlayer(2 * 16 + 8, assets)
+        end,
+    },
+}
+
+local CAVEMAN_SCENARIOS = {
+    {
+        title = "Patrol and ledge",
+        description = "The caveman runs, stops at a gap, and resumes after an idle pause.",
+        duration = 180,
+        seed = 51,
+        build = function()
+            local world = makeWorld(true)
+            local caveman = Enemy.new("caveman", 4 * 16 + 8, 7 * 16,
+                { facing = 1, seed = 51 })
+            caveman:setState(Enemy.STATES.walk)
+            return world, caveman
+        end,
+    },
+    {
+        title = "Spot and rush",
+        description = "A player enters its line of sight; the caveman charges toward them.",
+        duration = 110,
+        eventDuration = 45,
+        seed = 52,
+        build = function(assets)
+            local world = makeWorld()
+            local caveman = Enemy.new("caveman", 3 * 16 + 8, 7 * 16,
+                { facing = 1, seed = 52 })
+            caveman:setState(Enemy.STATES.walk)
+            return world, caveman, makePlayer(8 * 16 + 8, assets)
+        end,
+    },
+    {
+        title = "Whip and recovery",
+        description = "One whip stuns the three-health caveman; it later gets back up.",
+        duration = 260,
+        eventDuration = 235,
+        attackTick = 18,
+        seed = 53,
+        build = function(assets)
+            local world = makeWorld()
+            local caveman = Enemy.new("caveman", 6 * 16, 7 * 16,
+                { facing = 1, seed = 53 })
+            caveman:setState(Enemy.STATES.idle, 110)
+            return world, caveman, makePlayer(4 * 16 + 8, assets)
+        end,
+    },
+}
+
+local SPIDER_SCENARIOS = {
+    {
+        title = "Hanging ambush",
+        description = "A player below the spider triggers its drop, flip, and hops.",
+        duration = 135,
+        seed = 61,
+        build = function(assets)
+            local world = makeWorld()
+            world:set("solid", 6, 2)
+            local spider = Enemy.new("spider", 6 * 16 + 8, 4 * 16, { seed = 61 })
+            return world, spider, makePlayer(spider.x, assets)
+        end,
+    },
+    {
+        title = "Lost ceiling",
+        description = "Without a solid ceiling, the spider drops and begins hopping.",
+        duration = 115,
+        seed = 62,
+        build = function()
+            local world = makeWorld()
+            local spider = Enemy.new("spider", 6 * 16 + 8, 4 * 16, { seed = 62 })
+            return world, spider
+        end,
+    },
+    {
+        title = "Whip a hanging spider",
+        description = "The player whips the spider before it leaves its perch.",
+        duration = 90,
+        eventDuration = 35,
+        attackTick = 18,
+        seed = 63,
+        build = function(assets)
+            local world = makeWorld()
+            world:set("solid", 6, 5)
+            local spider = Enemy.new("spider", 6 * 16, 7 * 16, { seed = 63 })
+            return world, spider, makePlayer(4 * 16 + 8, assets)
+        end,
+    },
+}
+
+local GIANT_SPIDER_SCENARIOS = {
+    {
+        title = "Giant ambush",
+        description = "The giant spider flips from the ceiling and jumps toward the player.",
+        duration = 155,
+        seed = 71,
+        build = function(assets)
+            local world = makeWorld()
+            world:fill("solid", 6, 2, 2, 1)
+            local spider = makeGiantSpider(6, 3, 71)
+            return world, spider, makePlayer(spider.x, assets)
+        end,
+    },
+    {
+        title = "Whip the giant",
+        description = "A whip hit wounds the hanging giant and makes it drop.",
+        duration = 120,
+        eventDuration = 55,
+        attackTick = 18,
+        seed = 72,
+        build = function(assets)
+            local world = makeWorld()
+            world:fill("solid", 5, 5, 2, 1)
+            world:remove("solid", 5, 7)
+            world:remove("solid", 6, 7)
+            local spider = makeGiantSpider(5, 6, 72)
+            return world, spider, makePlayer(4 * 16 + 8, assets)
+        end,
+    },
+    {
+        title = "Web squirt",
+        description = "The giant lobs a web ball; its impact forms a fading web.",
+        duration = 110,
+        eventDuration = 80,
+        projectiles = true,
+        seed = 73,
+        build = function()
+            local world = makeWorld()
+            local spider = makeGiantSpider(6, 5, 73)
+            spider.y = 7 * 16
+            spider.height = 32
+            spider.state = "idle"
+            spider.spriteName = "sGiantSpider"
+            spider.squirtTimer = 0
+            return world, spider
+        end,
+    },
+}
+
+local SKELETON_SCENARIOS = {
+    {
+        title = "Bones awaken",
+        description = "A nearby player wakes fake bones; the skeleton forms, waits, then walks.",
+        duration = 115,
+        seed = 81,
+        input = function(tick) return { right = tick <= 15 } end,
+        build = function(assets)
+            local world = makeWorld()
+            local skeleton = Enemy.new("skeleton", 6 * 16 + 8, 7 * 16,
+                { fakeBones = true, seed = 81 })
+            return world, skeleton, makePlayer(1 * 16 + 8, assets)
+        end,
+    },
+    {
+        title = "No ledge sense",
+        description = "Unlike a snake, the walking skeleton continues over a gap.",
+        duration = 95,
+        seed = 82,
+        build = function()
+            local world = makeWorld(true)
+            world:fill("solid", 6, 8, 2, 1)
+            local skeleton = Enemy.new("skeleton", 4 * 16 + 8, 7 * 16,
+                { facing = 1, seed = 82 })
+            skeleton:setState(Enemy.STATES.walk)
+            return world, skeleton
+        end,
+    },
+    {
+        title = "Whip and shatter",
+        description = "One whip breaks the skeleton into animated bones and a skull.",
+        duration = 90,
+        eventDuration = 45,
+        attackTick = 18,
+        seed = 32, -- source-valid bone rolls with modest horizontal spread
+        build = function(assets)
+            local world = makeWorld()
+            local skeleton = Enemy.new("skeleton", 6 * 16, 7 * 16,
+                { facing = -1, seed = 83 })
+            skeleton:setState(Enemy.STATES.idle, 110)
+            return world, skeleton, makePlayer(4 * 16 + 8, assets)
+        end,
+    },
+}
+
+local function ropeWorld(withCeiling)
+    local world = makeWorld()
+    if not withCeiling then
+        for x = 1, 12 do world:remove("solid", x, 0) end
+    end
+    return world
+end
+
+local function ledgeShaft(height)
+    local world = World.new(14, height, 16)
+    world:fill("solid", 0, 0, 14, 1)
+    world:fill("solid", 0, 1, 1, height - 1)
+    world:fill("solid", 13, 1, 1, height - 1)
+    world:fill("solid", 1, height - 2, 12, 2)
+    world:fill("solid", 1, 7, 6, 1)
+    return world
+end
+
+local ROPE_SCENARIOS = {
+    {
+        title = "One-block headroom",
+        description = "The block directly over the player prevents the throw; no rope is spent.",
+        duration = 75, throwTick = 5, rope = true, seed = 91,
+        build = function(assets)
+            local world = ropeWorld(true)
+            world:set("solid", 4, 5)
+            return world, nil, makePlayer(4 * 16 + 8, assets)
+        end,
+    },
+    {
+        title = "Left corner, odd offset",
+        description = "A throw from x=109 grazes the brick corner and anchors on its left side.",
+        duration = 80, throwTick = 5, rope = true, seed = 92,
+        build = function(assets)
+            local world = ropeWorld(true)
+            world:set("solid", 7, 3)
+            return world, nil, makePlayer(6 * 16 + 13, assets)
+        end,
+    },
+    {
+        title = "Right corner, odd offset",
+        description = "A throw from x=115 grazes the opposite corner and anchors on its right side.",
+        duration = 80, throwTick = 5, rope = true, seed = 93,
+        build = function(assets)
+            local world = ropeWorld(true)
+            world:set("solid", 6, 3)
+            return world, nil, makePlayer(7 * 16 + 3, assets)
+        end,
+    },
+    {
+        title = "Clear upward throw",
+        description = "With open headroom, the rope reaches the ceiling and unfurls downward.",
+        duration = 85, throwTick = 5, rope = true, seed = 94,
+        build = function(assets)
+            return ropeWorld(true), nil, makePlayer(6 * 16 + 8, assets)
+        end,
+    },
+    {
+        title = "No ceiling overhead",
+        description = "The hook reaches its apex above the room, then the body grows back into view.",
+        duration = 85, throwTick = 5, rope = true, seed = 95,
+        build = function(assets)
+            return ropeWorld(false), nil, makePlayer(6 * 16 + 8, assets)
+        end,
+    },
+    {
+        title = "Rope hits a snake",
+        description = "The rising rope end kills the snake; its deployed body remains climbable.",
+        duration = 85, throwTick = 5, rope = true, seed = 96,
+        build = function(assets)
+            local world = ropeWorld(true)
+            local snake = Enemy.new("snake", 6 * 16 + 8, 88, { seed = 96 })
+            snake:setState(Enemy.STATES.idle, 90)
+            return world, snake, makePlayer(snake.x, assets)
+        end,
+    },
+    {
+        title = "Rope stuns a caveman",
+        description = "The rising rope end deals one damage and stuns a three-health caveman.",
+        duration = 85, throwTick = 5, rope = true, seed = 97,
+        build = function(assets)
+            local world = ropeWorld(true)
+            local caveman = Enemy.new("caveman", 6 * 16 + 8, 88, { seed = 97 })
+            caveman:setState(Enemy.STATES.idle, 90)
+            return world, caveman, makePlayer(caveman.x, assets)
+        end,
+    },
+    {
+        title = "Crouched ledge drop",
+        description = "Hold down at the ledge, then deploy beside the player; the rope stops at the shaft floor.",
+        duration = 90, throwTick = 5, rope = true, seed = 98,
+        input = function() return { down = true } end,
+        build = function(assets)
+            return ledgeShaft(16), nil, makePlayer(6 * 16 + 8, assets)
+        end,
+    },
+    {
+        title = "Deep shaft: finite rope",
+        description = "The floor is 30 tiles down. The rope stops after 16 eight-pixel segments, not at the floor.",
+        duration = 100, throwTick = 5, rope = true, ropeLimit = true, seed = 99,
+        input = function() return { down = true } end,
+        build = function(assets)
+            return ledgeShaft(30), nil, makePlayer(6 * 16 + 8, assets)
+        end,
+    },
+}
+
+local BOMB_SCENARIOS = {
+    {
+        title = "Wall rebound",
+        description = "An unpasted bomb rebounds from brick and blasts the nearby thrower.",
+        duration = 115, throwTick = 5, bomb = true, seed = 101,
+        build = function(assets)
+            local world = makeWorld()
+            world:fill("solid", 8, 5, 1, 2)
+            return world, nil, makePlayer(4 * 16 + 8, assets)
+        end,
+    },
+    {
+        title = "Paste sticks to a wall",
+        description = "With paste, the bomb stays on the wall until its fuse explodes.",
+        duration = 115, throwTick = 5, bomb = true, seed = 102,
+        build = function(assets)
+            local world = makeWorld()
+            world:fill("solid", 7, 5, 1, 2)
+            local player = makePlayer(4 * 16 + 8, assets)
+            player.equipment.paste = true
+            return world, nil, player
+        end,
+    },
+    {
+        title = "Blast catches a snake",
+        description = "The wall catches a paste bomb; its blast reaches the snake beyond it.",
+        duration = 115, throwTick = 5, bomb = true, seed = 103,
+        build = function(assets)
+            local world = makeWorld()
+            world:fill("solid", 7, 5, 1, 2)
+            local snake = Enemy.new("snake", 8 * 16 + 8, 7 * 16, { seed = 103 })
+            snake:setState(Enemy.STATES.idle, 110)
+            local player = makePlayer(4 * 16 + 8, assets)
+            player.equipment.paste = true
+            return world, snake, player
+        end,
+    },
+    {
+        title = "Upward lob",
+        description = "Holding up launches the bomb steeply toward the ceiling.",
+        duration = 115, throwTick = 5, bomb = true, seed = 104,
+        input = function(tick) return { up = tick == 5 } end,
+        build = function(assets)
+            local world = makeWorld()
+            return world, nil, makePlayer(4 * 16 + 8, assets)
+        end,
+    },
+    {
+        title = "Grounded drop",
+        description = "Holding down drops the bomb with little sideways speed.",
+        duration = 115, throwTick = 5, bomb = true, seed = 105,
+        input = function(tick) return { down = tick == 5 } end,
+        build = function(assets)
+            return makeWorld(), nil, makePlayer(4 * 16 + 8, assets)
+        end,
+    },
+    {
+        title = "Whip blocks the throw",
+        description = "A bomb press during a whip leaves the bomb supply untouched.",
+        duration = 75, throwTick = 5, attackTick = 4, bomb = true, seed = 106,
+        build = function(assets)
+            return makeWorld(), nil, makePlayer(4 * 16 + 8, assets)
+        end,
+    },
+}
+
+local function boulderWorld()
+    local world = World.new(14, 12, 16)
+    world:fill("solid", 0, 0, 14, 1)
+    world:fill("solid", 0, 1, 1, 11)
+    world:fill("solid", 13, 1, 1, 11)
+    world:fill("solid", 1, 10, 12, 2)
+    return world
+end
+
+local function boulderPlayer(assets)
+    local player = makePlayer(3 * 16 + 8, assets)
+    player.y = 10 * 16 - 8
+    return player
+end
+
+local BOULDER_SCENARIOS = {
+    {
+        title = "Fall, bounce, roll",
+        description = "A released boulder falls, bounces, then rolls toward the player's side.",
+        duration = 155, eventDuration = 155, boulderTick = 5,
+        build = function(assets)
+            return boulderWorld(), nil, boulderPlayer(assets),
+                { entities = {} }, { x = 9 * 16, y = 5 * 16 }
+        end,
+    },
+    {
+        title = "Break the wall",
+        description = "The rolling boulder smashes ordinary brick; the room boundary holds.",
+        duration = 155, eventDuration = 155, boulderTick = 5,
+        build = function(assets)
+            local world = boulderWorld()
+            world:set("solid", 5, 8)
+            return world, nil, boulderPlayer(assets),
+                { entities = {} }, { x = 9 * 16, y = 5 * 16 }
+        end,
+    },
+}
+
+local STATUE_SCENARIOS = {
+    {
+        title = "Idol arms the statue",
+        description = "Taking the idol starts the head's 100-step alarm. Its face opens and releases a boulder.",
+        duration = 190, eventDuration = 190, idolTick = 5, statue = true,
+        build = function(assets)
+            local world = boulderWorld()
+            local head = { kind = "giant_tiki_head", x = 9, y = 4.75 }
+            return world, nil, boulderPlayer(assets),
+                { entities = { head } }
+        end,
+    },
+    {
+        title = "Untouched idol",
+        description = "Without an idol pickup, the complete statue stays closed and no boulder appears.",
+        duration = 190, eventDuration = 190, statue = true,
+        build = function(assets)
+            local world = boulderWorld()
+            local head = { kind = "giant_tiki_head", x = 9, y = 4.75 }
+            return world, nil, boulderPlayer(assets),
+                { entities = { head } }
+        end,
+    },
+}
+
+local SCENARIOS = {
+    Snake = SNAKE_SCENARIOS,
+    Bat = BAT_SCENARIOS,
+    Spider = SPIDER_SCENARIOS,
+    ["Giant Spider"] = GIANT_SPIDER_SCENARIOS,
+    Caveman = CAVEMAN_SCENARIOS,
+    Skeleton = SKELETON_SCENARIOS,
+    Ropes = ROPE_SCENARIOS,
+    Bombs = BOMB_SCENARIOS,
+    Boulder = BOULDER_SCENARIOS,
+    Statue = STATUE_SCENARIOS,
+}
+
 function EnemyAI.new(app)
     return setmetatable({
         app = app,
-        world = nil,
-        player = nil,
-        enemies = {},
+        pageIndex = 1,
+        scenarios = {},
         images = {},
         sounds = {},
         accumulator = 0,
-        kills = 0,
-        gameOverTimer = 0,
-        effects = {},
-        showSensors = true,
-        debugCollision = false,
+        scrollY = 0,
+        maxScroll = 0,
+        paused = false,
+        soundEnabled = false,
+        pageRows = {},
     }, EnemyAI)
 end
 
@@ -71,331 +646,610 @@ function EnemyAI:loadAssets()
     if self.images.brick then return end
     self.images.brick = loadImage("assets/original/mines/brick.png")
     self.images.brickAlt = loadImage("assets/original/mines/brick_alt.png")
-    self.images.brickDown = loadImage("assets/original/mines/brick_down.png")
     self.images.background = loadImage("assets/original/mines/bg_cave.png")
     self.images.background:setWrap("repeat", "repeat")
-    Enemy.loadAssets()
-    self.sounds.bat = love.audio.newSource("original-game-reference/sound/bat.wav", "static")
+    self.images.tikiHead = loadImage("assets/original/entities/giant_tiki_head.png")
+    self.images.idol = loadImage("assets/original/mines/gold_idol.png")
+    self.images.tikiBody = loadImage("original-game-reference/source/extracted/spelunky/Backgrounds/bgTiki.png")
+    self.images.tikiArms = loadImage("original-game-reference/source/extracted/spelunky/Backgrounds/bgTikiArms.png")
+    self.tikiArmLeft = love.graphics.newQuad(0, 16, 16, 16, self.images.tikiArms:getDimensions())
+    self.tikiArmRight = love.graphics.newQuad(0, 0, 16, 16, self.images.tikiArms:getDimensions())
+    self.backgroundQuad = love.graphics.newQuad(0, 0, 14 * 16, 9 * 16,
+        self.images.background:getDimensions())
     self.sounds.hit = love.audio.newSource("original-game-reference/sound/hit.wav", "static")
     self.sounds.hurt = love.audio.newSource("original-game-reference/sound/hurt.wav", "static")
+    self.sounds.bat = love.audio.newSource("original-game-reference/sound/bat.wav", "static")
+    self.sounds.alert = love.audio.newSource("original-game-reference/sound/alert.wav", "static")
+    self.sounds.spider = love.audio.newSource("original-game-reference/sound/spiderjump.wav", "static")
+    self.sounds.giant = love.audio.newSource("original-game-reference/sound/gspiderjump.wav", "static")
+    self.sounds.throw = love.audio.newSource("original-game-reference/sound/throw.wav", "static")
+    self.sounds.explosion = love.audio.newSource("original-game-reference/sound/explosion.wav", "static")
+    Enemy.loadAssets()
+    Effects.loadAssets()
 end
 
-function EnemyAI:playSound(name)
+function EnemyAI:playScenarioSound(name)
+    if not self.soundEnabled then return end
     local source = self.sounds[name]
-    if source then source:clone():play() end
+    if source then
+        source:stop()
+        source:play()
+    end
 end
 
-function EnemyAI:resetArena()
-    self.world = makeCourse()
-    self.player = Player.new(5 * 16 + 8, 22 * 16 - 8)
-    self.player.state = Player.STATES.standing
-    self.player.spriteName = "sStandLeft"
-    self.player.playtestLog = self.app.playtestLog
-    self.player:loadAssets()
-    self.enemies = {
-        Enemy.new("snake", 12 * 16 + 8, 22 * 16, { facing = -1, seed = 11 }),
-        Enemy.new("bat", 20 * 16 + 8, 16 * 16 + 16, { seed = 22 }),
-        Enemy.new("spider", 29 * 16 + 8, 16 * 16 + 16, { seed = 33 }),
-        Enemy.new("snake", 35 * 16 + 8, 22 * 16, { facing = 1, seed = 44 }),
-    }
+function EnemyAI:resetScenario(scenario)
+    scenario.world, scenario.enemy, scenario.player, scenario.level, scenario.boulderOrigin =
+        scenario.definition.build(self.playerAssets)
+    scenario.backgroundQuad = scenario.world.height ~= 9 and love.graphics.newQuad(0, 0,
+        scenario.world.width * 16, scenario.world.height * 16,
+        self.images.background:getDimensions()) or self.backgroundQuad
+    scenario.hadBrick = scenario.world:has("solid", 5, 8)
+    scenario.idol = scenario.definition.statue and Item.new({
+        kind = "gold_idol", x = (scenario.player.x + 16) / 16,
+        y = scenario.player.y / 16,
+    }) or nil
+    scenario.tools = nil
+    scenario.traps = nil
+    if scenario.level then
+        scenario.traps = TrapSystem.new(scenario.world, scenario.level, {
+            drawEntity = function(_, entity)
+                love.graphics.setColor(1, 1, 1, 1)
+                love.graphics.draw(self.images.tikiHead,
+                    math.floor(entity.x * 16 - 16), math.floor(entity.y * 16 - 16))
+            end,
+        })
+        if self.trapAssets then
+            scenario.traps.assets = self.trapAssets
+        else
+            scenario.traps:loadAssets()
+            self.trapAssets = scenario.traps.assets
+        end
+    end
+    if scenario.definition.rope or scenario.definition.bomb then
+        scenario.tools = ToolSystem.new(scenario.world, Player.TICK_RATE)
+        if self.toolAssets then
+            scenario.tools.assets = self.toolAssets
+        else
+            scenario.tools:loadAssets()
+            self.toolAssets = scenario.tools.assets
+        end
+        scenario.tools.explosionSound = nil
+        if scenario.definition.rope then
+            scenario.ropesRemaining = 1
+            scenario.tools.onRopeHit = function(_, target)
+                scenario.event = "ROPE HIT"
+                scenario.eventTick = scenario.tick
+                scenario.effects:blood(target.x, target.y - 8,
+                    target.alive and 1 or (target.kind == "snake" and 4 or 1))
+                self:playScenarioSound("hit")
+            end
+        else
+            scenario.bombsRemaining = 1
+            scenario.tools.onExplosion = function()
+                self:playScenarioSound("explosion")
+            end
+        end
+    end
+    scenario.effects = Effects.new(scenario.definition.seed)
+    scenario.projectiles = scenario.definition.projectiles
+        and ProjectileSystem.new(scenario.world) or nil
+    if scenario.player and not self.playerAssets then
+        self.playerAssets = {
+            images = scenario.player.images,
+            whipImages = scenario.player.whipImages,
+        }
+        self.sounds.whip = scenario.player.whipSound
+    end
+    if scenario.player then
+        -- Scenario playback owns audio, so muting can stop every active sound.
+        scenario.player.whipSound = nil
+        scenario.player.thudSound = nil
+    end
+    scenario.tick = 0
+    scenario.event = nil
+    scenario.eventTick = nil
+    scenario.runs = (scenario.runs or 0) + 1
+end
+
+function EnemyAI:resetPage()
+    self.scenarios = {}
+    local definitions = SCENARIOS[PAGES[self.pageIndex].name]
+    if definitions then
+        for _, definition in ipairs(definitions) do
+            local scenario = { definition = definition }
+            self:resetScenario(scenario)
+            self.scenarios[#self.scenarios + 1] = scenario
+        end
+    end
     self.accumulator = 0
-    self.kills = 0
-    self.gameOverTimer = 0
-    self.effects = {}
-    if self.app.playtestLog then self.app.playtestLog:level("enemy_ai", self) end
 end
 
 function EnemyAI:enter()
     self:loadAssets()
-    self:resetArena()
+    self:resetPage()
 end
 
-function EnemyAI:getInput()
-    return {
-        left = love.keyboard.isDown("left", "a"),
-        right = love.keyboard.isDown("right", "d"),
-        up = love.keyboard.isDown("up", "w"),
-        down = love.keyboard.isDown("down", "s"),
-        jump = love.keyboard.isDown("space", "z"),
-        sprint = love.keyboard.isDown("lshift", "rshift"),
-        attack = love.keyboard.isDown("x", "c", "k", "lctrl", "rctrl"),
-    }
+function EnemyAI:setPage(index)
+    self.pageIndex = ((index - 1) % #PAGES) + 1
+    self.scrollY = 0
+    self.paused = false
+    self:resetPage()
 end
 
-function EnemyAI:getAttackHitbox()
-    return self.player:getWhipHitbox()
-end
-
-function EnemyAI:addEffect(x, y, color)
-    self.effects[#self.effects + 1] = { x = x, y = y, timer = 10, color = color }
-end
-
-function EnemyAI:updateEffects()
-    for index = #self.effects, 1, -1 do
-        local effect = self.effects[index]
-        effect.timer = effect.timer - 1
-        if effect.timer <= 0 then table.remove(self.effects, index) end
+function EnemyAI:toggleSound()
+    self.soundEnabled = not self.soundEnabled
+    if not self.soundEnabled then
+        for _, source in pairs(self.sounds) do source:stop() end
     end
 end
 
-function EnemyAI:updateAttack(input)
-    local left, top, right, bottom = self:getAttackHitbox()
-    if left then
-        for _, enemy in ipairs(self.enemies) do
-            if enemy.alive and self.player:whipCanHit(enemy)
-                and enemy:overlapsRectangle(left, top, right, bottom) then
-                self.player:markWhipHit(enemy)
-                enemy:damage(1)
-                self.kills = self.kills + 1
-                self:addEffect(enemy.x, enemy.y - 8, COLORS.alert)
-                self:playSound("hit")
+function EnemyAI:stepScenario(scenario)
+    local definition = scenario.definition
+    scenario.tick = scenario.tick + 1
+    local player = scenario.player
+    local enemy = scenario.enemy
+    local previousPlayerY = player and player.y
+
+    if player then
+        local input = definition.input and definition.input(scenario.tick) or {}
+        input.attack = scenario.tick == definition.attackTick
+        player:step(scenario.world, input)
+        if player.whipJustCracked then self:playScenarioSound("whip") end
+        if definition.bomb and scenario.tick == definition.throwTick then
+            if scenario.tools:throwBomb(player, input) then
+                scenario.bombsRemaining = scenario.bombsRemaining - 1
+                scenario.event = "BOMB THROWN"
+                self:playScenarioSound("throw")
+            else
+                scenario.event = "BLOCKED: BOMB KEPT"
+            end
+        elseif definition.rope and scenario.tick == definition.throwTick then
+            if scenario.tools:throwRope(player, input) then
+                scenario.ropesRemaining = scenario.ropesRemaining - 1
+                scenario.event = "ROPE THROWN"
+                self:playScenarioSound("throw")
+            else
+                scenario.event = "BLOCKED: ROPE KEPT"
+            end
+        end
+    else
+        scenario.world.time = (scenario.world.time or 0) + 1
+    end
+
+    if enemy and enemy.alive then
+        local previousState = enemy.state
+        local previousProjectiles = scenario.projectiles and #scenario.projectiles.projectiles or 0
+        enemy:step(scenario.world, player, { projectiles = scenario.projectiles })
+        if enemy.justAlerted then
+            if enemy.kind == "caveman" then
+                scenario.event = "CAVEMAN ALERT"
+                self:playScenarioSound("alert")
+            elseif enemy.kind == "spider" then
+                scenario.event = "SPIDER DROP"
+            elseif enemy.kind == "skeleton" then
+                scenario.event = "BONES STIR"
+            else
+                scenario.event = "BAT ALERT"
+                self:playScenarioSound("bat")
+            end
+        elseif enemy.kind == "giant_spider" and previousState == "hang"
+            and enemy.state ~= "hang" then
+            scenario.event = "GIANT DROP"
+            self:playScenarioSound("giant")
+        elseif enemy.kind == "bat" and previousState ~= Enemy.STATES.hang
+            and enemy.state == Enemy.STATES.hang then
+            scenario.event = "REHANG"
+            scenario.eventTick = scenario.tick
+        end
+        if (enemy.kind == "spider" or enemy.kind == "giant_spider")
+            and enemy.state ~= previousState
+            and (enemy.state == Enemy.STATES.bounce or enemy.state == "bounce") then
+            self:playScenarioSound(enemy.kind == "spider" and "spider" or "giant")
+        end
+        if scenario.projectiles and #scenario.projectiles.projectiles > previousProjectiles then
+            scenario.event = "WEB FIRED"
+            scenario.eventTick = scenario.tick
+        end
+        if player then
+            local left = player:getWhipHitbox()
+            if left and player:whipCanHit(enemy)
+                and player:whipOverlapsRectangle(enemy:getBounds()) then
+                player:markWhipHit(enemy)
+                enemy:damage(1, player.x)
+                if enemy.kind ~= "skeleton" then
+                    scenario.effects:blood(enemy.x, enemy.y - 8, 1)
+                end
+                scenario.event = "WHIP HIT"
+                scenario.eventTick = scenario.tick
+                self:playScenarioSound("hit")
+            end
+            if enemy.alive and enemy:resolvePlayerContact(player, previousPlayerY) == "hurt" then
+                scenario.event = "PLAYER HIT"
+                scenario.eventTick = scenario.eventTick or scenario.tick
+                if enemy.kind == "caveman" then
+                    scenario.effects:blood(player.x, player.y - 8, 1)
+                end
+                self:playScenarioSound("hurt")
+            end
+        end
+        if not enemy.alive then
+            if enemy.kind == "skeleton" then
+                scenario.effects:skeletonBreak(enemy.x, enemy.y - 8)
+            else
+                scenario.effects:blood(enemy.x, enemy.y - 8,
+                    enemy.kind == "giant_spider" and 4 or 3)
             end
         end
     end
-end
 
-function EnemyAI:updateEnemies(previousPlayerY)
-    for _, enemy in ipairs(self.enemies) do
-        if enemy.alive then
-            enemy:step(self.world, self.player)
-            if enemy.justAlerted and enemy.kind == "bat" then self:playSound("bat") end
-            local result = enemy:resolvePlayerContact(self.player, previousPlayerY)
-            if result == "stomp" then
-                self.kills = self.kills + 1
-                self:addEffect(enemy.x, enemy.y - 8, COLORS.alert)
-                self:playSound("hit")
-            elseif result == "hurt" then
-                self:addEffect(self.player.x, self.player.y - 4, COLORS.text)
-                self:playSound("hurt")
+    if scenario.tools then
+        local explosionCount = #scenario.tools.explosions
+        scenario.tools:update(player, enemy and { enemy } or {}, {})
+        if definition.bomb then
+            local bomb = scenario.tools.bombs[1]
+            if #scenario.tools.explosions > explosionCount then
+                scenario.event = player.health == 0 and "PLAYER BLASTED"
+                    or enemy and not enemy.alive and "SNAKE BLASTED" or "WALL BLASTED"
+                scenario.eventTick = scenario.tick
+            elseif bomb and bomb.alive and bomb.timer <= bomb.flashStart then
+                scenario.event = bomb.stuck and "STUCK AND FLASHING" or "BOMB FLASHING"
+            elseif bomb and bomb.alive and bomb.stuck then
+                scenario.event = "BOMB STUCK"
             end
         end
+        local rope = scenario.tools.ropes[1]
+        if rope and rope.deployed and scenario.event == "ROPE THROWN" then
+            scenario.event = "ROPE ANCHORED"
+        end
+        if rope and definition.ropeLimit and rope.deployed and not rope.deploying then
+            scenario.event = "ROPE LIMIT: 16 SEGMENTS"
+        end
     end
-end
-
-function EnemyAI:simulationStepBody(input)
-    if self.player:isDead() then
-        self.gameOverTimer = self.gameOverTimer - 1
-        if self.gameOverTimer <= 0 then self:resetArena() end
-        return
+    if scenario.traps then
+        if scenario.tick == definition.idolTick then
+            if scenario.idol:pickup(player) then scenario.traps:triggerIdol(player) end
+            scenario.event = "IDOL TAKEN: HEAD ARMED"
+            scenario.eventTick = scenario.tick
+        end
+        if scenario.idol and scenario.idol.held then scenario.idol:updateHeldPosition(player) end
+        if scenario.tick == definition.boulderTick then
+            scenario.traps:spawnBoulder(scenario.boulderOrigin)
+            scenario.event = "BOULDER RELEASED"
+            scenario.eventTick = scenario.tick
+        end
+        local bouldersBefore = #scenario.traps.boulders
+        scenario.traps:update(player, enemy and { enemy } or {}, {})
+        if #scenario.traps.boulders > bouldersBefore then
+            scenario.event = "STATUE OPENED: BOULDER"
+            scenario.eventTick = scenario.tick
+        elseif scenario.hadBrick and definition.boulderTick and scenario.tick > definition.boulderTick
+            and scenario.world:has("solid", 5, 8) == false then
+            scenario.event = "BRICK CRUSHED"
+            scenario.eventTick = scenario.tick
+        end
     end
+    if scenario.projectiles then scenario.projectiles:update({}, player) end
+    scenario.effects:update(scenario.world)
 
-    local previousPlayerY = self.player.y
-    self.player:step(self.world, input)
-    self:updateAttack(input)
-    self:updateEnemies(previousPlayerY)
-    self:updateEffects()
-    if self.player:isDead() then self.gameOverTimer = 75 end
-    if self.player.y > self.world.height * self.world.tileSize + 32 then self:resetArena() end
-end
-
-function EnemyAI:simulationStep()
-    local input = self:getInput()
-    local log = self.app.playtestLog
-    local before = log and log.capture(self)
-    if log then log:tickStart("enemy_ai", input, before) end
-    self:simulationStepBody(input)
-    if log then log:tick("enemy_ai", input, before, self) end
+    if scenario.tick >= definition.duration
+        or (scenario.eventTick and scenario.tick - scenario.eventTick >= (definition.eventDuration or 35)) then
+        self:resetScenario(scenario)
+    end
 end
 
 function EnemyAI:update(dt)
+    if self.paused then return end
     self.accumulator = math.min(self.accumulator + dt, STEP * 5)
     while self.accumulator >= STEP do
-        self:simulationStep()
+        local log = self.app.playtestLog
+        local before = log and log.capture(self)
+        if log then log:tickStart("enemy_ai", {}, before) end
+        for _, scenario in ipairs(self.scenarios) do
+            self:stepScenario(scenario)
+        end
+        if log then log:tick("enemy_ai", {}, before, self) end
         self.accumulator = self.accumulator - STEP
     end
 end
 
 function EnemyAI:keypressed(key, _, isRepeat)
     if isRepeat then return end
-    if key == "r" then
-        self:resetArena()
-    elseif key == "v" then
-        self.showSensors = not self.showSensors
-    elseif key == "b" then
-        self.debugCollision = not self.debugCollision
+    if key == "left" or key == "a" then
+        self:setPage(self.pageIndex - 1)
+    elseif key == "right" or key == "d" then
+        self:setPage(self.pageIndex + 1)
+    elseif key == "up" or key == "w" then
+        self.scrollY = clamp(self.scrollY - 80, 0, self.maxScroll)
+    elseif key == "down" or key == "s" then
+        self.scrollY = clamp(self.scrollY + 80, 0, self.maxScroll)
+    elseif key == "pageup" then
+        self.scrollY = clamp(self.scrollY - 500, 0, self.maxScroll)
+    elseif key == "pagedown" then
+        self.scrollY = clamp(self.scrollY + 500, 0, self.maxScroll)
+    elseif key == "r" then
+        self:resetPage()
+    elseif key == "space" then
+        self.paused = not self.paused
+    elseif key == "m" then
+        self:toggleSound()
     end
 end
 
-function EnemyAI:getViewport()
+function EnemyAI:wheelmoved(_, y)
+    self.scrollY = clamp(self.scrollY - y * 72, 0, self.maxScroll)
+end
+
+local function contains(rect, x, y)
+    return rect and x >= rect.x and x <= rect.x + rect.width
+        and y >= rect.y and y <= rect.y + rect.height
+end
+
+function EnemyAI:mousepressed(x, y, button)
+    if button ~= 1 then return end
+    if contains(self.soundButton, x, y) then
+        self:toggleSound()
+    elseif contains(self.restartButton, x, y) then
+        self:resetPage()
+    elseif contains(self.pauseButton, x, y) then
+        self.paused = not self.paused
+    else
+        for _, row in ipairs(self.pageRows) do
+            if contains(row, x, y) then
+                self:setPage(row.index)
+                return
+            end
+        end
+    end
+end
+
+function EnemyAI:getGridLayout()
     local width, height = love.graphics.getDimensions()
-    local worldWidth = self.world.width * self.world.tileSize
-    local worldHeight = self.world.height * self.world.tileSize
-    local availableHeight = height - HEADER_HEIGHT - FOOTER_HEIGHT
-    local scale = math.max(1, math.floor(math.min(width / worldWidth, availableHeight / worldHeight)))
+    local contentX = SIDEBAR_WIDTH + GAP
+    local contentWidth = width - contentX - GAP
+    local columns = math.max(1, math.floor((contentWidth + GAP) / (CARD_MIN_WIDTH + GAP)))
+    local cardWidth = math.floor((contentWidth - GAP * (columns - 1)) / columns)
+    local rows = math.ceil(#self.scenarios / columns)
+    local viewportHeight = height - HEADER_HEIGHT - FOOTER_HEIGHT
+    local contentHeight = rows * CARD_HEIGHT + math.max(0, rows - 1) * GAP + GAP * 2
     return {
-        x = math.floor((width - worldWidth * scale) / 2),
-        y = HEADER_HEIGHT + math.floor((availableHeight - worldHeight * scale) / 2),
-        width = worldWidth * scale,
-        height = worldHeight * scale,
-        scale = scale,
+        x = contentX, width = contentWidth, columns = columns, cardWidth = cardWidth,
+        y = HEADER_HEIGHT, height = viewportHeight, contentHeight = contentHeight,
     }
 end
 
-function EnemyAI:drawSensors(enemy)
-    if not self.showSensors or not enemy.alive then return end
-    love.graphics.setLineWidth(0.75)
-    love.graphics.setColor(COLORS.sense)
-    if enemy.kind == "bat" then
-        love.graphics.circle("line", enemy.x, enemy.y - 8, 90)
-        love.graphics.line(enemy.x, enemy.y - 8, self.player.x, self.player.y)
-    elseif enemy.kind == "spider" and enemy.state == Enemy.STATES.hang then
-        love.graphics.rectangle("fill", enemy.x - 7, enemy.y, 14, 90)
-    elseif enemy.kind == "snake" then
-        local direction = enemy.facing
-        love.graphics.line(enemy.x + direction * 7, enemy.y - 6,
-            enemy.x + direction * 10, enemy.y - 6)
-        love.graphics.line(enemy.x + direction * 8, enemy.y,
-            enemy.x + direction * 8, enemy.y + 3)
-    end
-end
-
-function EnemyAI:drawEnemyState(enemy)
-    if not enemy.alive then return end
-    local label = enemy.state
-    local font = self.app.fonts.small
-    love.graphics.setFont(font)
-    local width = font:getWidth(label) * 0.5 + 6
-    local x = math.floor(enemy.x - width / 2)
-    local y = math.floor(enemy.y - 29)
-    love.graphics.setColor(0.03, 0.025, 0.02, 0.84)
-    love.graphics.rectangle("fill", x, y, width, 10, 2, 2)
-    love.graphics.setColor(STATE_COLORS[label] or COLORS.text)
-    love.graphics.print(label, x + 3, y - 2, 0, 0.5, 0.5)
-end
-
-function EnemyAI:drawPlayer()
-    if self.player.invincibleTimer > 0 and math.floor(self.player.invincibleTimer / 2) % 2 == 0 then
-        return
-    end
-    self.player:draw()
-end
-
-function EnemyAI:drawDebugBounds(entity, color)
-    local left, top, right, bottom
-    if entity == self.player then
-        local halfWidth = entity:getCollisionHalfWidth()
-        local topOffset, bottomOffset = entity:getVerticalBounds()
-        left, top, right, bottom = entity.x - halfWidth, entity.y + topOffset,
-            entity.x + halfWidth, entity.y + bottomOffset
-    else
-        left, top, right, bottom = entity:getBounds()
-    end
-    love.graphics.setColor(color)
-    love.graphics.setLineWidth(0.75)
-    love.graphics.rectangle("line", left, top, right - left, bottom - top)
-end
-
-function EnemyAI:drawWorld(viewport)
-    local worldWidth = self.world.width * self.world.tileSize
-    local worldHeight = self.world.height * self.world.tileSize
-    local backgroundQuad = love.graphics.newQuad(0, 0, worldWidth, worldHeight,
-        self.images.background:getDimensions())
-
-    love.graphics.setScissor(viewport.x, viewport.y, viewport.width, viewport.height)
-    love.graphics.push()
-    love.graphics.translate(viewport.x, viewport.y)
-    love.graphics.scale(viewport.scale, viewport.scale)
-    love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.draw(self.images.background, backgroundQuad, 0, 0)
-    self.world:each("solid", function(x, y)
-        local image = (x * 17 + y * 31) % 7 == 0 and self.images.brickAlt or self.images.brick
-        love.graphics.draw(image, x * 16, y * 16)
-    end)
-    self.world:each("platform", function(x, y)
-        love.graphics.draw(self.images.brickDown, x * 16, y * 16)
-    end)
-
+function EnemyAI:drawSidebar(height)
+    love.graphics.setColor(COLORS.panel)
+    love.graphics.rectangle("fill", 0, 0, SIDEBAR_WIDTH, height)
+    love.graphics.setColor(COLORS.border)
+    love.graphics.rectangle("fill", SIDEBAR_WIDTH - 1, 0, 1, height)
+    love.graphics.setFont(self.app.fonts.body)
+    love.graphics.setColor(COLORS.text)
+    love.graphics.print("SCENARIO TESTS", 16, 17)
     love.graphics.setFont(self.app.fonts.small)
-    for _, label in ipairs(self.world.labels) do
-        love.graphics.setColor(COLORS.muted)
-        love.graphics.printf(label.text, label.x - 40, label.y, 80, "center", 0, 0.5, 0.5)
-    end
+    love.graphics.setColor(COLORS.muted)
+    love.graphics.print(string.format("%d TEST PAGES", #PAGES), 16, 47)
 
-    for _, enemy in ipairs(self.enemies) do self:drawSensors(enemy) end
-    for _, enemy in ipairs(self.enemies) do
-        if enemy.alive then
-            enemy:draw()
-            self:drawEnemyState(enemy)
+    self.pageRows = {}
+    for index, enemy in ipairs(PAGES) do
+        local row = { index = index, x = 8, y = 78 + (index - 1) * 36,
+            width = SIDEBAR_WIDTH - 16, height = 32 }
+        self.pageRows[#self.pageRows + 1] = row
+        local selected = index == self.pageIndex
+        if selected then
+            love.graphics.setColor(COLORS.accent)
+            love.graphics.rectangle("fill", row.x, row.y, row.width, row.height, 3, 3)
+        end
+        love.graphics.setFont(self.app.fonts.small)
+        love.graphics.setColor(selected and COLORS.selectedText or COLORS.text)
+        love.graphics.print(string.format("%02d", index), row.x + 9, row.y + 7)
+        love.graphics.print(enemy.name, row.x + 43, row.y + 7)
+        if not enemy.scenarios then
+            love.graphics.setColor(COLORS.muted)
+            love.graphics.printf("—", row.x, row.y + 7, row.width - 9, "right")
         end
     end
-    self:drawPlayer()
+    love.graphics.setFont(self.app.fonts.small)
+    love.graphics.setColor(COLORS.muted)
+    love.graphics.printf("SCENARIOS LOOP AUTOMATICALLY", 14, height - 66,
+        SIDEBAR_WIDTH - 28, "left")
+end
 
-    local attackLeft, attackTop, attackRight, attackBottom = self:getAttackHitbox()
-    if attackLeft and self.debugCollision then
-        love.graphics.setColor(0.95, 0.75, 0.18, 0.8)
-        love.graphics.rectangle("line", attackLeft, attackTop,
-            attackRight - attackLeft, attackBottom - attackTop)
-    end
-    if self.debugCollision then
-        self:drawDebugBounds(self.player, { 0.2, 1, 0.35, 0.9 })
-        for _, enemy in ipairs(self.enemies) do
-            if enemy.alive then self:drawDebugBounds(enemy, { 1, 0.25, 0.2, 0.9 }) end
-        end
-    end
-
-    for _, effect in ipairs(self.effects) do
-        local radius = 2 + (10 - effect.timer) * 0.55
-        love.graphics.setColor(effect.color)
-        love.graphics.circle("line", effect.x, effect.y, radius)
-        love.graphics.line(effect.x - radius, effect.y, effect.x + radius, effect.y)
-        love.graphics.line(effect.x, effect.y - radius, effect.x, effect.y + radius)
-    end
-    love.graphics.pop()
-    love.graphics.setScissor()
+function EnemyAI:drawButton(rect, label)
+    love.graphics.setColor(COLORS.accent)
+    love.graphics.rectangle("fill", rect.x, rect.y, rect.width, rect.height, 4, 4)
+    love.graphics.setFont(self.app.fonts.small)
+    love.graphics.setColor(COLORS.selectedText)
+    love.graphics.printf(label, rect.x, rect.y + 8, rect.width, "center")
 end
 
 function EnemyAI:drawHeader(width)
-    love.graphics.setColor(COLORS.panel)
-    love.graphics.rectangle("fill", 0, 0, width, HEADER_HEIGHT)
+    local enemy = PAGES[self.pageIndex]
+    love.graphics.setColor(COLORS.panelDark)
+    love.graphics.rectangle("fill", SIDEBAR_WIDTH, 0, width - SIDEBAR_WIDTH, HEADER_HEIGHT)
     love.graphics.setColor(COLORS.border)
-    love.graphics.rectangle("fill", 0, HEADER_HEIGHT - 1, width, 1)
+    love.graphics.rectangle("fill", SIDEBAR_WIDTH, HEADER_HEIGHT - 1,
+        width - SIDEBAR_WIDTH, 1)
     love.graphics.setFont(self.app.fonts.title)
     love.graphics.setColor(COLORS.text)
-    love.graphics.print("ENEMY AI", 20, 10)
+    love.graphics.print(enemy.name, SIDEBAR_WIDTH + GAP, 6)
     love.graphics.setFont(self.app.fonts.small)
     love.graphics.setColor(COLORS.muted)
-    love.graphics.print("ORIGINAL 30 Hz SENSING, STATES & CONTACT RULES", 22, 61)
-    local hearts = string.rep("♥ ", self.player.health)
-    love.graphics.setColor(COLORS.alert)
-    love.graphics.printf("LIFE  " .. hearts, width - 350, 23, 330, "right")
-    love.graphics.setColor(COLORS.accent)
-    love.graphics.printf(string.format("KILLS  %d / %d", self.kills, #self.enemies),
-        width - 350, 59, 330, "right")
+    love.graphics.print(enemy.scenarios and string.format("%d SCRIPTED SCENARIOS  •  30 STEPS/S", #self.scenarios)
+        or "SCENARIOS COMING SOON", SIDEBAR_WIDTH + GAP + 2, 59)
+    self.soundButton = { x = width - 118, y = 25, width = 104, height = 34 }
+    self:drawButton(self.soundButton, self.soundEnabled and "MUTE" or "UNMUTE")
+    if enemy.scenarios then
+        self.restartButton = { x = width - 318, y = 25, width = 88, height = 34 }
+        self.pauseButton = { x = width - 218, y = 25, width = 94, height = 34 }
+        self:drawButton(self.restartButton, "RESTART")
+        self:drawButton(self.pauseButton, self.paused and "RESUME" or "PAUSE")
+    else
+        self.restartButton, self.pauseButton = nil, nil
+    end
+end
+
+function EnemyAI:drawScenarioWorld(scenario, x, y, width)
+    local previewX, previewY = x + 12, y + 76
+    local previewWidth, previewHeight = width - 24, 294
+    love.graphics.setColor(COLORS.background)
+    love.graphics.rectangle("fill", previewX, previewY, previewWidth, previewHeight, 3, 3)
+    local worldWidth = scenario.world.width * 16
+    local worldHeight = scenario.world.height * 16
+    local scale = math.max(1, math.min(2, math.floor(previewWidth / worldWidth),
+        math.floor(previewHeight / worldHeight)))
+    local drawX = math.floor(previewX + (previewWidth - worldWidth * scale) / 2)
+    local drawY = worldHeight * scale > previewHeight and previewY
+        or math.floor(previewY + (previewHeight - worldHeight * scale) / 2)
+    local clipX, clipY, clipWidth, clipHeight = love.graphics.getScissor()
+    local left = math.max(previewX, clipX or previewX)
+    local top = math.max(previewY, clipY or previewY)
+    local right = math.min(previewX + previewWidth,
+        clipX and clipX + clipWidth or previewX + previewWidth)
+    local bottom = math.min(previewY + previewHeight,
+        clipY and clipY + clipHeight or previewY + previewHeight)
+    love.graphics.setScissor(left, top, math.max(0, right - left), math.max(0, bottom - top))
+    love.graphics.push()
+    love.graphics.translate(drawX, drawY)
+    love.graphics.scale(scale)
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.draw(self.images.background, scenario.backgroundQuad, 0, 0)
+    local queue = DepthQueue.new()
+    if scenario.level and #scenario.level.entities > 0 then
+        queue:add(Depth.BACKDROP, function()
+            local head = scenario.level.entities[1]
+            local x, y = (head.x - 1) * 16, (head.y + 1.25) * 16
+            love.graphics.setColor(1, 1, 1, 1)
+            love.graphics.draw(self.images.tikiBody, x, y)
+            love.graphics.draw(self.images.tikiArms, self.tikiArmLeft, x - 16, y)
+            love.graphics.draw(self.images.tikiArms, self.tikiArmRight, x + 32, y)
+        end)
+    end
+    queue:add(Depth.TERRAIN, function()
+        scenario.world:each("solid", function(tileX, tileY)
+            local image = (tileX * 17 + tileY * 31) % 7 == 0
+                and self.images.brickAlt or self.images.brick
+            love.graphics.setColor(1, 1, 1, 1)
+            love.graphics.draw(image, tileX * 16, tileY * 16)
+        end)
+    end)
+    if scenario.player then
+        if scenario.player.invincibleTimer == 0
+            or math.floor(scenario.player.invincibleTimer / 2) % 2 == 1 then
+            queue:add(Depth.PLAYER, function() scenario.player:drawBody() end)
+            if scenario.player:getWhipPhase() then
+                queue:add(Depth.EFFECT, function() scenario.player:drawWhip() end)
+            end
+        end
+    end
+    if scenario.tools then scenario.tools:submit(queue) end
+    if scenario.idol then
+        queue:add(scenario.idol.held and Depth.heldItem(scenario.player)
+            or Depth.entity("gold_idol"), function()
+            love.graphics.setColor(1, 1, 1, 1)
+            love.graphics.draw(self.images.idol, math.floor(scenario.idol.x - 8),
+                math.floor(scenario.idol.y - 12))
+        end)
+    end
+    if scenario.traps then scenario.traps:submit(queue) end
+    if scenario.enemy and scenario.enemy.alive then
+        queue:add(Depth.entity(scenario.enemy.kind), function() scenario.enemy:draw() end)
+    end
+    if scenario.projectiles then scenario.projectiles:submit(queue) end
+    queue:add(Depth.EFFECT, function() scenario.effects:draw() end)
+    queue:draw()
+    if scenario.enemy and scenario.enemy.alive then
+        love.graphics.setFont(self.app.fonts.small)
+        love.graphics.setColor(COLORS.text)
+        love.graphics.print(scenario.enemy.state, scenario.enemy.x - 12,
+            scenario.enemy.y - 29, 0, 0.5, 0.5)
+    end
+    love.graphics.pop()
+    love.graphics.setScissor(clipX, clipY, clipWidth, clipHeight)
+end
+
+function EnemyAI:drawCard(scenario, x, y, width)
+    local definition = scenario.definition
+    love.graphics.setColor(COLORS.card)
+    love.graphics.rectangle("fill", x, y, width, CARD_HEIGHT, 5, 5)
+    love.graphics.setColor(COLORS.border)
+    love.graphics.rectangle("line", x + 0.5, y + 0.5, width - 1,
+        CARD_HEIGHT - 1, 5, 5)
+    love.graphics.setFont(self.app.fonts.body)
+    love.graphics.setColor(COLORS.text)
+    love.graphics.print(definition.title, x + 12, y + 9)
+    love.graphics.setFont(self.app.fonts.small)
+    love.graphics.setColor(COLORS.muted)
+    love.graphics.printf(definition.description, x + 12, y + 38, width - 24, "left")
+    self:drawScenarioWorld(scenario, x, y, width)
+    love.graphics.setColor(scenario.event == "PLAYER HIT" and COLORS.danger
+        or scenario.event and COLORS.success or COLORS.text)
+    love.graphics.print(scenario.event or (scenario.enemy and scenario.enemy.state)
+        or "READY", x + 12, y + 385)
+    if scenario.player then
+        love.graphics.setColor(COLORS.text)
+        local status = definition.bomb
+            and string.format("HP %d/%d  BOMBS %d", scenario.player.health,
+                scenario.player.maxHealth, scenario.bombsRemaining)
+            or string.format("HEALTH %d/%d", scenario.player.health, scenario.player.maxHealth)
+        love.graphics.printf(status, x + width / 3, y + 385, width / 3, "center")
+    end
+    love.graphics.setColor(COLORS.muted)
+    love.graphics.printf(string.format("RUN %02d  •  %d/%d", scenario.runs,
+        scenario.tick, definition.duration), x + 12, y + 385, width - 24, "right")
+end
+
+function EnemyAI:drawGrid(width, height)
+    local layout = self:getGridLayout()
+    self.maxScroll = math.max(0, layout.contentHeight - layout.height)
+    self.scrollY = clamp(self.scrollY, 0, self.maxScroll)
+    if #self.scenarios == 0 then
+        love.graphics.setFont(self.app.fonts.body)
+        love.graphics.setColor(COLORS.muted)
+        love.graphics.printf("Scripted scenarios for " .. PAGES[self.pageIndex].name
+            .. " are coming soon.", layout.x, height / 2 - 15,
+            layout.width, "center")
+        return
+    end
+    love.graphics.setScissor(layout.x, layout.y, layout.width, layout.height)
+    for index, scenario in ipairs(self.scenarios) do
+        local column = (index - 1) % layout.columns
+        local row = math.floor((index - 1) / layout.columns)
+        local x = layout.x + column * (layout.cardWidth + GAP)
+        local y = layout.y + GAP + row * (CARD_HEIGHT + GAP) - self.scrollY
+        if y + CARD_HEIGHT >= layout.y and y <= layout.y + layout.height then
+            self:drawCard(scenario, x, y, layout.cardWidth)
+        end
+    end
+    love.graphics.setScissor()
+    if self.maxScroll > 0 then
+        local trackHeight = layout.height - 8
+        local thumbHeight = math.max(32, trackHeight * layout.height / layout.contentHeight)
+        local thumbY = layout.y + 4 + (trackHeight - thumbHeight) * self.scrollY / self.maxScroll
+        love.graphics.setColor(COLORS.border)
+        love.graphics.rectangle("fill", width - 5, layout.y + 4, 3, trackHeight, 2, 2)
+        love.graphics.setColor(COLORS.text)
+        love.graphics.rectangle("fill", width - 5, thumbY, 3, thumbHeight, 2, 2)
+    end
 end
 
 function EnemyAI:drawFooter(width, height)
-    love.graphics.setColor(COLORS.panel)
+    love.graphics.setColor(COLORS.panelDark)
     love.graphics.rectangle("fill", 0, height - FOOTER_HEIGHT, width, FOOTER_HEIGHT)
     love.graphics.setColor(COLORS.border)
     love.graphics.rectangle("fill", 0, height - FOOTER_HEIGHT, width, 1)
     love.graphics.setFont(self.app.fonts.small)
     love.graphics.setColor(COLORS.muted)
-    love.graphics.printf(
-        "A/D MOVE   SHIFT SPRINT   Z/SPACE JUMP   X WHIP   V SENSORS   B COLLIDERS   R RESET   ESC MENU",
-        12, height - 30, width - 24, "center")
-end
-
-function EnemyAI:drawOverlay(width, height)
-    if not self.player:isDead() and self.kills < #self.enemies then return end
-    love.graphics.setColor(0.02, 0.015, 0.01, 0.76)
-    love.graphics.rectangle("fill", 0, 0, width, height)
-    love.graphics.setFont(self.app.fonts.title)
-    love.graphics.setColor(self.player:isDead() and COLORS.alert or COLORS.text)
-    local message = self.player:isDead() and "YOU DIED" or "ARENA CLEAR"
-    love.graphics.printf(message, 0, height / 2 - 38, width, "center")
-    love.graphics.setFont(self.app.fonts.small)
-    love.graphics.setColor(COLORS.muted)
-    local detail = self.player:isDead() and "RESETTING...  •  R TO RETRY NOW" or "R TO RUN THE SIMULATION AGAIN"
-    love.graphics.printf(detail, 0, height / 2 + 18, width, "center")
+    love.graphics.printf("A/D OR ←/→  PAGE     W/S OR WHEEL  SCROLL     SPACE  PAUSE     R  RESTART     M  SOUND     ESC  MENU",
+        10, height - 25, width - 20, "center")
 end
 
 function EnemyAI:draw()
     local width, height = love.graphics.getDimensions()
     love.graphics.clear(COLORS.background)
     self:drawHeader(width)
-    self:drawWorld(self:getViewport())
+    self:drawGrid(width, height)
+    self:drawSidebar(height)
     self:drawFooter(width, height)
-    self:drawOverlay(width, height)
 end
 
 return EnemyAI

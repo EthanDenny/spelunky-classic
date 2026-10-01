@@ -1,5 +1,6 @@
 local MinesGenerator = require("src.world.mines_generator")
 local MinesVariants = require("src.world.mines_variants")
+local MinesLevelSelection = require("src.world.mines_level_selection")
 local GeneratedWorld = require("src.platform.generated_world")
 local Player = require("src.platform.player")
 local Enemy = require("src.platform.enemy")
@@ -14,6 +15,9 @@ local OriginalHUD = require("src.ui.original_hud")
 local Creature = require("src.platform.creature")
 local ProjectileSystem = require("src.platform.projectile_system")
 local RunState = require("src.game.run_state")
+local Depth = require("src.render.classic_depth")
+local DepthQueue = require("src.render.depth_queue")
+local ClassicSounds = require("src.audio.classic_sounds")
 
 local FullLevelPlaytest = {}
 FullLevelPlaytest.__index = FullLevelPlaytest
@@ -49,6 +53,8 @@ function FullLevelPlaytest.new(app)
         app = app,
         renderer = nil,
         levelNumber = 1,
+        subtypeIndex = 1,
+        selectionError = nil,
         seed = nil,
         level = nil,
         world = nil,
@@ -68,7 +74,10 @@ function FullLevelPlaytest.new(app)
         hitSound = nil,
         spikeBloodImage = nil,
         throwSound = nil,
+        sounds = ClassicSounds.new(),
         actionHeld = false,
+        climbSoundTick = 0,
+        climbSoundToggle = false,
         tools = nil,
         traps = nil,
         hud = nil,
@@ -127,7 +136,26 @@ function FullLevelPlaytest:generateLevel(seed)
     self.run = self.run or RunState.new(seed)
     self.level = MinesGenerator.generate(seed, { levelNumber = self.levelNumber })
     MinesVariants.apply(self.level, self.run)
+    self.level.selectedSubtype = MinesLevelSelection.choices[self.subtypeIndex].key
     self:buildSimulation()
+end
+
+function FullLevelPlaytest:generateSelectedLevel(startSeed, freshRun)
+    local subtype = MinesLevelSelection.choices[self.subtypeIndex].key
+    local seed = startSeed
+    if subtype ~= "random" then
+        local foundSeed, _, err = MinesLevelSelection.find(startSeed, self.levelNumber, subtype)
+        if not foundSeed then self.selectionError = err return false end
+        seed = foundSeed
+    end
+    if freshRun then
+        self.run = nil
+        self.heldItem = nil
+        self.heldNpc = nil
+    end
+    self.selectionError = nil
+    self:generateLevel(seed)
+    return true
 end
 
 function FullLevelPlaytest:buildSimulation()
@@ -137,6 +165,8 @@ function FullLevelPlaytest:buildSimulation()
     self.player.playtestLog = self.app.playtestLog
     self.run:applyToPlayer(self.player)
     self.player.state = Player.STATES.standing
+    self.climbSoundTick = 0
+    self.climbSoundToggle = false
     self.player.spriteName = "sStandLeft"
     self.player:loadAssets()
     self.tools = ToolSystem.new(self.world, Player.TICK_RATE)
@@ -151,6 +181,10 @@ function FullLevelPlaytest:buildSimulation()
     self.items = {}
     self.collectibles = {}
     self.effects = Effects.new(self.seed)
+    self.tools.onRopeHit = function(_, enemy)
+        if enemy.kind ~= "skeleton" then self.effects:blood(enemy.x, enemy.y - 8, 1) end
+        if self.hitSound then self.hitSound:clone():play() end
+    end
     Effects.loadAssets()
     self.hiddenEntities = {}
     self.heldItem = nil
@@ -245,15 +279,7 @@ function FullLevelPlaytest:enter()
 end
 
 function FullLevelPlaytest:getInput()
-    return {
-        left = love.keyboard.isDown("left", "a"),
-        right = love.keyboard.isDown("right", "d"),
-        up = love.keyboard.isDown("up", "w"),
-        down = love.keyboard.isDown("down", "s"),
-        jump = love.keyboard.isDown("space", "z"),
-        sprint = love.keyboard.isDown("lshift", "rshift"),
-        attack = love.keyboard.isDown("x", "c", "k", "lctrl", "rctrl"),
-    }
+    return self.app.controls:playerInput()
 end
 
 function FullLevelPlaytest:isNearExit()
@@ -278,6 +304,7 @@ function FullLevelPlaytest:advanceLevel()
     self.run:capturePlayer(self.player)
     self.run:finishLevel()
     self.levelNumber = self.levelNumber + 1
+    self.subtypeIndex = 1
     self:generateLevel(self.seed)
 end
 
@@ -288,7 +315,7 @@ function FullLevelPlaytest:checkSpikes()
     for _, spike in ipairs(self.spikeEntities) do
         local left = spike.x * 16
         local top = spike.y * 16
-        if x + 4 > left and x - 4 < left + 16
+        if not spike.destroyed and x + 4 > left and x - 4 < left + 16
             and y + 8 > top and y - 4 < top + 16 then
             spike.bloody = true
             self.effects:blood(x, y, 3)
@@ -299,13 +326,16 @@ function FullLevelPlaytest:checkSpikes()
 end
 
 function FullLevelPlaytest:checkWhip()
-    local left, top, right, bottom = self.player:getWhipHitbox()
+    local left = self.player:getWhipHitbox()
     if not left then return end
     for _, enemy in ipairs(self.enemies) do
         if enemy.alive and self.player:whipCanHit(enemy)
-            and enemy:overlapsRectangle(left, top, right, bottom) then
+            and self.player:whipOverlapsRectangle(enemy:getBounds()) then
             self.player:markWhipHit(enemy)
             enemy:damage(1)
+            if enemy.kind == "snake" then
+                self.effects:blood(enemy.x, enemy.y - 8, 1)
+            end
             if enemy.kind == "shopkeeper" then
                 enemy.angry = true
                 self.run:angerShopkeepers("VANDAL! THIEF!")
@@ -314,16 +344,21 @@ function FullLevelPlaytest:checkWhip()
         end
     end
     for _, item in ipairs(self.items) do
-        if not item.held and not item.opened and item:overlapsRectangle(left, top, right, bottom)
+        if not item.held and not item.opened
             and (item.kind == "jar" or item.kind == "crate" or item.kind == "chest") then
-            self:openContainer(item)
+            local half = item:getCollisionHalfWidth()
+            local itemTop, itemBottom = item:getVerticalBounds()
+            if self.player:whipOverlapsRectangle(item.x - half, item.y + itemTop,
+                item.x + half, item.y + itemBottom) then
+                self:openContainer(item)
+            end
         end
     end
     for _, entity in ipairs(self.level.entities) do
         if entity.kind == "web" and not self.dynamicEntities[entity] then
             local entityLeft, entityTop = entity.x * 16, entity.y * 16
-            if right >= entityLeft and left <= entityLeft + 16
-                and bottom >= entityTop and top <= entityTop + 16 then
+            if self.player:whipOverlapsRectangle(entityLeft, entityTop,
+                entityLeft + 16, entityTop + 16) then
                 self.dynamicEntities[entity] = true
                 self.world:remove("web", math.floor(entity.x), math.floor(entity.y))
             end
@@ -334,8 +369,49 @@ end
 function FullLevelPlaytest:openContainer(item)
     local x, y = item.x, item.y
     local reward, message = item:open(self.run)
-    if item.kind == "jar" then self.effects:jarBreak(x, y) end
-    if reward then self:spawnEntity(reward, x, y - 4) end
+    if item.kind == "jar" then
+        self.effects:jarBreak(x, y)
+        self.sounds:play("break_item")
+    elseif item.kind == "chest" or item.kind == "locked_chest" then
+        self.sounds:play("chest_open")
+    end
+    if reward == "snake" and item.kind == "jar" then
+        -- oJar's Destroy event creates an oSnake at x/y-8 after a left hit,
+        -- x-16/y-8 after a right hit, and x-8/y-8 otherwise. Our enemy
+        -- coordinates are bottom-center rather than GameMaker's top-left.
+        local snakeX = x + (item.impactSide == "left" and 8
+            or item.impactSide == "right" and -8 or 0)
+        local snakeY = y + 8
+        local snake = self:spawnEntity(reward, snakeX, snakeY)
+        if self.world:collidesSolid(snake, snake.x, snake.y) then
+            local normal = item.impactSide == "left" and { 1, 0 }
+                or item.impactSide == "right" and { -1, 0 }
+                or item.impactSide == "ceiling" and { 0, 1 }
+                or { 0, -1 }
+            local directions = { normal, { 0, -1 }, { 0, 1 }, { -1, 0 }, { 1, 0 },
+                { -1, -1 }, { 1, -1 }, { -1, 1 }, { 1, 1 } }
+            local placed = false
+            for distance = 1, 16 do
+                for _, direction in ipairs(directions) do
+                    local nextX = snakeX + direction[1] * distance
+                    local nextY = snakeY + direction[2] * distance
+                    if not self.world:collidesSolid(snake, nextX, nextY) then
+                        snake.x, snake.y = nextX, nextY
+                        snake.spawnX, snake.spawnY = nextX, nextY
+                        local entity = self.level.entities[#self.level.entities]
+                        entity.x, entity.y = nextX / 16, nextY / 16
+                        placed = true
+                        break
+                    end
+                end
+                if placed then break end
+            end
+        end
+    elseif reward then
+        -- oJar creates treasure at its own origin; the old y-4 offset could
+        -- insert a four-pixel gem into the ceiling that broke the pot.
+        self:spawnEntity(reward, x, item.kind == "jar" and y or y - 4)
+    end
     if message then self.run:addMessage(message, 60) end
     item.x, item.y = -1000, -1000
 end
@@ -355,6 +431,14 @@ function FullLevelPlaytest:checkCollectibles()
                 else
                     local message = Item.collect(entity.kind, self.run, self.player)
                     collectible.alive = false
+                    if entity.kind == "gold_bar" or entity.kind == "gold_bars" then
+                        self.sounds:play("coin")
+                    elseif entity.kind == "emerald_big" or entity.kind == "sapphire_big"
+                        or entity.kind == "ruby_big" then
+                        self.sounds:play("gem")
+                    else
+                        self.sounds:play("pickup")
+                    end
                     if entity.kind == "key" then self.run.hasKey = true end
                     if message then self.run:addMessage(message, 75) end
                 end
@@ -391,6 +475,7 @@ function FullLevelPlaytest:buyNearbyCollectible()
             self.run.money = self.run.money - price
             local message = Item.collect(entity.kind, self.run, self.player)
             collectible.alive = false
+            self.sounds:play("pickup")
             self.run:addMessage(message or "PURCHASED", 75)
             return true
         end
@@ -520,6 +605,7 @@ function FullLevelPlaytest:pickupNearestItem()
     end
     if nearest and nearest:pickup(self.player) then
         self.heldItem = nearest
+        self.sounds:play("pickup")
         if nearest.kind == "gold_idol" and not nearest.idolTriggered then
             nearest.idolTriggered = true
             self.traps:triggerIdol(self.player)
@@ -573,6 +659,7 @@ function FullLevelPlaytest:openNearbyContainer()
                 self.run.hasKey = true
             end
             local reward, message = item:open(self.run)
+            if reward then self.sounds:play("chest_open") end
             if message then self.run:addMessage(message, 90) end
             if reward then
                 item.x, item.y = -1000, -1000
@@ -582,6 +669,16 @@ function FullLevelPlaytest:openNearbyContainer()
         end
     end
     return false
+end
+
+function FullLevelPlaytest:crateAtPlayer()
+    for _, item in ipairs(self.items) do
+        if item.kind == "crate" and not item.opened
+            and item:overlapsRectangle(self.player.x, self.player.y,
+                self.player.x, self.player.y) then
+            return item
+        end
+    end
 end
 
 function FullLevelPlaytest:meleeHeldWeapon(item)
@@ -630,7 +727,11 @@ function FullLevelPlaytest:useHeldItem(input)
             return true
         else
             local cooldown = self.projectiles:fireWeapon(item.kind, self.player, self.player)
-            if cooldown then item.cooldown = cooldown return true end
+            if cooldown then
+                if item.kind == "bow" then self.sounds:play("bowpull") end
+                item.cooldown = cooldown
+                return true
+            end
         end
     end
     if item.weapon then item:dropWeapon(self.player)
@@ -653,7 +754,7 @@ end
 
 function FullLevelPlaytest:applyEnvironment(input)
     local player = self.player
-    if self.world:cellAt("web", player.x, player.y) then
+    if self.world:webAtPoint(player.x, player.y) then
         player:web(12)
         player.vx = player.vx * 0.15
         player.vy = player.vy * 0.15
@@ -662,6 +763,7 @@ end
 
 function FullLevelPlaytest:simulationStepBody(input)
     if self.player:isDead() then
+        self.player:step(self.world, {})
         self.deathTimer = self.deathTimer - 1
         if self.deathTimer <= 0 then
             self.run = RunState.new(self.seed)
@@ -673,13 +775,39 @@ function FullLevelPlaytest:simulationStepBody(input)
 
     local actionPressed = input.attack and not self.actionHeld
     self.actionHeld = input.attack
-    if self.heldItem or self.heldNpc then input.suppressWhip = true end
+    local crateToOpen = actionPressed and input.up and self:crateAtPlayer()
+    if self.heldItem or self.heldNpc or crateToOpen then input.suppressWhip = true end
     local previousY = self.player.y
     local previousHealth = self.player.health
+    local previousState = self.player.state
     self.player:step(self.world, input)
+    if self.player.state == Player.STATES.jumping
+        and previousState ~= Player.STATES.jumping
+        and (previousState == Player.STATES.standing or previousState == Player.STATES.running
+            or previousState == Player.STATES.hanging or previousState == Player.STATES.climbing) then
+        self.sounds:play("jump")
+    end
+    if self.player.state == Player.STATES.climbing and (input.up or input.down)
+        and math.abs(self.player.y - previousY) > 0.05 then
+        self.climbSoundTick = self.climbSoundTick - 1
+        if self.climbSoundTick <= 0 then
+            self.sounds:play(self.climbSoundToggle and "climb2" or "climb1")
+            self.climbSoundToggle = not self.climbSoundToggle
+            self.climbSoundTick = 8
+        end
+    else
+        self.climbSoundTick = 0
+    end
     self:applyEnvironment(input)
     if actionPressed then
-        if self.heldNpc then
+        if crateToOpen then
+            if self.heldItem == crateToOpen then
+                self.heldItem = nil
+                crateToOpen.held = false
+            end
+            self:openContainer(crateToOpen)
+            self.sounds:play("pickup")
+        elseif self.heldNpc then
             self.heldNpc:throw(self.player, input)
             self.heldNpc = nil
         elseif self.heldItem then
@@ -700,7 +828,7 @@ function FullLevelPlaytest:simulationStepBody(input)
     self:revealHiddenContents()
     for _, bones in ipairs(self.fakeBones) do
         if bones:update(self.world, self.player) then
-            self:spawnEntity("skeleton", bones.x, bones.y, {
+            self:spawnEntity("skeleton", bones.x + 8, bones.y + 16, {
                 facing = self.player.x < bones.x + 8 and -1 or 1,
             })
         end
@@ -716,10 +844,20 @@ function FullLevelPlaytest:simulationStepBody(input)
 
     for _, enemy in ipairs(self.enemies) do
         if enemy.alive then
+            local oldState, oldVy = enemy.state, enemy.vy
             enemy:step(self.world, self.player, {
                 run = self.run,
                 projectiles = self.projectiles,
             })
+            if enemy.kind == "bat" and oldState == "HANG" and enemy.state ~= oldState then
+                self.sounds:play("bat")
+            elseif enemy.kind == "giant_spider" and oldState == "hang"
+                and enemy.state ~= oldState then
+                self.sounds:play("giant_spider")
+            elseif enemy.kind == "giant_spider" and oldVy >= 0 and enemy.vy < -1
+                and enemy.state == "bounce" then
+                self.sounds:play("spider_jump")
+            end
             enemy:resolvePlayerContact(self.player, previousY)
             if enemy.kind == "damsel" and self:isNearExit()
                 and math.abs(enemy.x - self.player.x) < 24 then
@@ -727,13 +865,16 @@ function FullLevelPlaytest:simulationStepBody(input)
                 enemy.rescued = true
                 self.run.damsels = self.run.damsels + 1
                 self.player.health = math.min(self.player.maxHealth, self.player.health + 1)
+                self.sounds:play("kiss")
                 self.run:addMessage("A KISS FOR YOUR TROUBLE", 90)
             end
         elseif not enemy.deathCounted then
             enemy.deathCounted = true
+            if enemy.kind == "caveman" then self.sounds:play("caveman_die") end
             self.run.kills = self.run.kills + 1
-            if enemy.kind ~= "skeleton" then
-                self.effects:blood(enemy.x, enemy.y - 8, 1)
+            if enemy.kind ~= "skeleton" and not enemy.blastParticlesEmitted then
+                self.effects:blood(enemy.x, enemy.y - 8,
+                    enemy.kind == "snake" and 3 or 1)
             end
             if enemy.kind == "giant_spider" then self:spawnEntity("paste", enemy.x, enemy.y - 4) end
             if self.run.equipment.kapala then
@@ -753,11 +894,20 @@ function FullLevelPlaytest:simulationStepBody(input)
         end
     end
 
-    self.projectiles:update(self.enemies, self.player)
+    self.projectiles:update(self.enemies, self.player, self.items)
 
-    if self.player.health < previousHealth then self:dropHeldItemFromHurt() end
+    if self.player.health < previousHealth then
+        self.sounds:play("hurt")
+        self:dropHeldItemFromHurt()
+    end
     for _, item in ipairs(self.items) do
         item:update(self.world, self.player)
+        if item.justHit and not item.opened and item.kind == "skull" then
+            self.effects:skullBreak(item.x, item.y)
+            self.sounds:play("break_item")
+            item.opened = true
+            item.x, item.y = -1000, -1000
+        end
         if item.justHit and not item.opened and (item.kind == "jar" or item.kind == "crate") then
             self:openContainer(item)
         end
@@ -767,6 +917,17 @@ function FullLevelPlaytest:simulationStepBody(input)
                 if enemy.alive and (not enemy.stunned or enemy.stunned == 0)
                     and item:overlapsRectangle(enemy:getBounds()) then
                     enemy:damage(item.heavy and 2 or 1, item.x)
+                    if item.kind == "skull" then
+                        self.effects:skullBreak(item.x, item.y)
+                        self.sounds:play("break_item")
+                        item.opened = true
+                        item.x, item.y = -1000, -1000
+                        break
+                    elseif item.kind == "arrow" then
+                        item.opened = true
+                        item.x, item.y = -1000, -1000
+                        break
+                    end
                     item.vx = -item.vx * 0.35
                     item.vy = -2
                 end
@@ -789,7 +950,7 @@ function FullLevelPlaytest:simulationStepBody(input)
 
     if self.player:isDead() then self.deathTimer = 75 end
     if self.player.y > self.world.height * self.world.tileSize + 32 then
-        self:generateLevel(self.seed)
+        self:generateSelectedLevel(self.seed, self.subtypeIndex ~= 1)
         return
     end
     self.exitReady = self:isNearExit()
@@ -814,28 +975,49 @@ end
 
 function FullLevelPlaytest:changeDepth(direction)
     self.levelNumber = ((self.levelNumber - 1 + direction) % MINES_DEPTHS) + 1
-    self:generateLevel(self.seed)
+    local subtype = MinesLevelSelection.choices[self.subtypeIndex].key
+    local resetType = self.levelNumber < MinesLevelSelection.requiredDepth(subtype)
+    if resetType then self.subtypeIndex = 1 end
+    self:generateSelectedLevel(self.seed, resetType or self.subtypeIndex ~= 1)
+end
+
+function FullLevelPlaytest:changeSubtype(direction)
+    self.subtypeIndex = ((self.subtypeIndex - 1 + direction)
+        % #MinesLevelSelection.choices) + 1
+    local subtype = MinesLevelSelection.choices[self.subtypeIndex].key
+    self.levelNumber = math.max(self.levelNumber, MinesLevelSelection.requiredDepth(subtype))
+    self:generateSelectedLevel(self.seed, true)
 end
 
 function FullLevelPlaytest:keypressed(key, _, isRepeat)
     if isRepeat then return end
-    if key == "f" and self.run.bombs > 0 and self.player and not self.player:isDead() then
-        self.tools:throwBomb(self.player)
-        self.run.bombs = self.run.bombs - 1
-    elseif key == "g" and self.run.ropes > 0 and self.player and not self.player:isDead() then
-        if self.tools:throwRope(self.player, self:getInput()) then
+    local controls = self.app.controls
+    if controls:matches("rope", key) then
+        if self.run.ropes > 0 and self.player and not self.player:isDead()
+            and self.tools:throwRope(self.player, self:getInput()) then
             self.run.ropes = self.run.ropes - 1
+            if self.throwSound then self.throwSound:clone():play() end
         end
-    elseif (key == "up" or key == "w") and self:isNearExit() then
-        self:advanceLevel()
+    elseif controls:matches("bomb", key) then
+        if self.run.bombs > 0 and self.player and not self.player:isDead()
+            and self.tools:throwBomb(self.player, self:getInput()) then
+            self.run.bombs = self.run.bombs - 1
+            if self.throwSound then self.throwSound:clone():play() end
+        end
+    elseif controls:matches("up", key) then
+        if self:isNearExit() then self:advanceLevel() end
     elseif key == "r" then
-        self:generateLevel(self.seed)
+        self:generateSelectedLevel(self.seed, true)
     elseif key == "n" then
-        self:generateLevel((self.seed % 2147483646) + 1)
+        self:generateSelectedLevel(MinesLevelSelection.nextSeed(self.seed), self.subtypeIndex ~= 1)
     elseif key == "-" then
         self:changeDepth(-1)
     elseif key == "=" then
         self:changeDepth(1)
+    elseif key == "[" then
+        self:changeSubtype(-1)
+    elseif key == "]" then
+        self:changeSubtype(1)
     elseif key == "b" then
         self.debugCollision = not self.debugCollision
     end
@@ -894,76 +1076,78 @@ function FullLevelPlaytest:drawWorld(viewport)
     love.graphics.translate(-self.cameraX, -self.cameraY)
 
     self:drawBackground()
-    -- GameMaker draws loose oItem instances (depth 101) before oSolid
-    -- terrain (depth 100), so tile foreground pixels naturally cover them.
-    for _, entity in ipairs(self.level.entities) do
-        if entity.kind ~= "player" and not self.dynamicEntities[entity]
-            and (Item.rendersBehindTerrain(entity.kind) or entity.kind == "bones"
-                or entity.kind == "spikes") then
+    local queue = DepthQueue.new()
+    self.renderer:submitLevel(queue, self.level, {
+        includeEntity = function(entity)
+            return entity.kind ~= "player" and not self.dynamicEntities[entity]
+        end,
+        drawEntity = function(entity)
             if entity.kind == "spikes" and entity.bloody then
                 love.graphics.setColor(1, 1, 1, 1)
                 love.graphics.draw(self.spikeBloodImage, entity.x * 16, entity.y * 16)
             else
                 self.renderer:drawEntity(entity)
             end
-        end
+        end,
+    })
+    for _, bones in ipairs(self.fakeBones) do
+        local current = bones
+        queue:add(Depth.entity("fake_bones"), function() current:draw(self.renderer) end)
     end
-    for _, bones in ipairs(self.fakeBones) do bones:draw(self.renderer) end
     for _, item in ipairs(self.items) do
-        if not item.held then
-            self.renderer:drawEntity({
-                kind = item.kind,
-                x = item.x / 16,
-                y = item.y / 16,
-                properties = item.properties,
-            })
+        if not item.held and not item.opened then
+            local current = item
+            queue:add(Depth.entity(current.kind), function()
+                self.renderer:drawEntity({
+                    kind = current.kind == "arrow" and current.facing < 0
+                        and "arrow_left" or current.kind,
+                    x = current.x / 16, y = current.y / 16,
+                    properties = current.properties,
+                })
+            end)
         end
     end
-    -- oTreasure has depth 101, behind oSolid's depth 100.
     for _, collectible in ipairs(self.collectibles) do
-        if collectible.alive then self.renderer:drawEntity(collectible.entity) end
-    end
-    if self.tools then self.tools:drawBack() end
-    for y = 0, self.level.height - 1 do
-        for x = 0, self.level.width - 1 do
-            self.renderer:drawTile(self.level.tiles[y + 1][x + 1], x * 16, y * 16)
+        if collectible.alive then
+            local current = collectible
+            queue:add(Depth.entity(current.entity.kind), function()
+                self.renderer:drawEntity(current.entity)
+            end)
         end
     end
-    DynamicTerrain.draw(self.world, self.renderer)
-    for _, entity in ipairs(self.level.entities) do
-        if entity.kind ~= "player" and not self.dynamicEntities[entity]
-            and not Item.rendersBehindTerrain(entity.kind)
-            and entity.kind ~= "bones" and entity.kind ~= "spikes" then
-            self.renderer:drawEntity(entity)
-        end
-    end
+    DynamicTerrain.submit(queue, self.world, self.renderer)
     for _, enemy in ipairs(self.enemies) do
-        if enemy.alive then enemy:draw(self.renderer) end
+        if enemy.alive then
+            local current = enemy
+            queue:add(current.held and Depth.heldItem(self.player) or Depth.entity(current.kind), function()
+                current:draw(self.renderer)
+            end)
+        end
     end
-    if self.projectiles then self.projectiles:draw() end
-    if self.traps then self.traps:draw() end
-    if self.tools then self.tools:drawFront() end
+    if self.projectiles then self.projectiles:submit(queue) end
+    if self.traps then self.traps:submit(queue) end
+    if self.tools then self.tools:submit(queue) end
 
     if not (self.player.invincibleTimer > 0 and math.floor(self.player.invincibleTimer / 2) % 2 == 0) then
-        self.player:draw()
-    end
-    -- scrSetupWalls adds cave-top tiles at depth 3, in front of oPlayer1 (50).
-    for _, decoration in ipairs(self.level.decorations or {}) do
-        if decoration.y >= 0 then
-            love.graphics.setColor(1, 1, 1, 1)
-            love.graphics.draw(self.renderer.images.bg_cave_top,
-                self.renderer.caveTopQuads[decoration.variant], decoration.x * 16, decoration.y * 16)
+        queue:add(Depth.entity("player"),
+            function() self.player:drawBody() end)
+        if self.player:getWhipPhase() then
+            queue:add(Depth.EFFECT, function() self.player:drawWhip() end)
         end
     end
     if self.heldItem then
-        self.renderer:drawEntity({
-            kind = self.heldItem.kind,
-            x = self.heldItem.x / 16,
-            y = self.heldItem.y / 16,
-            properties = self.heldItem.properties,
-        })
+        queue:add(Depth.heldItem(self.player), function()
+            self.renderer:drawEntity({
+                kind = self.heldItem.kind == "arrow" and self.player.facing < 0
+                    and "arrow_left" or self.heldItem.kind,
+                x = self.heldItem.x / 16,
+                y = self.heldItem.y / 16,
+                properties = self.heldItem.properties,
+            })
+        end)
     end
-    self.effects:draw()
+    if self.effects then queue:add(Depth.EFFECT, function() self.effects:draw() end) end
+    queue:draw()
     if self.level.dark then
         love.graphics.stencil(function()
             love.graphics.circle("fill", math.floor(self.player.x), math.floor(self.player.y - 4),
@@ -1038,6 +1222,7 @@ function FullLevelPlaytest:draw()
     love.graphics.setFont(self.app.fonts.small)
     love.graphics.setColor(COLORS.muted)
     love.graphics.print("MINES  " .. self:levelLabel()
+        .. "    " .. string.upper(MinesLevelSelection.choices[self.subtypeIndex].label)
         .. "    SEED " .. self.seed, 20, 42)
 
     if self.exitReady then
@@ -1051,19 +1236,24 @@ function FullLevelPlaytest:draw()
         love.graphics.printf("YOU DIED", 0, HEADER_HEIGHT + 24, width, "center")
     end
 
-    local message = self.run and self.run:currentMessage()
+    local message = self.selectionError or (self.run and self.run:currentMessage())
     if message then
         love.graphics.setColor(0.04, 0.03, 0.02, 0.9)
         love.graphics.rectangle("fill", width / 2 - 190, height - FOOTER_HEIGHT - 42, 380, 30, 4, 4)
         love.graphics.setColor(COLORS.text)
-        love.graphics.printf(message.text, width / 2 - 185,
+        love.graphics.printf(type(message) == "table" and message.text or message, width / 2 - 185,
             height - FOOTER_HEIGHT - 35, 370, "center")
     end
 
     love.graphics.setColor(COLORS.muted)
+    local controls = self.app.controls
     love.graphics.printf(
-        "A/D MOVE   SHIFT SPRINT   Z/SPACE JUMP   X WHIP/THROW   DOWN+X PICK UP/DROP   F BOMB   G ROPE   W/S CLIMB   R RESET   N SEED   -/= DEPTH   B COLLIDERS   ESC BACK",
-        12, height - 27, width - 24, "center")
+        string.format("%s/%s MOVE   %s RUN   %s JUMP   %s ACTION/PICK UP   %s BOMB   %s ROPE   %s/%s CLIMB\n"
+            .. "R RESET   N NEXT SEED   -/= DEPTH   [/] TYPE   B COLLIDERS   ESC BACK",
+            controls:label("left"), controls:label("right"), controls:label("run"),
+            controls:label("jump"), controls:label("attack"), controls:label("bomb"),
+            controls:label("rope"), controls:label("up"), controls:label("down")),
+        12, height - 37, width - 24, "center")
     love.graphics.setColor(1, 1, 1, 1)
 end
 

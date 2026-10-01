@@ -1,4 +1,5 @@
 local SpriteData = require("src.platform.player_sprite_data")
+local WhipMask = require("src.platform.whip_mask")
 
 local Player = {}
 Player.__index = Player
@@ -100,6 +101,7 @@ function Player.new(x, y)
         equipment = {},
         status = "normal",
         stunTimer = 0,
+        deadBounced = false,
         webTimer = 0,
         fallTimer = 0,
         parachuteOpen = false,
@@ -153,6 +155,7 @@ function Player:reset()
     self.attackPressedThisStep = false
     self.status = "normal"
     self.stunTimer = 0
+    self.deadBounced = false
     self.webTimer = 0
     self.fallTimer = 0
     self.parachuteOpen = false
@@ -190,6 +193,9 @@ function Player:kill(cause, vx, vy)
     self.transitionTarget = nil
     self.whipping = false
     self.stunTimer = 0
+    self.deadBounced = cause == "fall"
+    self.wideCollision = false
+    self.collisionTopOffset = -8
     self.status = "dead"
     self:setState(Player.STATES.dead)
     if self.playtestLog then self.playtestLog:record("player_killed", {
@@ -198,7 +204,7 @@ function Player:kill(cause, vx, vy)
     return true
 end
 
-function Player:hurt(sourceX, amount, cause, stunDuration)
+function Player:hurt(sourceX, amount, cause, stunDuration, reaction)
     if self.invincibleTimer > 0 or self:isDead() then
         if self.playtestLog then self.playtestLog:record("damage_blocked", {
             sourceX = sourceX, amount = amount or 1, cause = cause,
@@ -210,18 +216,20 @@ function Player:hurt(sourceX, amount, cause, stunDuration)
     self.health = math.max(0, self.health - (amount or 1))
     self.invincibleTimer = 30
     self.vx = self.x < sourceX and -6 or 6
-    self.vy = -4
-    self.ax = 0
-    self.ay = 0
-    self.xRemainder = 0
-    self.yRemainder = 0
-    self.climbKind = nil
-    self.transitionTarget = nil
-    self.whipping = false
-    self.stunTimer = self.health <= 0 and 0 or (stunDuration or 30)
+    if reaction ~= "enemy_contact" then
+        self.vy = -4
+        self.ax = 0
+        self.ay = 0
+        self.xRemainder = 0
+        self.yRemainder = 0
+        self.climbKind = nil
+        self.transitionTarget = nil
+        self.whipping = false
+        self.stunTimer = self.health <= 0 and 0 or (stunDuration or 30)
+    end
     if self.health <= 0 then
         self:kill(cause, self.vx, self.vy)
-    else
+    elseif reaction ~= "enemy_contact" then
         self:setState(Player.STATES.stunned)
         self:refreshStatus()
     end
@@ -305,17 +313,35 @@ end
 
 function Player:getWhipPhase()
     if not self.whipping then return nil end
-    if self.animationFrame < 2 then return "back" end
+    if self.animationFrame > 0 and self.animationFrame < 2 then return "back" end
     if self.animationFrame > 4 then return "front" end
     return nil
 end
 
 function Player:getWhipHitbox()
+    local name, x, y, phase = self:getWhipSprite()
+    if not name then return nil end
+    local left, top, right, bottom = WhipMask.bounds(name, x, y)
+    return left, top, right, bottom, phase
+end
+
+function Player:getWhipSprite()
     local phase = self:getWhipPhase()
     if not phase then return nil end
+    local name
+    if phase == "back" then
+        name = self.facing < 0 and "sWhipPreL" or "sWhipPreR"
+    else
+        name = self.facing < 0 and "sWhipLeft" or "sWhipRight"
+    end
     local direction = phase == "back" and -self.facing or self.facing
-    local centerX = self.x + direction * 16
-    return centerX - 8, self.y - 8, centerX + 8, self.y + 8, phase
+    return name, math.floor(self.x + direction * 16) - 8,
+        math.floor(self.y) - 8, phase
+end
+
+function Player:whipOverlapsRectangle(left, top, right, bottom)
+    local name, x, y = self:getWhipSprite()
+    return name and WhipMask.overlaps(name, x, y, left, top, right, bottom) or false
 end
 
 function Player:whipCanHit(target)
@@ -469,6 +495,12 @@ function Player:enterClimb(world, input)
         end
     elseif input.down then
         if not self:isGroundState() then
+            return false
+        end
+        -- A ladder body at a solid floor is a crouch, not a climb entry.
+        -- Classic's grounded Down-climb exception checks for a ladder top.
+        if world:collidesSolid(self, self.x, self.y + 1)
+            and not world:cellAt("ladderTop", self.x, self.y + 9) then
             return false
         end
         kind, tileX, tileY = world:climbableAtPoint(self.x, self.y + 8)
@@ -992,7 +1024,13 @@ function Player:selectSprite(world)
         sprite = self.vx == 0 and "sStunL" or (self.vx < 0 and "sDieLL" or "sDieLR")
         if self.vx == 0 then speed = 0.4 * Player.TICK_RATE end
     elseif self.state == Player.STATES.dead then
-        sprite = self.vx == 0 and "sDieL" or (self.vx < 0 and "sDieLL" or "sDieLR")
+        if self.vx == 0 then
+            sprite = "sDieL"
+        elseif self.deadBounced then
+            sprite = self.vy < 0 and "sDieLBounce" or "sDieLFall"
+        else
+            sprite = self.vx < 0 and "sDieLL" or "sDieLR"
+        end
     elseif self.state == Player.STATES.hanging then
         sprite = "sHangLeft"
     elseif self.state == Player.STATES.climbing then
@@ -1035,6 +1073,29 @@ function Player:updateAnimation(world)
     end
 end
 
+function Player:updateDead(world)
+    -- oPlayer1 applies gravity and contact response before moveTo. Once the
+    -- body has touched ground, bounced switches its gravity from 0.6 to 1.
+    self.vy = self.vy + (self.deadBounced and 1 or 0.6)
+    if self.vy < 0 and world:collidesSolid(self, self.x, self.y - 1) then
+        self.vy = -self.vy * 0.8
+    end
+    if world:collidesSolid(self, self.x - 1, self.y)
+        or world:collidesSolid(self, self.x + 1, self.y) then
+        self.vx = -self.vx * 0.5
+    end
+    if world:collidesSolid(self, self.x, self.y + 1)
+        or world:platformLanding(self, self.y, self.y + 1) then
+        self.vy = self.vy > 1 and -self.vy * 0.5 or 0
+        self.vx = math.abs(self.vx) < 0.1 and 0 or self.vx * 0.3
+        self.deadBounced = true
+    end
+    self.vx = clamp(self.vx, -10, 10)
+    self.vy = clamp(self.vy, -self.yVelocityLimit, self.yVelocityLimit)
+    self:moveHorizontal(world, self.vx)
+    self:moveVertical(world, self.vy, false)
+end
+
 function Player:step(world, input)
     input = input or {}
     world.time = (world.time or 0) + 1
@@ -1065,6 +1126,13 @@ function Player:step(world, input)
     if self.webTimer > 0 then self.webTimer = self.webTimer - 1 end
     self:refreshStatus()
 
+    if self:isDead() then
+        self.state = Player.STATES.dead
+        self:updateDead(world)
+        self:updateAnimation(world)
+        return
+    end
+
     if self.vy > 0 and self.state ~= Player.STATES.climbing then
         self.fallTimer = self.fallTimer + 1
     elseif self:isGroundState() then
@@ -1074,8 +1142,11 @@ function Player:step(world, input)
         self.fallTimer = 0
     end
 
+    -- A long drop can turn fatal during the fall-timer check above. It must
+    -- enter the same body-physics path on this tick, not normal controls.
     if self:isDead() then
         self.state = Player.STATES.dead
+        self:updateDead(world)
         self:updateAnimation(world)
         return
     end
@@ -1163,25 +1234,26 @@ function Player:getAnimationFrame()
     return sprite, sprite.frames[index]
 end
 
-function Player:draw()
+function Player:drawWhip()
+    local name, x, y = self:getWhipSprite()
+    local whip = name and self.whipImages and self.whipImages[name]
+    if not whip then return end
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.draw(whip, x + 8, y + 8, 0, 1, 1, 8, 8)
+end
+
+function Player:drawBody()
     local sprite, image = self:getAnimationFrame()
     local scaleX = self.facing == -1 and 1 or -1
     love.graphics.setColor(1, 1, 1, 1)
-    local phase = self:getWhipPhase()
-    if phase == "back" then
-        local name = self.facing < 0 and "sWhipPreL" or "sWhipPreR"
-        local whip = self.whipImages and self.whipImages[name]
-        local whipX = self.x - self.facing * 16
-        if whip then love.graphics.draw(whip, math.floor(whipX), math.floor(self.y), 0, 1, 1, 8, 8) end
-    end
     love.graphics.draw(image, math.floor(self.x), math.floor(self.y), 0,
         scaleX, 1, sprite.data.originX, sprite.data.originY)
-    if phase == "front" then
-        local name = self.facing < 0 and "sWhipLeft" or "sWhipRight"
-        local whip = self.whipImages and self.whipImages[name]
-        local whipX = self.x + self.facing * 16
-        if whip then love.graphics.draw(whip, math.floor(whipX), math.floor(self.y), 0, 1, 1, 8, 8) end
-    end
+end
+
+function Player:draw()
+    if self:getWhipPhase() == "back" then self:drawWhip() end
+    self:drawBody()
+    if self:getWhipPhase() == "front" then self:drawWhip() end
 end
 
 return Player

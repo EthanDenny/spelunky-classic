@@ -20,6 +20,14 @@ local HUD_SPRITES = {
     held = "sHoldItemIcon",
 }
 
+-- scrDrawHUD only draws these pickup types inside sHoldItemIcon. Heavy
+-- carryables (including crates and idols) leave the icon's center empty.
+local HELD_SLOT_ITEMS = {
+    rock = true, jar = true, skull = true, arrow = true,
+    machete = true, mattock = true, pistol = true, web_cannon = true,
+    teleporter = true, shotgun = true, bow = true, key = true,
+}
+
 local EQUIPMENT_ORDER = {
     "spectacles", "compass", "parachute", "paste", "gloves", "mitt", "cape",
     "jetpack", "spike_shoes", "spring_shoes", "udjat_eye", "kapala",
@@ -46,6 +54,9 @@ function OriginalHUD:loadAssets()
     for key, spriteName in pairs(HUD_SPRITES) do
         self.images[key] = loadImage(hudRoot .. spriteName .. ".images/image 0.png")
     end
+    self.images.bowDisplay = loadImage(
+        "original-game-reference/source/extracted/spelunky/Sprites/Items/Saleable/"
+            .. "sBowDisp.images/image 0.png")
 
     self.glyphs = {}
     local fontRoot = "original-game-reference/source/extracted/config/Sprites/sFont.images/"
@@ -67,7 +78,12 @@ end
 function OriginalHUD:drawHeldItem(item)
     local layout = OriginalHUD.LAYOUT
     love.graphics.draw(self.images.held, layout.heldX, layout.heldY)
-    if not item then return end
+    if not item or not HELD_SLOT_ITEMS[item.kind] then return end
+
+    if item.kind == "bow" then
+        love.graphics.draw(self.images.bowDisplay, layout.heldX, layout.heldY)
+        return
+    end
 
     local sprite = self.renderer.entitySprites[item.kind]
     if not sprite then return end

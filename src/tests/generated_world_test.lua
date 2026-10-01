@@ -10,6 +10,7 @@ function Test.run()
         entrance = { x = 1, y = 1 },
         entities = {
             { kind = "arrow_trap_left", x = 3, y = 2 },
+            { kind = "sacrifice_altar", x = 1, y = 4 },
             { kind = "gold_bar", x = 2.5, y = 2.5 },
         },
         tiles = {
@@ -27,6 +28,8 @@ function Test.run()
         and world:dynamicSolidAt(3 * 16, 3 * 16, 4 * 16, 4 * 16, true),
         "Push blocks must retain their distinct movable-solid collision class")
     assert(world:has("solid", 3, 2), "Block-replacing traps must preserve terrain collision")
+    assert(world:has("solid", 1, 4) and world:has("solid", 2, 4),
+        "Both halves of the sacrifice altar must block movement")
     assert(world:has("ladder", 1, 2) and world:has("ladderTop", 1, 1),
         "Generated ladders must retain their body and one-way top distinction")
 

@@ -73,6 +73,15 @@ local function addEntity(level, kind, x, y, properties)
     }
 end
 
+local function addBackdrop(level, kind, x, y, variant)
+    level.backdrops[#level.backdrops + 1] = {
+        kind = kind,
+        x = x,
+        y = y,
+        variant = variant,
+    }
+end
+
 local function createBrick(level, rng, x, y, options)
     options = options or {}
 
@@ -410,12 +419,18 @@ local function generateSymbol(level, rng, symbol, x, y, roomX, roomY, shopType)
         addEntity(level, "altar_right", x + 1, y)
     elseif symbol == "x" then
         addEntity(level, "sacrifice_altar", x, y)
+        addBackdrop(level, "kali_body", x - 1, y - 3)
+        addEntity(level, "kali_head", x + 1, y - 4,
+            { variant = rng:integer(1, 3) })
     elseif symbol == "a" then
         addEntity(level, "chest", x, y)
     elseif symbol == "I" then
-        addEntity(level, "gold_idol", x + 1, y)
+        addEntity(level, "gold_idol", x + 1, y + 0.75)
     elseif symbol == "B" then
-        addEntity(level, "giant_tiki_head", x + 1, y + 1)
+        addEntity(level, "giant_tiki_head", x + 1, y + 0.75)
+        addBackdrop(level, "tiki_body", x, y + 2)
+        addBackdrop(level, "tiki_arm_right", x + 2, y + 2, rng:integer(0, 2))
+        addBackdrop(level, "tiki_arm_left", x - 1, y + 2, rng:integer(0, 2))
     elseif symbol == "+" then
         createBlock(level, x, y)
     elseif symbol == "." and not isSolid(getTile(level, x, y)) then
@@ -435,9 +450,9 @@ local function generateSymbol(level, rng, symbol, x, y, roomX, roomY, shopType)
     elseif symbol == "i" or symbol == "q" then
         addEntity(level, "shop_item", x, y, { shopType = shopType, highEnd = symbol == "q" })
     elseif symbol == "d" then
-        addEntity(level, "die", x, y)
+        addEntity(level, "die", x + 0.5, y + 0.5)
     elseif symbol == "D" then
-        addEntity(level, "damsel", x, y, { forSale = true })
+        addEntity(level, "damsel", x + 0.5, y + 0.5, { forSale = true })
     elseif symbol == "s" then
         if rng:integer(1, 10) == 1 then
             addEntity(level, "snake", x, y)
@@ -447,10 +462,10 @@ local function generateSymbol(level, rng, symbol, x, y, roomX, roomY, shopType)
     elseif symbol == "S" then
         addEntity(level, "snake", x, y)
     elseif symbol == "T" then
-        addEntity(level, "ruby_big", x, y)
+        addEntity(level, "ruby_big", x + 0.5, y + 0.5)
     elseif symbol == "M" then
         createBrick(level, rng, x, y)
-        addEntity(level, "mattock", x, y)
+        addEntity(level, "mattock", x + 0.5, y + 0.5)
     end
 
     if symbol ~= "0" then
@@ -553,6 +568,7 @@ function MinesGenerator.generate(seed, options)
         tiles = makeGrid(LEVEL_WIDTH, LEVEL_HEIGHT),
         symbols = makeGrid(LEVEL_WIDTH, LEVEL_HEIGHT),
         entities = {},
+        backdrops = {},
         decorations = {},
         roomPath = newRoomPath(),
         roomTemplates = { {}, {}, {}, {} },

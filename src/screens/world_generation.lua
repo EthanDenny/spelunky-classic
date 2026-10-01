@@ -1,6 +1,8 @@
-local MinesGenerator = require("src.world.mines_generator")
+local MinesLevelSelection = require("src.world.mines_level_selection")
 local EntitySpriteData = require("src.world.original_entity_sprites")
 local SegmentedSelector = require("src.ui.segmented_selector")
+local Depth = require("src.render.classic_depth")
+local DepthQueue = require("src.render.depth_queue")
 
 local WorldGeneration = {}
 WorldGeneration.__index = WorldGeneration
@@ -23,13 +25,16 @@ function WorldGeneration.new(app)
     return setmetatable({
         app = app,
         selector = SegmentedSelector.new(LEVEL_TYPES),
+        subtypeSelector = SegmentedSelector.new(MinesLevelSelection.choices),
         levelNumber = 1,
         seed = nil,
         level = nil,
         images = {},
+        backdropImages = {},
         entitySprites = {},
         caveTopQuads = {},
         showRoomPath = false,
+        selectionError = nil,
     }, WorldGeneration)
 end
 
@@ -73,12 +78,103 @@ function WorldGeneration:loadAssets()
         image:setFilter("nearest", "nearest")
         self.entitySprites[key] = { image = image, metadata = metadata }
     end
+    for key, sprite in pairs({ arrow = "sArrowRight", arrow_left = "sArrowLeft" }) do
+        local image = love.graphics.newImage(
+            "original-game-reference/source/extracted/spelunky/Sprites/Items/Weapons/"
+                .. sprite .. ".images/image 0.png")
+        image:setFilter("nearest", "nearest")
+        self.entitySprites[key] = { image = image,
+            metadata = { originX = 4, originY = 4, width = 8, height = 8 } }
+    end
+
+    local backgroundDirectory = "original-game-reference/source/extracted/spelunky/Backgrounds/"
+    for kind, filename in pairs({
+        kali_body = "bgKaliBody.png",
+        tiki_body = "bgTiki.png",
+        tiki_arms = "bgTikiArms.png",
+    }) do
+        local image = love.graphics.newImage(backgroundDirectory .. filename)
+        image:setFilter("nearest", "nearest")
+        self.backdropImages[kind] = image
+    end
+    self.backdropImages.kali_heads = {}
+    for variant = 1, 3 do
+        local path = ("original-game-reference/source/extracted/spelunky/"
+            .. "Sprites/Traps/sKaliHead%d.images/image 0.png"):format(variant)
+        local image = love.graphics.newImage(path)
+        image:setFilter("nearest", "nearest")
+        self.backdropImages.kali_heads[variant] = image
+    end
+    self.tikiArmQuads = { right = {}, left = {} }
+    for variant = 0, 2 do
+        self.tikiArmQuads.right[variant] = love.graphics.newQuad(
+            variant * 16, 0, 16, 16, self.backdropImages.tiki_arms:getDimensions())
+        self.tikiArmQuads.left[variant] = love.graphics.newQuad(
+            variant * 16, 16, 16, 16, self.backdropImages.tiki_arms:getDimensions())
+    end
 
     self.images.bg_cave:setWrap("repeat", "repeat")
     self.caveTopQuads = {
         love.graphics.newQuad(0, 0, 16, 16, self.images.bg_cave_top:getDimensions()),
         love.graphics.newQuad(16, 0, 16, 16, self.images.bg_cave_top:getDimensions()),
     }
+end
+
+function WorldGeneration:drawBackdrops(level)
+    love.graphics.setColor(1, 1, 1, 1)
+    for _, backdrop in ipairs(level.backdrops or {}) do
+        local x, y = backdrop.x * 16, backdrop.y * 16
+        if backdrop.kind == "kali_body" or backdrop.kind == "tiki_body" then
+            love.graphics.draw(self.backdropImages[backdrop.kind], x, y)
+        elseif backdrop.kind == "tiki_arm_right" then
+            love.graphics.draw(self.backdropImages.tiki_arms,
+                self.tikiArmQuads.right[backdrop.variant], x, y)
+        elseif backdrop.kind == "tiki_arm_left" then
+            love.graphics.draw(self.backdropImages.tiki_arms,
+                self.tikiArmQuads.left[backdrop.variant], x, y)
+        end
+    end
+end
+
+-- Shared static Mines submission used by the generator preview and live play.
+-- Dynamic objects are submitted by their owning systems to the same queue.
+function WorldGeneration:submitLevel(queue, level, options)
+    options = options or {}
+    queue:add(Depth.BACKDROP, function() self:drawBackdrops(level) end)
+    for _, entity in ipairs(level.entities) do
+        if not entity.destroyed and not entity.kind:match("^hidden_")
+            and (not options.includeEntity or options.includeEntity(entity)) then
+            local current = entity
+            queue:add(Depth.entity(current.kind), function()
+                if options.drawEntity then options.drawEntity(current)
+                else self:drawEntity(current) end
+            end)
+        end
+    end
+    -- Group terrain by source depth; this avoids allocating a closure and a
+    -- sort entry for each cell every frame while preserving stable cell order.
+    for _, depth in ipairs({ 1000, 110, 100 }) do
+        local targetDepth = depth
+        queue:add(targetDepth, function()
+            for y = 0, level.height - 1 do
+                for x = 0, level.width - 1 do
+                    local tile = level.tiles[y + 1][x + 1]
+                    if Depth.tile(tile.kind) == targetDepth then
+                        self:drawTile(tile, x * 16, y * 16)
+                    end
+                end
+            end
+        end)
+    end
+    queue:add(Depth.CAVE_LIP, function()
+        love.graphics.setColor(1, 1, 1, 1)
+        for _, decoration in ipairs(level.decorations or {}) do
+            if decoration.y >= 0 then
+                love.graphics.draw(self.images.bg_cave_top, self.caveTopQuads[decoration.variant],
+                    decoration.x * 16, decoration.y * 16)
+            end
+        end
+    end)
 end
 
 function WorldGeneration:enter()
@@ -90,22 +186,36 @@ function WorldGeneration:enter()
 end
 
 function WorldGeneration:generate(seed)
-    self.seed = seed
-    self.level = MinesGenerator.generate(seed, { levelNumber = self.levelNumber })
+    local subtype = self.subtypeSelector:getSelected().key
+    local matchedSeed, level, err = MinesLevelSelection.find(seed, self.levelNumber, subtype)
+    if not level then self.selectionError = err return false end
+    self.seed = matchedSeed
+    self.level = level
     self.level.area = "mines"
+    self.level.selectedSubtype = subtype
+    self.selectionError = nil
     if self.app.playtestLog then
         self.app.playtestLog:generatedLevel("world_generation", self.level, self.levelNumber)
     end
+    return true
 end
 
 function WorldGeneration:regenerate()
-    local nextSeed = (self.seed % 2147483646) + 1
-    self:generate(nextSeed)
+    self:generate(MinesLevelSelection.nextSeed(self.seed))
 end
 
 function WorldGeneration:changeLevelNumber(direction)
     local depthCount = self.selector:getSelected().depthCount
     self.levelNumber = ((self.levelNumber - 1 + direction) % depthCount) + 1
+    if self.levelNumber < MinesLevelSelection.requiredDepth(self.subtypeSelector:getSelected().key) then
+        self.subtypeSelector:select(1)
+    end
+    self:generate(self.seed)
+end
+
+function WorldGeneration:changeSubtype(direction)
+    local subtype = self.subtypeSelector:move(direction)
+    self.levelNumber = math.max(self.levelNumber, MinesLevelSelection.requiredDepth(subtype.key))
     self:generate(self.seed)
 end
 
@@ -122,6 +232,10 @@ function WorldGeneration:keypressed(key, _, isRepeat)
         if self.selector:getSelected().implemented then
             self:changeLevelNumber(-1)
         end
+    elseif key == "left" or key == "a" then
+        self:changeSubtype(-1)
+    elseif key == "right" or key == "d" then
+        self:changeSubtype(1)
     elseif key == "r" or key == "return" or key == "kpenter" or key == "space" then
         if self.selector:getSelected().implemented then
             self:regenerate()
@@ -138,7 +252,8 @@ function WorldGeneration:getLayout()
     local gap = 16
     return {
         sidebar = { x = margin, y = margin, width = sidebarWidth, height = height - margin * 2 },
-        selector = { x = 24, y = 62, width = sidebarWidth - 32, height = 220 },
+        selector = { x = 24, y = 62, width = sidebarWidth - 32, height = 36 },
+        subtype = { x = 24, y = 124, width = sidebarWidth - 32, height = 168 },
         viewport = {
             x = margin + sidebarWidth + gap,
             y = margin,
@@ -163,7 +278,13 @@ function WorldGeneration:mousepressed(x, y, button)
     end
 
     local layout = self:getLayout()
-    if contains(layout.generate, x, y) then
+    local subtypeIndex = self.subtypeSelector:indexAt(x, y)
+    if subtypeIndex then
+        self.subtypeSelector:select(subtypeIndex)
+        self.levelNumber = math.max(self.levelNumber,
+            MinesLevelSelection.requiredDepth(self.subtypeSelector:getSelected().key))
+        self:generate(self.seed)
+    elseif contains(layout.generate, x, y) then
         self:regenerate()
     elseif contains(layout.depthDown, x, y) then
         self:changeLevelNumber(-1)
@@ -180,6 +301,7 @@ function WorldGeneration:drawButton(bounds, label, active)
 end
 
 function WorldGeneration:drawTile(tile, x, y)
+    love.graphics.setColor(1, 1, 1, 1)
     if tile.kind == "brick" then
         local imageName = TILE_IMAGES[tile.style] or "brick"
         love.graphics.draw(self.images[imageName], x, y)
@@ -198,6 +320,7 @@ function WorldGeneration:drawTile(tile, x, y)
 end
 
 function WorldGeneration:drawEntity(entity)
+    love.graphics.setColor(1, 1, 1, 1)
     local fallbackX = entity.x * 16
     local fallbackY = entity.y * 16
     local spriteKey = entity.kind
@@ -215,6 +338,9 @@ function WorldGeneration:drawEntity(entity)
     elseif entity.kind == "sacrifice_altar" then
         love.graphics.draw(self.entitySprites.sac_altar_left.image, entity.x * 16, entity.y * 16)
         love.graphics.draw(self.entitySprites.sac_altar_right.image, (entity.x + 1) * 16, entity.y * 16)
+    elseif entity.kind == "kali_head" then
+        love.graphics.draw(self.backdropImages.kali_heads[entity.properties.variant],
+            entity.x * 16 - 16, entity.y * 16 - 16)
     elseif entity.kind ~= "hidden_sapphire"
         and entity.kind ~= "hidden_emerald"
         and entity.kind ~= "hidden_ruby"
@@ -277,22 +403,9 @@ function WorldGeneration:drawLevel(viewport)
         background:getDimensions())
     love.graphics.draw(background, backgroundQuad, 0, 0)
 
-    for y = 0, self.level.height - 1 do
-        for x = 0, self.level.width - 1 do
-            self:drawTile(self.level.tiles[y + 1][x + 1], x * 16, y * 16)
-        end
-    end
-
-    for _, decoration in ipairs(self.level.decorations) do
-        if decoration.y >= 0 then
-            love.graphics.draw(self.images.bg_cave_top, self.caveTopQuads[decoration.variant],
-                decoration.x * 16, decoration.y * 16)
-        end
-    end
-
-    for _, entity in ipairs(self.level.entities) do
-        self:drawEntity(entity)
-    end
+    local queue = DepthQueue.new()
+    self:submitLevel(queue, self.level)
+    queue:draw()
 
     if self.showRoomPath then
         self:drawRoomPath()
@@ -320,6 +433,11 @@ function WorldGeneration:draw()
 
     self.selector:draw(layout.selector.x, layout.selector.y, layout.selector.width,
         layout.selector.height, self.app.fonts.small, true)
+    love.graphics.setFont(self.app.fonts.small)
+    love.graphics.setColor(0.56, 0.50, 0.40)
+    love.graphics.print("LEVEL TYPE", layout.subtype.x, layout.subtype.y - 18)
+    self.subtypeSelector:draw(layout.subtype.x, layout.subtype.y, layout.subtype.width,
+        layout.subtype.height, self.app.fonts.small, true)
 
     love.graphics.setFont(self.app.fonts.small)
     self:drawButton(layout.depthDown, "<", true)
@@ -335,6 +453,8 @@ function WorldGeneration:draw()
     if self.level.hasSnakePit then features[#features + 1] = "SNAKE PIT" end
     if self.level.hasShop then features[#features + 1] = "SHOP" end
     if self.level.hasIdol then features[#features + 1] = "IDOL" end
+    if self.level.hasAltar then features[#features + 1] = "ALTAR" end
+    if self.level.dark then features[#features + 1] = "DARK" end
     local featureText = #features > 0 and table.concat(features, " · ") or "STANDARD"
     love.graphics.printf("SEED " .. self.seed, layout.info.x, layout.info.y,
         layout.info.width, "center")
@@ -345,7 +465,8 @@ function WorldGeneration:draw()
 
     love.graphics.setFont(self.app.fonts.small)
     love.graphics.setColor(0.56, 0.50, 0.40)
-    love.graphics.printf("UP/DOWN  DEPTH\nR  GENERATE\nTAB  ROOM PATH\nESC  BACK",
+    love.graphics.printf(self.selectionError or
+        "UP/DOWN  DEPTH\nLEFT/RIGHT  TYPE\nR  GENERATE\nTAB  ROOM PATH\nESC  BACK",
         layout.sidebar.x + 16, height - 126, layout.sidebar.width - 32, "left")
 end
 

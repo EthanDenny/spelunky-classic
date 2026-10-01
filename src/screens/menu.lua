@@ -19,7 +19,7 @@ function Menu.new(app)
             { label = "Animation Viewer", screen = "animation_viewer" },
             { label = "World Generation", screen = "world_generation" },
             { label = "Platforming Engine", screen = "platforming_engine" },
-            { label = "Enemy AI", screen = "enemy_ai" },
+            { label = "Scenario Tests", screen = "enemy_ai" },
             { label = "Full Level Playtest", screen = "full_level_playtest" },
         },
     }, Menu)

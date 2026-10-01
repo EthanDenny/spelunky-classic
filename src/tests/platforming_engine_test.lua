@@ -1,6 +1,10 @@
 local Test = {}
 
 function Test.run(app)
+    local savedControls = app.controls
+    app.controls = require("src.input.classic_controls").fromContents(
+        assert(love.filesystem.read("original-game-reference/keys.cfg")),
+        assert(love.filesystem.read("original-game-reference/settings.cfg")))
     local screen = app.screens.platforming_engine
     screen:enter()
     screen:resetCourse()
@@ -34,6 +38,28 @@ function Test.run(app)
     screen:resetCourse()
     assert(#screen.items == 1 and not screen.items[1].held,
         "Resetting the room must restore its loose rock")
+
+    local ropeCount = screen.ropes
+    screen:simulationStep({ attack = true })
+    screen:keypressed("s")
+    assert(screen.ropes == ropeCount and #screen.tools.ropes == 0,
+        "A rope press during the whip animation must not spend a rope")
+    for _ = 1, 20 do screen:simulationStep({}) end
+    screen:keypressed("s")
+    assert(screen.ropes == ropeCount - 1 and #screen.tools.ropes == 1,
+        "The platforming room must deploy a rope with Classic's S binding")
+    for _ = 1, 40 do screen:simulationStep({}) end
+    assert(screen.tools.ropes[1].deployed and #screen.tools.ropes[1].segments > 0,
+        "A thrown rope must become a climbable line in the platforming room")
+    local bombCount = screen.bombs
+    screen:keypressed("f")
+    screen:keypressed("g")
+    assert(screen.bombs == bombCount and screen.ropes == ropeCount - 1,
+        "The previous F/G tool shortcuts must not spend Classic's bomb or rope inventory")
+    screen:keypressed("a")
+    assert(screen.bombs == bombCount - 1 and #screen.tools.bombs == 1,
+        "Classic's A binding must throw a bomb in the platforming room")
+    app.controls = savedControls
 end
 
 return Test

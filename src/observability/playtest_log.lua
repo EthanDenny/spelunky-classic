@@ -12,7 +12,7 @@ local PLAYER_FIELDS = {
     "gravity", "gravityIntensity", "xVelocityLimit", "yVelocityLimit", "climbKind",
     "climbTileX", "hangTileX", "hangTileY", "transitionTicks", "transitionTarget",
     "hangCooldown", "ladderCooldown", "dropThroughTimer", "invincibleTimer", "stunTimer",
-    "webTimer", "fallTimer", "parachuteOpen", "jetpackFuel", "whipping",
+    "webTimer", "fallTimer", "parachuteOpen", "jetpackFuel", "deadBounced", "whipping",
     "whipCracked", "whipJustCracked", "attackPressedThisStep", "spriteName",
     "animationFrame", "wideCollision", "collisionTopOffset",
 }
@@ -21,6 +21,8 @@ local ENTITY_FIELDS = {
     "stunTimer", "safeTimer", "cooldown", "held", "opened", "targetX", "falling",
     "moveable", "width", "height", "age", "life", "radius", "damage", "stuck", "sticky",
     "durability", "attackTimer", "alertTimer", "angry", "heavy",
+    "spriteName", "animation", "imageSpeed", "squirtTimer",
+    "deploying", "deployed", "deployY", "segmentCount",
 }
 local RUN_FIELDS = {
     "seed", "health", "maxHealth", "bombs", "ropes", "money", "time", "kills",
@@ -122,6 +124,7 @@ function PlaytestLog.capture(screen)
     local result = {
         seed = screen.seed,
         levelNumber = screen.levelNumber,
+        subtype = screen.level and screen.level.selectedSubtype,
         levelTime = screen.levelTime,
         deathTimer = screen.deathTimer,
         exitReady = screen.exitReady,
@@ -157,12 +160,30 @@ function PlaytestLog.capture(screen)
         end
     end
     if screen.enemies then result.enemies = entityList(screen.enemies) end
+    if screen.scenarios then
+        result.scenarios = {}
+        for index, scenario in ipairs(screen.scenarios) do
+            result.scenarios[index] = {
+                name = scenario.definition.title,
+                tick = scenario.tick,
+                runs = scenario.runs,
+                event = scenario.event,
+                enemy = copyFields(scenario.enemy, ENTITY_FIELDS),
+                player = copyFields(scenario.player, PLAYER_FIELDS),
+            }
+            if scenario.tools then
+                result.scenarios[index].ropesRemaining = scenario.ropesRemaining
+                result.scenarios[index].ropes = entityList(scenario.tools.ropes)
+            end
+        end
+    end
     if screen.items then result.items = entityList(screen.items) end
     if screen.fakeBones then result.fakeBones = entityList(screen.fakeBones) end
     if screen.spikeEntities then
         result.spikes = {}
         for index, spike in ipairs(screen.spikeEntities) do
-            result.spikes[index] = { x = spike.x, y = spike.y, bloody = not not spike.bloody }
+            result.spikes[index] = { x = spike.x, y = spike.y,
+                bloody = not not spike.bloody, destroyed = not not spike.destroyed }
         end
     end
     if screen.effects then result.effects = entityList(screen.effects.particles) end
@@ -241,6 +262,7 @@ function PlaytestLog:level(screenName, screen)
         seed = screen.seed,
         area = level and level.area,
         depth = screen.levelNumber,
+        subtype = level and level.selectedSubtype,
         width = screen.world.width,
         height = screen.world.height,
         tileSize = screen.world.tileSize,
@@ -261,7 +283,8 @@ function PlaytestLog:generatedLevel(screenName, level, depth)
         entities[index] = { kind = entity.kind, x = entity.x, y = entity.y }
     end
     self:record("generation", { screen = screenName, area = level.area,
-        seed = level.seed, depth = depth, tiles = rows, entities = entities })
+        seed = level.seed, depth = depth, subtype = level.selectedSubtype,
+        tiles = rows, entities = entities })
 end
 
 function PlaytestLog:tick(screenName, input, before, screen)

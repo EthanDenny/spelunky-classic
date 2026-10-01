@@ -5,6 +5,20 @@ local function key(x, y)
     return x .. ":" .. y
 end
 
+local function destroySpikesAbove(world, left, top, width)
+    if not world.level then return end
+    local pointX, pointY = left + width / 2, top - 1
+    for _, entity in ipairs(world.level.entities or {}) do
+        if entity.kind == "spikes" and not entity.destroyed
+            and pointX >= entity.x * world.tileSize
+            and pointX < (entity.x + 1) * world.tileSize
+            and pointY >= entity.y * world.tileSize
+            and pointY < (entity.y + 1) * world.tileSize then
+            entity.destroyed = true
+        end
+    end
+end
+
 function World.new(width, height, tileSize)
     return setmetatable({
         width = width,
@@ -18,6 +32,7 @@ function World.new(width, height, tileSize)
         ladderTop = {},
         rope = {},
         web = {},
+        dynamicWebs = {},
         dynamicSolids = {},
         labels = {},
     }, World)
@@ -33,8 +48,29 @@ end
 
 function World:remove(kind, x, y)
     assert(self[kind], "Unknown platform-world cell kind: " .. tostring(kind))
-    local existed = self[kind][key(x, y)] ~= nil
+    local value = self[kind][key(x, y)]
+    local existed = value ~= nil
     self[kind][key(x, y)] = nil
+    if kind == "solid" and existed and self.level then
+        -- Cave lips are generated one cell above their supporting brick.
+        -- The original removes that depth-3 tile when the solid is destroyed.
+        for index = #(self.level.decorations or {}), 1, -1 do
+            local decoration = self.level.decorations[index]
+            if decoration.x == x and decoration.y + 1 == y then
+                table.remove(self.level.decorations, index)
+            end
+        end
+        -- oSolid's Destroy event also destroys oSpikes immediately above it.
+        destroySpikesAbove(self, x * self.tileSize, y * self.tileSize, self.tileSize)
+        if type(value) == "table" then
+            value.destroyed = true
+            -- A two-cell entity such as the sacrifice altar must not leave
+            -- its second collision cell behind after the object is destroyed.
+            for cell, occupant in pairs(self.solid) do
+                if occupant == value then self.solid[cell] = nil end
+            end
+        end
+    end
     if existed and self.playtestLog then self.playtestLog:record("world_cell", {
         action = "remove", kind = kind, x = x, y = y, worldTime = self.time,
     }) end
@@ -55,6 +91,16 @@ end
 
 function World:cellAt(kind, x, y)
     return self:has(kind, math.floor(x / self.tileSize), math.floor(y / self.tileSize))
+end
+
+function World:webAtPoint(x, y)
+    for _, web in ipairs(self.dynamicWebs) do
+        if x >= web.x and x < web.x + 16
+            and y >= web.y and y < web.y + 16 then
+            return true
+        end
+    end
+    return self:cellAt("web", x, y)
 end
 
 function World:each(kind, callback)
@@ -119,6 +165,9 @@ end
 
 function World:removeDynamicSolid(block)
     block.alive = false
+    if block.kind ~= "boulder" then
+        destroySpikesAbove(self, block.x, block.y, block.width)
+    end
     if self.playtestLog then self.playtestLog:record("dynamic_solid_removed", {
         kind = block.kind, x = block.x, y = block.y, worldTime = self.time,
     }) end
@@ -214,8 +263,15 @@ function World:destroyTerrain(centerX, centerY, radius)
     for _, block in ipairs(self.dynamicSolids) do
         local dx = block.x + block.width / 2 - centerX
         local dy = block.y + block.height / 2 - centerY
-        if block.alive ~= false and dx * dx + dy * dy <= (radius + 8) ^ 2 then
-            block.alive = false
+        if block.alive ~= false and block.kind ~= "boulder"
+            and dx * dx + dy * dy <= (radius + 8) ^ 2 then
+            self:removeDynamicSolid(block)
+            destroyed[#destroyed + 1] = {
+                x = math.floor(block.x / tileSize),
+                y = math.floor(block.y / tileSize),
+                pixelX = block.x + block.width / 2,
+                pixelY = block.y + block.height / 2,
+            }
         end
     end
     return destroyed

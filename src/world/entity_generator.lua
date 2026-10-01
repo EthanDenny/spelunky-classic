@@ -1,5 +1,13 @@
 local EntityGenerator = {}
 
+local SOLID_ENTITIES = {
+    altar_left = true,
+    altar_right = true,
+    sacrifice_altar = true,
+    arrow_trap_left = true,
+    arrow_trap_right = true,
+}
+
 local function getTile(level, x, y)
     if x < 0 or x >= level.width or y < 0 or y >= level.height then return nil end
     return level.tiles[y + 1][x + 1]
@@ -8,8 +16,17 @@ end
 local function isSolid(level, x, y)
     local tile = getTile(level, x, y)
     if not tile then return false end
-    return tile.kind == "solid" or tile.kind == "brick" or tile.kind == "block"
-        or tile.kind == "smooth_brick" or tile.kind == "push_block"
+    if tile.kind == "solid" or tile.kind == "brick" or tile.kind == "block"
+        or tile.kind == "smooth_brick" or tile.kind == "push_block" then
+        return true
+    end
+    for _, entity in ipairs(level.entities) do
+        if SOLID_ENTITIES[entity.kind] and entity.y == y
+            and (entity.x == x or (entity.kind == "sacrifice_altar" and entity.x + 1 == x)) then
+            return true
+        end
+    end
+    return false
 end
 
 local function addEntity(level, kind, x, y, properties)
@@ -123,11 +140,26 @@ local function chooseShopItem(level, rng, shopType, highEnd)
     return ({ "bomb_bag", "rope_pile", "parachute" })[rng:integer(1, 3)]
 end
 
+-- scrShopItemsGen uses the center of each 'i' cell, with a vertical offset
+-- chosen for the item's sprite. The 'q' marker uses scrGenerateItem(+8,+8).
+local SHOP_ITEM_Y_OFFSET = {
+    bomb_bag = 10, bomb_box = 8, paste = 10, rope_pile = 11,
+    pistol = 12, machete = 12, bow = 12, web_cannon = 12, shotgun = 12,
+    spring_shoes = 10, spectacles = 10, gloves = 8, mitt = 8,
+    cape = 10, spike_shoes = 10, compass = 10, mattock = 10,
+    jetpack = 8, teleporter = 12, parachute = 10,
+}
+
 local function resolveEmbeddedEntities(level, rng)
     for _, entity in ipairs(level.entities) do
         if entity.kind == "shop_item" then
             entity.kind = chooseShopItem(level, rng, entity.properties.shopType,
                 entity.properties.highEnd)
+            local yOffset = entity.properties.highEnd and 8
+                or (entity.properties.shopType == "Weapon" and entity.kind == "bomb_box" and 10)
+                or assert(SHOP_ITEM_Y_OFFSET[entity.kind], "Missing shop item placement")
+            entity.x = entity.x + 0.5
+            entity.y = entity.y + yOffset / 16
             entity.properties.forSale = true
         elseif entity.kind == "treasure" then
             if rng:integer(1, 120) == 1 then entity.kind = "ruby_big"
@@ -207,6 +239,8 @@ local function populateMines(level, rng, x, y, state)
                 and not isSolid(level, x + 1, y + 1) and not isSolid(level, x + 1, y + 2)
                 and rng:integer(1, 40) == 1 then
                 addEntity(level, "giant_spider", x, y + 1)
+                addEntity(level, "web", x, y + 2)
+                addEntity(level, "web", x + 1, y + 2)
                 state.giantSpider = true
             elseif rng:integer(1, 60) == 1 then addEntity(level, "bat", x, y + 1)
             elseif rng:integer(1, 80) == 1 then addEntity(level, "spider", x, y + 1) end
@@ -216,17 +250,25 @@ local function populateMines(level, rng, x, y, state)
             elseif rng:integer(1, 800) == 1 then addEntity(level, "caveman", x, y - 1) end
         end
     end
+end
 
-    if getTile(level, x, y).kind == "block" and rng:integer(1, 4) == 1
-        and not near(level, "entrance", x, y, 9) then
-        if isSolid(level, x + 1, y) and not isSolid(level, x - 1, y) and not isSolid(level, x - 2, y) then
-            addEntity(level, "arrow_trap_left", x, y)
-            level.tiles[y + 1][x + 1] = { kind = "empty" }
-        elseif isSolid(level, x - 1, y) and not isSolid(level, x + 1, y) and not isSolid(level, x + 2, y) then
-            addEntity(level, "arrow_trap_right", x, y)
-            level.tiles[y + 1][x + 1] = { kind = "empty" }
-        end
+local function placeMinesTrap(level, rng, x, y)
+    if getTile(level, x, y).kind ~= "block" or inShop(level, x, y) then return end
+    local entrance = level.entrance
+    local entranceDistance = entrance and distance(x, y, entrance.x, entrance.y) or math.huge
+    if rng:integer(1, 4) ~= 1 or entranceDistance <= 3
+        or (entrance and y == entrance.y and entranceDistance < 9) then return end
+
+    if isSolid(level, x + 1, y) and not isSolid(level, x - 1, y)
+        and not isSolid(level, x - 2, y) then
+        addEntity(level, "arrow_trap_left", x, y)
+    elseif isSolid(level, x - 1, y) and not isSolid(level, x + 1, y)
+        and not isSolid(level, x + 2, y) and not isSolid(level, x + 3, y) then
+        addEntity(level, "arrow_trap_right", x, y)
+    else
+        return
     end
+    level.tiles[y + 1][x + 1] = { kind = "empty" }
 end
 
 local function addProgressionItems(level, rng)
@@ -284,6 +326,14 @@ function EntityGenerator.populate(level, rng)
         end
     end
     addProgressionItems(level, rng)
+
+    -- Classic converts eligible oBlock instances only after treasure, enemies,
+    -- the locked chest, and its key have all been generated.
+    for y = 1, level.height - 1 do
+        for x = 0, level.width - 1 do
+            placeMinesTrap(level, rng, x, y)
+        end
+    end
 
     if level.entrance then
         addEntity(level, "player", level.entrance.x + 0.5, level.entrance.y + 0.5,

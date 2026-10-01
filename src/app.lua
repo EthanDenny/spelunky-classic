@@ -1,5 +1,6 @@
 local App = {}
 App.__index = App
+local ClassicControls = require("src.input.classic_controls")
 
 local UI_FONT = "assets/fonts/NotoSans-Regular.ttf"
 local SYMBOL_FONT = "assets/fonts/NotoSansMono-Regular.ttf"
@@ -14,6 +15,7 @@ end
 function App.new(playtestLog)
     return setmetatable({
         playtestLog = playtestLog,
+        controls = nil,
         currentScreen = nil,
         currentScreenName = nil,
         screens = {},
@@ -22,6 +24,11 @@ function App.new(playtestLog)
 end
 
 function App:load()
+    self.controls = ClassicControls.load()
+    if self.playtestLog then self.playtestLog:record("controls_loaded", {
+        keySource = self.controls.keySource, settingsSource = self.controls.settingsSource,
+        keys = self.controls.keys, settings = self.controls.settings,
+    }) end
     love.graphics.setDefaultFilter("nearest", "nearest")
 
     self.fontFallbacks = {}

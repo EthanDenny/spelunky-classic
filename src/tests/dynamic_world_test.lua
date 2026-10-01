@@ -65,6 +65,33 @@ function Test.run()
     end
 
     do
+        local world = World.new(10, 12, 16)
+        local tools = ToolSystem.new(world, 30)
+        local player = Player.new(40, 43)
+        player.facing = 1
+        world:set("solid", 3, 2)
+        assert(not tools:throwRope(player, { down = true }) and #tools.ropes == 0,
+            "A blocked side placement must not deploy or spend a rope")
+
+        world:remove("solid", 3, 2)
+        world:set("solid", 3, 3)
+        local outerRope = tools:throwRope(player, { down = true })
+        assert(outerRope and outerRope.x == 72,
+            "Downward placement must try the far half-cell when the near edge is blocked")
+        world:remove("solid", 3, 3)
+        local rope = tools:throwRope(player, { down = true })
+        assert(rope and rope.deployed and rope.x == 56 and rope.y == 43,
+            "Downward rope hooks must snap horizontally but retain the player's pixel height")
+        for _ = 1, 12 do tools:update(player, {}, {}) end
+        assert(#rope.segments == 12 and world:climbableAtPoint(rope.x, 112) == "rope",
+            "Deployed ropes must grow into a climbable body")
+        local climber = Player.new(rope.x, 112)
+        for _ = 1, 4 do climber:step(world, { up = true }) end
+        assert(climber.state == Player.STATES.climbing and climber.climbKind == "rope",
+            "The player must be able to grab and climb a deployed rope")
+    end
+
+    do
         local level = emptyLevel(10, 10)
         level.area = "mines"
         level.entities[1] = { kind = "giant_tiki_head", x = 5, y = 2, properties = {} }

@@ -1,4 +1,5 @@
 local MinesGenerator = require("src.world.mines_generator")
+local EntityGenerator = require("src.world.entity_generator")
 local SpriteData = require("src.world.original_entity_sprites")
 
 local Test = {}
@@ -16,6 +17,7 @@ local LOOT = {
 
 local SPECIAL_RENDERERS = {
     sacrifice_altar = true,
+    kali_head = true,
     worshipper = true,
     hidden_sapphire = true,
     hidden_emerald = true,
@@ -23,7 +25,34 @@ local SPECIAL_RENDERERS = {
     hidden_item = true,
 }
 
+local function assertAltarDoesNotFaceArrowTrap()
+    local level = {
+        width = 42,
+        height = 34,
+        levelNumber = 1,
+        startRoomX = 0,
+        startRoomY = 0,
+        roomPath = { { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 } },
+        entrance = { x = 1, y = 1 },
+        entities = { { kind = "altar_left", x = 12, y = 10 } },
+        tiles = {},
+    }
+    for y = 1, level.height do
+        level.tiles[y] = {}
+        for x = 1, level.width do level.tiles[y][x] = { kind = "empty" } end
+    end
+    level.tiles[11][10] = { kind = "brick" }
+    level.tiles[11][11] = { kind = "block" }
+    local rng = { integer = function(_, minimum) return minimum end }
+    EntityGenerator.populate(level, rng)
+    for _, entity in ipairs(level.entities) do
+        assert(entity.kind ~= "arrow_trap_right",
+            "Arrow trap must not face the solid idol altar")
+    end
+end
+
 function Test.run()
+    assertAltarDoesNotFaceArrowTrap()
     local foundShopkeeper = false
     for depth = 1, 4 do
         local foundEnemy = false

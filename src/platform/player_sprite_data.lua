@@ -60,6 +60,16 @@ return {
         width = 16, height = 16,
         frames = { "assets/original/platform/player/sDieLR/000.png" },
     },
+    sDieLBounce = {
+        originX = 8, originY = 8,
+        width = 16, height = 16,
+        frames = { "assets/original/platform/player/sDieLBounce/000.png" },
+    },
+    sDieLFall = {
+        originX = 8, originY = 8,
+        width = 16, height = 16,
+        frames = { "assets/original/platform/player/sDieLFall/000.png" },
+    },
     sHangLeft = {
         originX = 8, originY = 8,
         width = 16, height = 16,

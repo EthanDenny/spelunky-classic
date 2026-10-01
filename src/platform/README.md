@@ -36,6 +36,25 @@ objects and runs them on the same fixed 30 Hz simulation:
   recover, and make randomized player-directed hops
 
 The shared contact rules support one-hit enemies, downward stomps and bounce velocity,
-side-contact damage, knockback, and 30-tick player invincibility. The Enemy AI screen
-adds the original 11-frame player attack animation and front/back whip hit windows,
-plus optional sensor and collision visualization.
+side-contact damage, a brief horizontal push without a stun pose, and 30-tick player
+invincibility. The Scenario Tests viewer
+has a Mines enemy and rope sidebar with automatically repeating scenarios. Its snake page shows
+patrol and gap avoidance, player contact, and an idle snake being whipped. Bat scenarios
+cover ambush, ceiling return, and a timed whip. Caveman scenarios cover ledge patrol,
+an animated charge, and a whip stun with animated recovery. Spider scenarios show
+ceiling drops, the full flip animation, hopping, and a whip kill. Giant spider
+scenarios show its ceiling flip, jumps, whip-triggered drop, and web shot. Skeleton
+scenarios show fake bones awakening, walking over a ledge, and shattering into
+bones and a skull. The rope page shows a blocked one-block throw, both corner
+offsets, throws with and without a ceiling, the moving rope end striking
+snakes and cavemen, a crouched drop beside a ledge, and the 16-segment limit
+in a deep shaft. The bomb page shows a wall rebound, paste sticking to and
+breaking a wall, a snake caught in the blast, Up and Down throws, and a whip
+blocking the throw. Flames rebound from solid surfaces; destroyed bricks and
+movable blocks shed rubble, while blasted enemies leave blood or skeleton pieces.
+Scenario sound starts muted and can be enabled with the header button or M key.
+Snake deaths emit three blood particles from the sprite center; a whip hit emits
+one additional particle, following the original collision and step events.
+The live giant spider starts as `oGiantSpiderHang`, then switches to its
+32×32 flip, idle, jump, crawl, and web-squirt sprites when triggered; its
+visual state is recorded in playtest logs for frame-by-frame diagnosis.

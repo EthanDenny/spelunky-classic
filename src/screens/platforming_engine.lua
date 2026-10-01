@@ -1,6 +1,9 @@
 local Player = require("src.platform.player")
 local World = require("src.platform.world")
 local Item = require("src.platform.item")
+local ToolSystem = require("src.platform.tool_system")
+local Depth = require("src.render.classic_depth")
+local DepthQueue = require("src.render.depth_queue")
 
 local PlatformingEngine = {}
 PlatformingEngine.__index = PlatformingEngine
@@ -25,6 +28,9 @@ function PlatformingEngine.new(app)
         player = nil,
         items = {},
         heldItem = nil,
+        tools = nil,
+        bombs = 4,
+        ropes = 4,
         actionHeld = false,
         accumulator = 0,
         images = {},
@@ -62,6 +68,10 @@ function PlatformingEngine:resetCourse()
     self.player.spriteName = "sStandLeft"
     self.player.playtestLog = self.app.playtestLog
     self.player:loadAssets()
+    self.tools = ToolSystem.new(self.world, Player.TICK_RATE)
+    self.tools:loadAssets()
+    self.bombs = 4
+    self.ropes = 4
     self.items = { Item.new({ kind = "rock", x = 7.5, y = 17.75 }, { width = 8, height = 8 }) }
     self.heldItem = nil
     self.actionHeld = false
@@ -77,16 +87,7 @@ function PlatformingEngine:enter()
 end
 
 function PlatformingEngine:getInput()
-    return {
-        left = love.keyboard.isDown("left", "a"),
-        right = love.keyboard.isDown("right", "d"),
-        up = love.keyboard.isDown("up", "w"),
-        down = love.keyboard.isDown("down", "s"),
-        jump = love.keyboard.isDown("z", "space"),
-        sprint = love.keyboard.isDown("lshift", "rshift"),
-        attack = love.keyboard.isDown("x", "c", "k", "lctrl", "rctrl"),
-        downToRun = true,
-    }
+    return self.app.controls:playerInput()
 end
 
 function PlatformingEngine:simulationStep(input)
@@ -118,6 +119,7 @@ function PlatformingEngine:simulationStep(input)
         end
     end
     for _, item in ipairs(self.items) do item:update(self.world, self.player) end
+    self.tools:update(self.player, {}, self.items)
 
     if log then log:tick("platforming_engine", input, before, self) end
 end
@@ -134,10 +136,21 @@ function PlatformingEngine:update(dt)
 end
 
 function PlatformingEngine:keypressed(key, _, isRepeat)
-    if isRepeat then
-        return
-    end
-    if key == "r" then
+    if isRepeat then return end
+    local controls = self.app.controls
+    if controls:matches("rope", key) then
+        if self.ropes > 0 and not self.player:isDead()
+            and self.tools:throwRope(self.player, self:getInput()) then
+            self.ropes = self.ropes - 1
+            if self.throwSound then self.throwSound:clone():play() end
+        end
+    elseif controls:matches("bomb", key) then
+        if self.bombs > 0 and not self.player:isDead()
+            and self.tools:throwBomb(self.player, self:getInput()) then
+            self.bombs = self.bombs - 1
+            if self.throwSound then self.throwSound:clone():play() end
+        end
+    elseif key == "r" then
         self:resetCourse()
     elseif key == "b" then
         self.debugCollision = not self.debugCollision
@@ -188,35 +201,52 @@ function PlatformingEngine:drawWorld(viewport)
 
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.draw(self.images.background, backgroundQuad, 0, 0)
+    local queue = DepthQueue.new()
+    queue:add(Depth.tile("ladder"), function()
+        self.world:each("ladder", function(x, y)
+            love.graphics.draw(self.images.ladder, x * 16, y * 16)
+        end)
+        self.world:each("ladderTop", function(x, y)
+            love.graphics.draw(self.images.ladderTop, x * 16, y * 16)
+        end)
+    end)
+    queue:add(Depth.entity("rope"), function()
+        self.world:each("rope", function(x, y, value)
+            if value == true then self:drawRope(x, y) end
+        end)
+    end)
+    self.tools:submit(queue)
     for _, item in ipairs(self.items) do
         if not item.held then
-            love.graphics.draw(self.images.rock, item.x - 4, item.y - 4)
+            local current = item
+            queue:add(Depth.entity(current.kind), function()
+                love.graphics.draw(self.images.rock, current.x - 4, current.y - 4)
+            end)
         end
     end
-    self.world:each("platform", function(x, y)
-        love.graphics.draw(self.images.brickDown, x * 16, y * 16)
+    queue:add(Depth.TERRAIN, function()
+        self.world:each("platform", function(x, y)
+            love.graphics.draw(self.images.brickDown, x * 16, y * 16)
+        end)
+        self.world:each("solid", function(x, y)
+            local image = (x * 17 + y * 31) % 7 == 0 and self.images.brickAlt or self.images.brick
+            love.graphics.draw(image, x * 16, y * 16)
+        end)
     end)
-    self.world:each("solid", function(x, y)
-        local image = (x * 17 + y * 31) % 7 == 0 and self.images.brickAlt or self.images.brick
-        love.graphics.draw(image, x * 16, y * 16)
-    end)
-    self.world:each("ladder", function(x, y)
-        love.graphics.draw(self.images.ladder, x * 16, y * 16)
-    end)
-    self.world:each("ladderTop", function(x, y)
-        love.graphics.draw(self.images.ladderTop, x * 16, y * 16)
-    end)
-    self.world:each("rope", function(x, y)
-        self:drawRope(x, y)
-    end)
-
-    self.player:draw()
+    queue:add(Depth.PLAYER, function() self.player:drawBody() end)
+    if self.player:getWhipPhase() then
+        queue:add(Depth.EFFECT, function() self.player:drawWhip() end)
+    end
     for _, item in ipairs(self.items) do
         if item.held then
-            love.graphics.setColor(1, 1, 1, 1)
-            love.graphics.draw(self.images.rock, item.x - 4, item.y - 4)
+            local current = item
+            queue:add(Depth.heldItem(self.player), function()
+                love.graphics.setColor(1, 1, 1, 1)
+                love.graphics.draw(self.images.rock, current.x - 4, current.y - 4)
+            end)
         end
     end
+    queue:draw()
 
     if self.debugCollision then
         local halfWidth = self.player:getCollisionHalfWidth()
@@ -259,7 +289,12 @@ function PlatformingEngine:drawFooter(width, height)
     love.graphics.rectangle("fill", 0, height - FOOTER_HEIGHT, width, 1)
     love.graphics.setFont(self.app.fonts.small)
     love.graphics.setColor(COLORS.muted)
-    love.graphics.printf("A/D MOVE   SHIFT SPRINT   Z/SPACE JUMP   S+X PICK UP   X THROW/WHIP   W/S CLIMB   B COLLIDER   R RESET   ESC MENU",
+    local controls = self.app.controls
+    love.graphics.printf(string.format(
+        "%s/%s MOVE   %s RUN   %s JUMP   %s ACTION/PICK UP   %s BOMB (%d)   %s ROPE (%d)   %s/%s CLIMB   B COLLIDER   R RESET   ESC MENU",
+        controls:label("left"), controls:label("right"), controls:label("run"),
+        controls:label("jump"), controls:label("attack"), controls:label("bomb"), self.bombs,
+        controls:label("rope"), self.ropes, controls:label("up"), controls:label("down")),
         12, height - 28, width - 24, "center")
 end
 

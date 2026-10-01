@@ -33,18 +33,24 @@ local function observed(callback, ...)
 end
 
 local function runSmokeTest()
+    assert(love.audio.getVolume() == 0,
+        "The smoke suite must mute application audio before loading any screens")
     require("src.tests.startup_test").run()
     require("src.tests.font_test").run(app)
     require("src.tests.animation_catalog_test").run()
+    require("src.tests.shop_item_physics_test").run(app)
     require("src.tests.platform_player_test").run()
     require("src.tests.platform_item_test").run()
     require("src.tests.platforming_engine_test").run(app)
-    require("src.tests.enemy_ai_test").run()
+    require("src.tests.enemy_ai_test").run(app)
+    require("src.tests.bomb_scenarios_test").run(app)
+    require("src.tests.boulder_statue_scenarios_test").run(app)
     require("src.tests.mines_generator_test").run()
+    require("src.tests.mines_level_selection_test").run(app)
     require("src.tests.entity_population_test").run()
     require("src.tests.generated_world_test").run()
     require("src.tests.dynamic_world_test").run()
-    require("src.tests.gameplay_systems_test").run()
+    require("src.tests.gameplay_systems_test").run(app)
     require("src.tests.playtest_log_test").run(app)
 
     local screenNames = {
@@ -92,7 +98,14 @@ local function runSmokeTest()
 
     local fullLevel = app.screens.full_level_playtest
     assert(fullLevel.world and fullLevel.player, "Full level playtest did not build its simulation")
+    require("src.tests.classic_controls_test").run(app)
+    require("src.tests.original_hud_item_test").run(app)
+    require("src.tests.crate_action_regression_test").run(app)
+    require("src.tests.render_depth_test").run(app)
     require("src.tests.playtest_feedback_test").run(app)
+    require("src.tests.mines_report_regression_test").run(app)
+    require("src.tests.mines_followup_regression_test").run(app)
+    require("src.tests.boulder_source_regression_test").run(app)
     fullLevel:buildSimulation()
     assert(fullLevel.level.entrance, "Full level playtest generated no entrance")
     assert(fullLevel.hud and fullLevel.hud.images
@@ -176,6 +189,7 @@ function love.load(args)
     end
 
     if hasArgument(args, "--smoke-test") then
+        love.audio.setVolume(0)
         Startup.openMainWindow(false)
         startup.phase = "running"
         app = App.new()

@@ -16,7 +16,9 @@ local SOLID_TILES = {
 local SOLID_ENTITIES = {
     arrow_trap_left = true,
     arrow_trap_right = true,
-    giant_tiki_head = true,
+    altar_left = true,
+    altar_right = true,
+    sacrifice_altar = true,
 }
 
 function GeneratedWorld.fromLevel(level)
@@ -58,9 +60,12 @@ function GeneratedWorld.fromLevel(level)
     end
 
     for _, entity in ipairs(level.entities or {}) do
-        if SOLID_ENTITIES[entity.kind] then
+        if not entity.destroyed and SOLID_ENTITIES[entity.kind] then
             world:set("solid", math.floor(entity.x), math.floor(entity.y), entity)
-        elseif entity.kind == "web" then
+            if entity.kind == "sacrifice_altar" then
+                world:set("solid", math.floor(entity.x) + 1, math.floor(entity.y), entity)
+            end
+        elseif not entity.destroyed and entity.kind == "web" then
             world:set("web", math.floor(entity.x), math.floor(entity.y), entity)
         end
     end

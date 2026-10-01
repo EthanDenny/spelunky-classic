@@ -42,6 +42,15 @@ function Test.run(app)
         end
         assert(contents:find('"type":"generation"', 1, true),
             "World generation must record the level shown to the tester")
+        local selectedTypeLogged = false
+        for line in contents:gmatch("[^\n]+") do
+            if line:find('"type":"generation"', 1, true)
+                and line:find('"subtype":"random"', 1, true) then
+                selectedTypeLogged = true
+                break
+            end
+        end
+        assert(selectedTypeLogged, "Generation logs must identify the selected Mines type")
     end)
     log:close()
     app.playtestLog = nil
