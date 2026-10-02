@@ -1,0 +1,42 @@
+src/platform/tiles/push_block.lua
+  s_a149baf2181030::t_9cd3b8995c1810 4-7
+README.md
+  s_a149baf2181030::t_f4d0f0838c868d 9-10
+src/platform/pickups/bomb_box.lua
+  s_a149baf2181030::t_66a0a39ab11af8 4-5
+src/platform/items/teleporter.lua
+  s_a149baf2181030::t_66a0a39ab11af8 13-14
+src/tests/platform_item_test.lua
+  s_a149baf2181030::t_a497a892eec16a 10-11,36-91
+src/tests/dynamic_world_test.lua
+  s_a149baf2181030::t_f3507310b5d6bc 21-31
+  s_a149baf2181030::t_a196966ee93dab 20
+src/platform/pickups/kapala.lua
+  s_a149baf2181030::t_66a0a39ab11af8 3
+src/platform/enemies/ghost.lua
+  s_a149baf2181030::t_66a0a39ab11af8 2,13,15-18,20-21,24
+src/platform/pickups/jetpack.lua
+  s_a149baf2181030::t_66a0a39ab11af8 4-5
+src/platform/README.md
+  s_a149baf2181030::t_f4d0f0838c868d 78-79
+docs/object-source-audit.md
+  s_a149baf2181030::t_db76e58056414e 5,101-106
+  s_a149baf2181030::t_6d8817ee1b82aa 1-4,6-36,38-100,107-215
+  s_a149baf2181030::t_6663bebb9f548d 37
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "4a1e5681c1ee68b2f4f13c71dbefab0251a1d728",
+  "prompts": {},
+  "sessions": {
+    "s_a149baf2181030": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0fdc3-ae05-7e41-a96b-bd7a333b41c3",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Ethan Denny <ethandenny@protonmail.com>"
+    }
+  }
+}
