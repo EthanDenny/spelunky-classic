@@ -1,0 +1,719 @@
+src/platform/tiles/types.lua
+  s_a149baf2181030::t_0184e0ace562a6 1-10
+src/platform/items/web_cannon.lua
+  s_a149baf2181030::t_6cf78fdc9f4833 12-13
+  s_a149baf2181030::t_cdf80a0956aac9 4-7
+  s_a149baf2181030::t_c779d2627b5e7d 1-3,8-11,14
+src/platform/effects/bone.lua
+  s_a149baf2181030::t_bfec62e60214ff 1,8
+  s_a149baf2181030::t_cdf80a0956aac9 2-7
+src/platform/structures/sacrifice_altar.lua
+  s_a149baf2181030::t_7a5e766fda12c5 1-8
+src/platform/effects/poof.lua
+  s_a149baf2181030::t_cdf80a0956aac9 2-4
+  s_a149baf2181030::t_bfec62e60214ff 1,5
+src/platform/items/key.lua
+  s_a149baf2181030::t_6cf78fdc9f4833 7-8
+  s_a149baf2181030::t_c779d2627b5e7d 1-6,9
+src/platform/enemies/skeleton.lua
+  s_d6797c77d20971::t_e37f4c05077357 1-5,9-81,117-118,121
+  s_d6797c77d20971::t_1674035445588b 7
+  s_d6797c77d20971::t_934cdecd3687de 6,82-116
+  s_d6797c77d20971::t_e24cad6b311349 8
+  s_a149baf2181030::t_c779d2627b5e7d 119-120
+src/platform/enemy.lua
+  s_6abfd3f5a194b4::t_3376566d72ed38 206,215-218
+  s_d6797c77d20971::t_0f431d93cf6a97 1-4,10-12,36-46,57,59,68-71,74,82-83,87-89,93-95,174,179-180,184,190,214,225,239,241,249,254
+  s_d6797c77d20971::t_e16c5f08228b5c 55-56
+  s_d6797c77d20971::t_dc8607e60ec749 207-208
+src/platform/items/rock.lua
+  s_a149baf2181030::t_c779d2627b5e7d 1-7
+src/platform/projectile_body.lua
+  s_a149baf2181030::t_4434c4117f2ad2 1-50,52-105
+  s_a149baf2181030::t_cdf80a0956aac9 51
+src/platform/pickups/types.lua
+  s_a149baf2181030::t_c779d2627b5e7d 1-28
+src/platform/pickups/bomb_bag.lua
+  s_a149baf2181030::t_c779d2627b5e7d 1-8
+src/platform/enemies/spider.lua
+  s_a149baf2181030::t_c779d2627b5e7d 96-97
+  s_d6797c77d20971::t_1b0773b3b784ed 1-95,98
+src/platform/enemies/snake.lua
+  s_d6797c77d20971::t_1b0773b3b784ed 1-62,65
+  s_a149baf2181030::t_c779d2627b5e7d 63-64
+src/audio/classic_sounds.lua
+  s_d6797c77d20971::t_69c551629304ef 6,12
+  s_d6797c77d20971::t_81ec12ef198554 9,11
+src/platform/pickups/gold_bars.lua
+  s_a149baf2181030::t_c779d2627b5e7d 1-8
+src/platform/effects/rubble_large.lua
+  s_a149baf2181030::t_bfec62e60214ff 1,5
+  s_a149baf2181030::t_cdf80a0956aac9 2-4
+src/platform/effects.lua
+  s_a149baf2181030::t_bfec62e60214ff 6,68,91,94,96,98-99,175,182-183,188,202,214-216,220,222,229,237,246,253-254,259-260,275,278,280-282
+  s_d6797c77d20971::t_f1b916bd2a9d6e 136-142,146-147,151,155-156
+main.lua
+  s_d6797c77d20971::t_dddebb75adcfb3 125
+  s_d6797c77d20971::t_be40374af872e1 47
+  s_6abfd3f5a194b4::t_0b3f361bda27f2 124
+  s_6abfd3f5a194b4::t_8235c3f344ea63 42
+src/platform/tools/rope.lua
+  s_a149baf2181030::t_46c9c1a5ba8459 1-138
+src/platform/shop_stock.lua
+  s_6abfd3f5a194b4::t_9c40226034a7bc 1-71
+src/screens/enemy_ai.lua
+  s_6abfd3f5a194b4::t_29d9ea5233c20f 519
+  s_d6797c77d20971::t_2fdd34adcb0086 569,657
+  s_d6797c77d20971::t_031fecf544e344 776,778-779,839-840
+  s_d6797c77d20971::t_a8ed3326d4a113 9,35,590-623,688-689,720-721,723-724,966-967,969,973-979,1195-1200,1219-1225
+  s_6abfd3f5a194b4::t_3ab218428a362a 492,502,514,528,538
+  s_d6797c77d20971::t_2529fe38e46547 13,659-662,706-707,1231
+  s_d6797c77d20971::t_6bc5dffeec2a04 986-990
+  s_d6797c77d20971::t_4fb040f15f1f84 991
+src/tests/generated_world_test.lua
+  s_d6797c77d20971::t_0065739d269ea2 15,32-33
+src/platform/items/locked_chest.lua
+  s_a149baf2181030::t_c779d2627b5e7d 1-3,6-8,11
+  s_a149baf2181030::t_cdf80a0956aac9 4-5
+  s_a149baf2181030::t_6cf78fdc9f4833 9-10
+src/platform/pickups/bomb_box.lua
+  s_a149baf2181030::t_c779d2627b5e7d 1-8
+src/platform/pickups/gold_chunk.lua
+  s_a149baf2181030::t_6cf78fdc9f4833 8-9
+  s_a149baf2181030::t_c779d2627b5e7d 1-7,10
+src/platform/pickups/gold_nugget.lua
+  s_a149baf2181030::t_c779d2627b5e7d 1-7,10
+  s_a149baf2181030::t_6cf78fdc9f4833 8-9
+src/platform/pickups/spring_shoes.lua
+  s_a149baf2181030::t_c779d2627b5e7d 1-8
+src/platform/traps/types.lua
+  s_a149baf2181030::t_46c9c1a5ba8459 1-5
+src/platform/structures/kali_head.lua
+  s_a149baf2181030::t_7a5e766fda12c5 1-8
+src/platform/tiles/ladder_top.lua
+  s_a149baf2181030::t_0184e0ace562a6 1
+src/platform/projectiles/types.lua
+  s_a149baf2181030::t_4434c4117f2ad2 1-6
+src/platform/effects/blood.lua
+  s_a149baf2181030::t_bfec62e60214ff 1,10
+  s_a149baf2181030::t_cdf80a0956aac9 2-9
+src/platform/effects/skull.lua
+  s_a149baf2181030::t_cdf80a0956aac9 2-6
+  s_a149baf2181030::t_bfec62e60214ff 1,7
+src/platform/melee_mask.lua
+  s_d6797c77d20971::t_c7b05c45b241cf 27-28,41
+  s_d6797c77d20971::t_bc4ff7d8eaeed1 1-26,29-40,42-63
+src/platform/items/mattock.lua
+  s_a149baf2181030::t_c779d2627b5e7d 1-3,6-9,16
+  s_a149baf2181030::t_6cf78fdc9f4833 10-15
+  s_a149baf2181030::t_cdf80a0956aac9 4-5
+src/platform/fake_bones.lua
+  s_a149baf2181030::t_c779d2627b5e7d 5
+src/platform/structures/types.lua
+  s_a149baf2181030::t_7a5e766fda12c5 1-11
+src/platform/treasure.lua
+  s_d6797c77d20971::t_94d768b7e462c3 8
+  s_d6797c77d20971::t_dbe78336e1a5b8 7,67
+  s_a149baf2181030::t_0184e0ace562a6 21
+  s_6abfd3f5a194b4::t_9cbeb09f0fcf79 11-13,18,46-55,57-62,64-66
+  s_6abfd3f5a194b4::t_41d149350b6bd6 16-17,71-75
+  s_a149baf2181030::t_94ce1314633646 76-77
+src/platform/item_contents.lua
+  s_d6797c77d20971::t_a266757c8e4e9b 20-23
+  s_d6797c77d20971::t_ae297ff944c49f 1-18,24,27-31
+  s_a149baf2181030::t_6cf78fdc9f4833 19,25-26
+src/platform/items/jar.lua
+  s_a149baf2181030::t_cdf80a0956aac9 11-13,16-18
+  s_a149baf2181030::t_c779d2627b5e7d 1-10,14-15,19-20
+src/platform/pickups/cape.lua
+  s_a149baf2181030::t_c779d2627b5e7d 1-9
+src/tests/bomb_scenarios_test.lua
+  s_6abfd3f5a194b4::t_b6f97ce4ccf673 75,129
+  s_d6797c77d20971::t_b631b211a50b31 4-5,84-100
+  s_6abfd3f5a194b4::t_bc780958a1a50c 156-158
+  s_d6797c77d20971::t_bf6538757be004 101
+src/platform/pickups/scarab.lua
+  s_a149baf2181030::t_c779d2627b5e7d 1-7
+src/tests/platform_player_test.lua
+  s_6abfd3f5a194b4::t_0f519e6cace4fe 184-209,211-219
+  s_6abfd3f5a194b4::t_96d16a2056dd3e 210
+  s_6abfd3f5a194b4::t_07adc108a48126 684-685,694,696-698,723,725
+  s_6abfd3f5a194b4::t_5aa8e1656cbcef 31-76,88-93,95-175,181-183,221-226,236,268-275
+  s_6abfd3f5a194b4::t_e54ada38d3b9bc 237-267
+  s_6abfd3f5a194b4::t_5db7be06ab1881 682-683
+  s_6abfd3f5a194b4::t_ff0970f676451b 94,176-180
+  s_6abfd3f5a194b4::t_2cd0da517bed52 220,227-235
+  s_d6797c77d20971::t_403902371b4dd8 77-87
+src/world/mines_generator.lua
+  s_a149baf2181030::t_0184e0ace562a6 4-5,63
+src/tests/boulder_statue_scenarios_test.lua
+  s_d6797c77d20971::t_e00631a6832ee6 13-14,25-27,31-32
+  s_d6797c77d20971::t_27dcd2310896a9 6-7,9-12,16-18,22-24,29-30
+src/tests/gameplay_systems_test.lua
+  s_d6797c77d20971::t_a42c46438988c0 100
+  s_d6797c77d20971::t_e810dfd44e800b 163-170
+  s_d6797c77d20971::t_b82436453de08b 235-247,253-267
+  s_d6797c77d20971::t_0992a1d80af460 29,31-33
+  s_d6797c77d20971::t_84163d385d3e8f 248-252
+  s_d6797c77d20971::t_28497237c7f836 73-92,107-122,155
+  s_d6797c77d20971::t_18bbf197942075 123-130
+  s_d6797c77d20971::t_2cca338dc70a7a 4,139-154
+  s_d6797c77d20971::t_97acd5eb5e8fb8 131-138
+  s_d6797c77d20971::t_7fd5b999aac160 2,93-99,101-106
+  s_d6797c77d20971::t_fbaa4f4ad76780 171-187
+src/platform/item_actions.lua
+  s_6abfd3f5a194b4::t_8295709f09f742 91
+  s_d6797c77d20971::t_c7b05c45b241cf 15,21,68,125
+  s_6abfd3f5a194b4::t_24b23abdc7706a 48,51,167
+  s_d6797c77d20971::t_425cd67c015fec 83,94,114-119
+  s_d6797c77d20971::t_db0347385d9aa2 63-64
+  s_d6797c77d20971::t_35c21064336612 28,31,52-53,62,70-75,79-80,124,148-150,152,157
+  s_d6797c77d20971::t_ac6022013b3ccf 17,92-93,122,129-132,134,137-138,141,145
+  s_d6797c77d20971::t_b5c6ab3394780c 168-176
+  s_d6797c77d20971::t_ed47792dd23bce 18-19,25-26,33-36,42-47,49-50,54-56,126-128,133,135-136,139-140
+  s_d6797c77d20971::t_01c727823e330f 5-9
+  s_d6797c77d20971::t_edc770d1b8d199 1,3-4,10-11,16,159-166,177-178,181-186,188-193
+  s_d6797c77d20971::t_216123b9a8807c 187
+  s_a149baf2181030::t_6cf78fdc9f4833 12-14,22-24,65,90,95,123,179-180
+  s_d6797c77d20971::t_a04a4bd1c9a60b 30,78,156
+  s_d6797c77d20971::t_8ac6768adacd5d 96-113
+  s_d6797c77d20971::t_81ec12ef198554 59-61,66-67,69,142-144,158
+  s_d6797c77d20971::t_a58be4f513c80e 57,85,89,120-121,151,153-154
+  s_d6797c77d20971::t_17dd63f9704c93 2,27,37-41,81-82,84,86-88
+  s_d6797c77d20971::t_a55d3b00e94af4 20,29,32,58,76-77,146-147,155
+src/platform/items/chest.lua
+  s_a149baf2181030::t_c779d2627b5e7d 1-3,5-7,44
+  s_a149baf2181030::t_cdf80a0956aac9 4,39
+  s_a149baf2181030::t_6cf78fdc9f4833 8-38,40-43
+src/platform/items/bow.lua
+  s_a149baf2181030::t_cdf80a0956aac9 4-6,84
+  s_a149baf2181030::t_c779d2627b5e7d 1-3,7-10,93
+  s_a149baf2181030::t_6cf78fdc9f4833 11-83,85-92
+src/platform/items/teleporter.lua
+  s_a149baf2181030::t_6cf78fdc9f4833 8-37
+  s_a149baf2181030::t_c779d2627b5e7d 1-7,38
+src/platform/pickups/ruby_big.lua
+  s_a149baf2181030::t_c779d2627b5e7d 1-7
+src/platform/tools/explosion.lua
+  s_a149baf2181030::t_4434c4117f2ad2 57
+  s_a149baf2181030::t_46c9c1a5ba8459 1-56,58-78
+src/platform/items/skull.lua
+  s_a149baf2181030::t_cdf80a0956aac9 4,7-8
+  s_a149baf2181030::t_c779d2627b5e7d 1-3,5-6,9-10
+src/platform/tiles/brick.lua
+  s_a149baf2181030::t_0184e0ace562a6 1-16
+src/render/classic_depth.lua
+  s_a149baf2181030::t_7a5e766fda12c5 3,15-18,31-33
+src/platform/structures/shop_sign.lua
+  s_a149baf2181030::t_7a5e766fda12c5 1-7
+src/platform/tools/rope_throw.lua
+  s_a149baf2181030::t_7a5e766fda12c5 1
+src/platform/projectiles/muzzle_flash.lua
+  s_a149baf2181030::t_4434c4117f2ad2 1-28
+src/platform/structures/altar_left.lua
+  s_a149baf2181030::t_7a5e766fda12c5 1-3
+src/platform/pickups/ruby.lua
+  s_a149baf2181030::t_c779d2627b5e7d 1-7,10
+  s_a149baf2181030::t_6cf78fdc9f4833 8-9
+src/input/classic_controls.lua
+  s_6abfd3f5a194b4::t_41d149350b6bd6 127
+src/platform/projectiles/bullet.lua
+  s_a149baf2181030::t_4434c4117f2ad2 1-13
+src/platform/item_traits.lua
+  s_a149baf2181030::t_c779d2627b5e7d 1-28
+src/platform/pickups/emerald_big.lua
+  s_a149baf2181030::t_c779d2627b5e7d 1-7
+src/platform/shop.lua
+  s_6abfd3f5a194b4::t_afa320053bad2d 82,112,205,208
+  s_6abfd3f5a194b4::t_5597a03d411788 75,78,163,171,175
+  s_6abfd3f5a194b4::t_2325a7853bfcc8 46
+  s_6abfd3f5a194b4::t_861213d30ae5e4 36-44,131
+  s_6abfd3f5a194b4::t_416d26ceb521c9 86,186-189,199-202
+  s_6abfd3f5a194b4::t_d25a261906add1 1-4,6-35,45,47-56,61-74,77,79-81,83-84,87,89-111,113-130,132-162,164-170,172-174,176-185,197-198,203-204,206-207,209-231
+  s_6abfd3f5a194b4::t_9c40226034a7bc 5
+  s_6abfd3f5a194b4::t_bab96ed3b4b6e7 57-60
+  s_6abfd3f5a194b4::t_5a147130477196 76,85,88
+  s_6abfd3f5a194b4::t_e419fa62098e9e 190-196
+src/platform/enemies/shopkeeper.lua
+  s_a149baf2181030::t_c779d2627b5e7d 294-295
+  s_6abfd3f5a194b4::t_331232b76c8154 106,119,124,128,130,141,147,153-154,158-159,184,198,216
+  s_d6797c77d20971::t_934cdecd3687de 3,6,10,194,213,238,249-250,296
+  s_6abfd3f5a194b4::t_3376566d72ed38 11-22,52-68,231-232,239-240
+  s_6abfd3f5a194b4::t_8295709f09f742 1-2,4-5,7-9,23,25-51,69-105,107-114,116-118,120-123,125-127,129,131-140,142-146,148-152,155-157,160-183,185-193,195-197,199-212,214-215,217-230,233-237,241-245,247-248,251-263,269-281,286-293
+  s_6abfd3f5a194b4::t_416d26ceb521c9 24,246
+  s_6abfd3f5a194b4::t_861213d30ae5e4 115,264-268,282-285
+src/platform/pickups/mitt.lua
+  s_a149baf2181030::t_c779d2627b5e7d 1-8
+src/platform/traps/arrow_trap_right.lua
+  s_a149baf2181030::t_4621376e5edc8e 1-3
+src/platform/enemies/damsel.lua
+  s_6abfd3f5a194b4::t_8295709f09f742 19-24
+  s_d6797c77d20971::t_934cdecd3687de 1-7,9-18,25-39,45-46,49
+  s_d6797c77d20971::t_1674035445588b 8,40-44
+  s_a149baf2181030::t_c779d2627b5e7d 47-48
+src/platform/pickups/gloves.lua
+  s_a149baf2181030::t_c779d2627b5e7d 1-8
+src/platform/tiles/push_block.lua
+  s_a149baf2181030::t_0184e0ace562a6 1-28
+src/platform/structures/bones.lua
+  s_a149baf2181030::t_7a5e766fda12c5 1-3
+src/platform/objects.lua
+  s_a149baf2181030::t_7a5e766fda12c5 1-26
+src/platform/trap_system.lua
+  s_a149baf2181030::t_cdf80a0956aac9 59
+  s_d6797c77d20971::t_72b213183706d4 61
+  s_a149baf2181030::t_46c9c1a5ba8459 4-7,23,27,43-46,52-57,64,97,110,118,125
+  s_a149baf2181030::t_4434c4117f2ad2 8
+src/tests/shop_behaviour_test.lua
+  s_6abfd3f5a194b4::t_bab96ed3b4b6e7 406-412
+  s_6abfd3f5a194b4::t_7046566f3d0de4 109-164
+  s_6abfd3f5a194b4::t_4e943ad41bc9d1 416-425,428-429,433-436,438-462,464-468,502
+  s_6abfd3f5a194b4::t_084125282bfc5a 430-432,469-472,474-479
+  s_6abfd3f5a194b4::t_40a10276ee0f83 38,46,351,426
+  s_6abfd3f5a194b4::t_0f519e6cace4fe 51-75
+  s_6abfd3f5a194b4::t_5f6a3c36239c0d 76-82,84-108
+  s_6abfd3f5a194b4::t_5a220de92577da 286-289,480-501
+  s_6abfd3f5a194b4::t_de821ccbfd018e 342-350,352-405,413-415
+  s_6abfd3f5a194b4::t_320bb9f79f23c6 1-37,39-45,47-50,165-192,202-285,290-296,298-341,503-511
+  s_6abfd3f5a194b4::t_1e0db9889863a5 83
+  s_6abfd3f5a194b4::t_a8e4aa3344fee6 427
+  s_6abfd3f5a194b4::t_861213d30ae5e4 297,437,473
+  s_6abfd3f5a194b4::t_ea2b8f7ce7ebad 463
+  s_6abfd3f5a194b4::t_0b3f361bda27f2 193-201
+src/platform/enemies/giant_spider.lua
+  s_a149baf2181030::t_c779d2627b5e7d 1-3,5-167,202-203
+  s_d6797c77d20971::t_934cdecd3687de 4,168-179,188,190-201,204-205
+  s_6abfd3f5a194b4::t_e69e6ab955069e 186-187,189
+  s_d6797c77d20971::t_e24cad6b311349 180-185
+src/platform/structures/exit.lua
+  s_a149baf2181030::t_7a5e766fda12c5 1-2,11
+  s_a149baf2181030::t_cdf80a0956aac9 3-10
+src/render/README.md
+  s_a149baf2181030::t_d3a7e487d0e0ea 4-6,36-37
+src/platform/enemies/ghost.lua
+  s_d6797c77d20971::t_934cdecd3687de 1-30,33
+  s_a149baf2181030::t_c779d2627b5e7d 31-32
+src/tests/shop_item_physics_test.lua
+  s_6abfd3f5a194b4::t_40a10276ee0f83 12-14,18
+src/platform/pickups/udjat_eye.lua
+  s_a149baf2181030::t_c779d2627b5e7d 1-7
+src/platform/pickups/kapala.lua
+  s_a149baf2181030::t_c779d2627b5e7d 1-7
+src/tests/mines_report_regression_test.lua
+  s_6abfd3f5a194b4::t_40a10276ee0f83 145-147
+  s_6abfd3f5a194b4::t_afa320053bad2d 149
+src/platform/enemies/types.lua
+  s_d6797c77d20971::t_e37f4c05077357 1-13
+src/platform/effects/flame.lua
+  s_a149baf2181030::t_bfec62e60214ff 1,6
+  s_a149baf2181030::t_cdf80a0956aac9 2-5
+src/tests/mine_item_scenarios_test.lua
+  s_d6797c77d20971::t_e959bc15fba8d2 125-132,135
+  s_d6797c77d20971::t_01c727823e330f 96
+  s_d6797c77d20971::t_b86c43f56e8015 40
+  s_d6797c77d20971::t_676558aa611e51 106,110,112,146-147,149-150
+  s_d6797c77d20971::t_425cd67c015fec 133-134
+  s_d6797c77d20971::t_e37889e1258e8d 108-109
+  s_d6797c77d20971::t_6005b72aa9a9e7 1-2,4-14,19,21,23-37,41-46,49,55-62,71-72,74-76,105,107,113-119,121-124,136-140
+  s_d6797c77d20971::t_6c661176dd1ae1 20
+  s_d6797c77d20971::t_9ec1d8cb54f08c 95,98-100,104
+  s_d6797c77d20971::t_61a72ef4d50a33 86-94,97,101-103
+  s_6abfd3f5a194b4::t_e69e6ab955069e 141-145
+  s_d6797c77d20971::t_d376e086ad940f 161
+  s_d6797c77d20971::t_be40374af872e1 3,15-18,22,120,165-170
+  s_d6797c77d20971::t_dedcc7a854aa86 48,50
+  s_6abfd3f5a194b4::t_b6f97ce4ccf673 47,51-54
+  s_d6797c77d20971::t_eedb95d25b1337 65,67-70,73
+  s_d6797c77d20971::t_933fa72029c857 111,148,163
+  s_d6797c77d20971::t_2fabc3d1b7b1e8 164
+  s_d6797c77d20971::t_983badbb748a7c 38-39
+  s_d6797c77d20971::t_f864892e1dc11f 151-156
+  s_d6797c77d20971::t_0992a1d80af460 63-64,66,77-85
+  s_6abfd3f5a194b4::t_40a10276ee0f83 157-160,162
+src/platform/effects/teleport_spark.lua
+  s_a149baf2181030::t_bfec62e60214ff 1,6
+  s_a149baf2181030::t_cdf80a0956aac9 2-5
+src/platform/creature.lua
+  s_d6797c77d20971::t_1674035445588b 48,152,167
+  s_d6797c77d20971::t_18e46a7c38770e 1-5,15-16,23,30-31,35,37-38,61,66-68,72-74,109-111,135,147,161,164-166,171,176-177,180,185-190,197-199,210-211,216
+  s_d6797c77d20971::t_e16c5f08228b5c 21-22
+  s_6abfd3f5a194b4::t_8295709f09f742 200
+  s_6abfd3f5a194b4::t_3376566d72ed38 134,136,145-146
+src/platform/projectiles/web_ball.lua
+  s_a149baf2181030::t_4434c4117f2ad2 1-83
+src/platform/holdable.lua
+  s_d6797c77d20971::t_6b8a71ab81ef84 1-16,19-20,22-28,32-33,36-42,48,55-59,62-64,66-69,72-76
+  s_6abfd3f5a194b4::t_1c5756aea3a5de 34-35,49-50
+  s_6abfd3f5a194b4::t_5a147130477196 17
+  s_d6797c77d20971::t_d2ac996615c53d 60-61,70-71
+  s_6abfd3f5a194b4::t_41d149350b6bd6 18
+  s_d6797c77d20971::t_216123b9a8807c 21,29-31,43-47,51-54,65
+src/platform/pickups/jetpack.lua
+  s_a149baf2181030::t_c779d2627b5e7d 1-9
+src/platform/tool_system.lua
+  s_d6797c77d20971::t_c532d2048bf7b4 46,55,67-69
+  s_a149baf2181030::t_46c9c1a5ba8459 5-7,24-27,32-42,51
+src/tests/mines_generator_test.lua
+  s_6abfd3f5a194b4::t_bab96ed3b4b6e7 175,177,193
+src/platform/tiles/block.lua
+  s_a149baf2181030::t_0184e0ace562a6 1
+src/platform/dynamic_terrain.lua
+  s_a149baf2181030::t_0184e0ace562a6 4
+  s_a149baf2181030::t_cdf80a0956aac9 3,9-11
+src/screens/full_level_playtest.lua
+  s_d6797c77d20971::t_9be58b971857b3 279,512
+  s_d6797c77d20971::t_af447f3e44077b 120,459,518
+  s_d6797c77d20971::t_c532d2048bf7b4 119,499-501,755-757,1016,1025
+  s_d6797c77d20971::t_4ffd1ead6c249a 562,564-568,575,672,674,702-703,734
+  s_a149baf2181030::t_cdf80a0956aac9 25-26,112,317,338,978
+  s_d6797c77d20971::t_72b213183706d4 748-753
+  s_d6797c77d20971::t_f99a4f1c4e24d5 373-379,382,384,391-392,399,424-425,427-434,438,560-561,569,577,607-609,613-615
+  s_d6797c77d20971::t_f1b916bd2a9d6e 610-612
+  s_d6797c77d20971::t_b54fd3992ebf9c 221,730,736,1028-1032
+  s_6abfd3f5a194b4::t_265abe564097bf 601,677
+  s_d6797c77d20971::t_b5c6ab3394780c 675
+  s_d6797c77d20971::t_77ab9cc88648b8 735
+  s_d6797c77d20971::t_edc770d1b8d199 8,588
+  s_d6797c77d20971::t_e304ae79d0a37f 126,278
+  s_d6797c77d20971::t_a5f9a87fcd8b0f 595,599
+  s_d6797c77d20971::t_84536d2bba66f3 380,383,388,426,437,824
+  s_d6797c77d20971::t_5966699866d3c0 618,620,623-624,627-653,655-664,822-823
+  s_6abfd3f5a194b4::t_400c80bcb2bb95 619,621
+  s_6abfd3f5a194b4::t_24b23abdc7706a 593-594,673
+  s_d6797c77d20971::t_a33cbc24d2e04f 680,731-732
+  s_6abfd3f5a194b4::t_76ed30f92e193e 22,626
+  s_d6797c77d20971::t_df29659a983211 563
+  s_d6797c77d20971::t_308a5d8085a26c 139-141
+  s_6abfd3f5a194b4::t_3376566d72ed38 347
+  s_d6797c77d20971::t_eff230ea58192c 993,1027
+  s_d6797c77d20971::t_e60ecf34cda99f 1080-1087
+  s_d6797c77d20971::t_933fa72029c857 989-990
+  s_d6797c77d20971::t_6f679a33908c3c 669-671,676,678-679,681
+  s_6abfd3f5a194b4::t_bab96ed3b4b6e7 230
+  s_6abfd3f5a194b4::t_861213d30ae5e4 359-360
+  s_d6797c77d20971::t_abfa3ab972b4dc 135-138,142-158,223
+  s_6abfd3f5a194b4::t_afa320053bad2d 516-517
+  s_6abfd3f5a194b4::t_8295709f09f742 23-24,227,351,452-455,481,485,497-498,502-503,682,708-711,767,777-778,807,885,887,1143,1147
+  s_d6797c77d20971::t_0f8781a3ab75b1 654
+  s_d6797c77d20971::t_7ac362b319b3b9 606,616-617,820
+  s_d6797c77d20971::t_c7b05c45b241cf 826
+  s_d6797c77d20971::t_a266757c8e4e9b 385-387
+  s_d6797c77d20971::t_45319a076384ea 515
+  s_6abfd3f5a194b4::t_72b072e4ced457 622,625
+  s_6abfd3f5a194b4::t_5a147130477196 85-86,295,514,687-688,886
+  s_6abfd3f5a194b4::t_416d26ceb521c9 121,348-350,457
+src/platform/projectile_system.lua
+  s_d6797c77d20971::t_edc770d1b8d199 59,69
+  s_a149baf2181030::t_4434c4117f2ad2 4-8,10-12,20,22,35,81-83,89-90,98,104
+  s_d6797c77d20971::t_65bf2ee9c01ec9 15,47-50,74-78,95-97,99-100
+  s_6abfd3f5a194b4::t_41d149350b6bd6 29
+  s_d6797c77d20971::t_01c727823e330f 42,51-58,60,63,65-68
+  s_d6797c77d20971::t_69c551629304ef 44-46,61-62
+src/platform/tiles/smooth_brick.lua
+  s_a149baf2181030::t_0184e0ace562a6 1
+src/platform/structures/altar_right.lua
+  s_a149baf2181030::t_7a5e766fda12c5 1-3
+src/platform/physical_body.lua
+  s_6abfd3f5a194b4::t_76ed30f92e193e 175-177,184-185
+  s_6abfd3f5a194b4::t_1c5756aea3a5de 9-42,46-54,56,61,64-73,76-81,84-125,128-150,153-158,161-171
+  s_6abfd3f5a194b4::t_a1c00d6ee0da76 43-45
+  s_6abfd3f5a194b4::t_265abe564097bf 82-83
+  s_a149baf2181030::t_cdf80a0956aac9 126-127,159-160
+  s_6abfd3f5a194b4::t_c8edf07d548f4e 74-75
+  s_d6797c77d20971::t_6b8a71ab81ef84 1-8,55,57-60,62-63,151-152,172-174,186-205
+  s_6abfd3f5a194b4::t_400c80bcb2bb95 178
+  s_6abfd3f5a194b4::t_3376566d72ed38 179-183
+src/platform/items/mattock_head.lua
+  s_a149baf2181030::t_c779d2627b5e7d 1-6,15
+  s_a149baf2181030::t_6cf78fdc9f4833 7-14
+src/platform/tool_timing.lua
+  s_a149baf2181030::t_46c9c1a5ba8459 1-9
+src/tests/render_depth_test.lua
+  s_d6797c77d20971::t_2cca338dc70a7a 7-8,227-235
+  s_d6797c77d20971::t_c4e2fa991c70f8 176,180-181,221-226
+  s_d6797c77d20971::t_8de4558b8d7c44 197-198
+  s_d6797c77d20971::t_3fac8787d6f9f5 219
+  s_d6797c77d20971::t_44e5bb2cbe5d43 175,177-179,182-196,236-238
+  s_d6797c77d20971::t_28497237c7f836 199-218,220
+src/platform/enemies/caveman.lua
+  s_a149baf2181030::t_c779d2627b5e7d 143-144
+  s_d6797c77d20971::t_934cdecd3687de 7,127-140
+  s_d6797c77d20971::t_dc8607e60ec749 111
+  s_6abfd3f5a194b4::t_3376566d72ed38 115,118
+  s_d6797c77d20971::t_e37f4c05077357 1-6,8-110,112-114,116-117,119-126,141-142,145
+src/tests/platform_item_test.lua
+  s_6abfd3f5a194b4::t_5a868c181ad907 8,22-123,189-222,238-250,262-286
+  s_d6797c77d20971::t_16fd0f2f744b2e 354-366
+  s_d6797c77d20971::t_2abff313ab7465 483-487,527-536
+  s_6abfd3f5a194b4::t_f6f656a00ef13a 9,124-153,155-182
+  s_d6797c77d20971::t_44e5bb2cbe5d43 5-7,476-482,488-525
+  s_6abfd3f5a194b4::t_5c1f73d9b83beb 251-261
+  s_6abfd3f5a194b4::t_400c80bcb2bb95 183-188
+  s_6abfd3f5a194b4::t_c8edf07d548f4e 434-435
+  s_d6797c77d20971::t_59028e483fc31d 400-403
+  s_6abfd3f5a194b4::t_40a10276ee0f83 154
+  s_d6797c77d20971::t_008e3db2a07876 405-406
+  s_6abfd3f5a194b4::t_0b288d109db116 223-237
+  s_d6797c77d20971::t_9ce25c6c4a6083 404
+  s_d6797c77d20971::t_74a61c5730beab 329-353
+  s_d6797c77d20971::t_9ec1d8cb54f08c 408-433
+  s_d6797c77d20971::t_0992a1d80af460 305-317,526
+  s_d6797c77d20971::t_057f5ab9009e8f 304
+  s_d6797c77d20971::t_60cfdd9d77cefc 407
+src/platform/tools/types.lua
+  s_a149baf2181030::t_46c9c1a5ba8459 1-5
+src/platform/environment/web.lua
+  s_a149baf2181030::t_4434c4117f2ad2 1-32,37
+  s_a149baf2181030::t_cdf80a0956aac9 33-36
+src/platform/items/gold_idol.lua
+  s_a149baf2181030::t_cdf80a0956aac9 4
+  s_a149baf2181030::t_c779d2627b5e7d 1-3,5-8
+src/platform/README.md
+  s_d6797c77d20971::t_4729af0017eefb 114-122,137-143
+  s_6abfd3f5a194b4::t_8dbf385e5e3f17 263-264
+  s_a149baf2181030::t_d3a7e487d0e0ea 76-109,112-113,156
+  s_6abfd3f5a194b4::t_34e8a65c49ca95 41-44,259-262
+  s_d6797c77d20971::t_d59df4ac809e9a 110-111,131-136,144
+  s_d6797c77d20971::t_fc807ae44f0fcd 145-155,157-159
+  s_6abfd3f5a194b4::t_dacd645130393a 160-207
+  s_6abfd3f5a194b4::t_577c7110e538d9 208-249,265-271
+  s_d6797c77d20971::t_d3542369022c9c 123-128
+  s_6abfd3f5a194b4::t_3d67e48dfbc3ec 250-258
+  s_d6797c77d20971::t_de6bb2805a322c 129-130
+  s_6abfd3f5a194b4::t_22a573dd729a8b 3,11-12,14,17-18,24-26,31-40,45-74
+  s_a149baf2181030::t_36a6020c70b655 75
+src/ui/original_hud.lua
+  s_d6797c77d20971::t_e60ecf34cda99f 60-64,73-91,159
+src/tests/playtest_feedback_test.lua
+  s_d6797c77d20971::t_77025b05f80261 153-157
+  s_d6797c77d20971::t_fc17b1443f0c7f 104,108,111-119
+  s_d6797c77d20971::t_9a03c03d2c9f93 138
+  s_d6797c77d20971::t_f3cf1d9a5c17ed 182-192
+  s_d6797c77d20971::t_076b56d67c8156 372-374,395-397
+  s_d6797c77d20971::t_722dd9a217d866 16-24,369-371,375-376,392-394,398
+  s_d6797c77d20971::t_98458b905d12d0 124-137,150
+  s_d6797c77d20971::t_f05a8d068588c2 179
+  s_d6797c77d20971::t_9ce25c6c4a6083 173,176-178
+  s_d6797c77d20971::t_189d37657239d4 151-152,158-172,174-175,180-181,193
+  s_d6797c77d20971::t_cfeec1dcc87ee8 7,11-12,26-46
+  s_d6797c77d20971::t_403902371b4dd8 6,139-149
+src/platform/tiles/ladder.lua
+  s_a149baf2181030::t_0184e0ace562a6 1
+src/platform/traps/arrow_trap_behavior.lua
+  s_a149baf2181030::t_1e08b3ba0a1b68 1-69
+src/screens/world_generation.lua
+  s_a149baf2181030::t_0184e0ace562a6 7-9,323-328
+  s_d6797c77d20971::t_340f73212ce4b7 6
+  s_a149baf2181030::t_6cf78fdc9f4833 75-89,92-93,363-366,369
+  s_d6797c77d20971::t_e16159b1d2f4be 90-91,367-368,370-377
+  s_d6797c77d20971::t_5a79449d4a3469 94
+  s_d6797c77d20971::t_1a566decb5383d 95-106,361,383-387,391-392,394
+  s_d6797c77d20971::t_e83d697118844d 344,347
+  s_d6797c77d20971::t_eff230ea58192c 360,362,378-382
+  s_d6797c77d20971::t_17dd63f9704c93 388-390,393
+  s_a149baf2181030::t_cdf80a0956aac9 345
+  s_a149baf2181030::t_7a5e766fda12c5 336-337,348-349
+  s_a149baf2181030::t_8ddcbbd0f97555 395
+src/platform/items/pistol.lua
+  s_a149baf2181030::t_c779d2627b5e7d 1-3,7-10,13
+  s_a149baf2181030::t_cdf80a0956aac9 4-6
+  s_a149baf2181030::t_6cf78fdc9f4833 11-12
+src/platform/traps/giant_tiki_head.lua
+  s_a149baf2181030::t_cdf80a0956aac9 24-37
+  s_a149baf2181030::t_4621376e5edc8e 1-23,38
+src/platform/item_definitions.lua
+  s_a149baf2181030::t_c779d2627b5e7d 1-2,4-8,11
+  s_d6797c77d20971::t_62e1f3a223abf9 3,9-10
+src/tests/dynamic_world_test.lua
+  s_6abfd3f5a194b4::t_afa8f07003dc64 27,30
+src/platform/structures/entrance.lua
+  s_a149baf2181030::t_7a5e766fda12c5 1-3
+src/platform/structures/lamp.lua
+  s_a149baf2181030::t_7a5e766fda12c5 1-3
+src/platform/effects/flame_trail.lua
+  s_a149baf2181030::t_cdf80a0956aac9 2-4
+  s_a149baf2181030::t_bfec62e60214ff 1,5
+src/platform/items/types.lua
+  s_a149baf2181030::t_c779d2627b5e7d 1-20
+src/platform/traps/spikes.lua
+  s_a149baf2181030::t_cdf80a0956aac9 1-32
+src/platform/effects/types.lua
+  s_a149baf2181030::t_bfec62e60214ff 1-13
+src/platform/items/die.lua
+  s_a149baf2181030::t_6cf78fdc9f4833 8-15,25-40,42-47
+  s_a149baf2181030::t_c779d2627b5e7d 1-3,5-7,48
+  s_a149baf2181030::t_cdf80a0956aac9 4,16-24,41
+src/platform/item.lua
+  s_d6797c77d20971::t_f780e663ee9b65 9,13,17-18,27-29,33-37,39,53-55
+  s_d6797c77d20971::t_316fc1bde2a2c4 3-5,62,66,77,95,100,123,132,136,155
+  s_a149baf2181030::t_6cf78fdc9f4833 63,90-91,154
+  s_6abfd3f5a194b4::t_d743c77db377cf 153
+  s_d6797c77d20971::t_216123b9a8807c 127-128
+  s_d6797c77d20971::t_af447f3e44077b 21-23
+  s_a149baf2181030::t_0184e0ace562a6 40
+  s_d6797c77d20971::t_b5c6ab3394780c 78
+  s_d6797c77d20971::t_9be58b971857b3 112-118
+  s_d6797c77d20971::t_ae297ff944c49f 6,139-140
+  s_6abfd3f5a194b4::t_416d26ceb521c9 32,41-48
+  s_d6797c77d20971::t_065c2cbd2b169a 72
+  s_6abfd3f5a194b4::t_5a147130477196 79,124,144,156
+  s_d6797c77d20971::t_77ab9cc88648b8 86
+  s_d6797c77d20971::t_1a566decb5383d 85
+  s_a149baf2181030::t_038e7181996e63 19-20
+.gitignore
+  s_a149baf2181030::t_08f0a6985c834a 1
+README.md
+  s_a149baf2181030::t_d3a7e487d0e0ea 7-8
+src/platform/pickups/sapphire.lua
+  s_a149baf2181030::t_6cf78fdc9f4833 8-9
+  s_a149baf2181030::t_c779d2627b5e7d 1-7,10
+src/platform/pickups/paste.lua
+  s_a149baf2181030::t_c779d2627b5e7d 1-8
+src/platform/traps/boulder.lua
+  s_a149baf2181030::t_4621376e5edc8e 1-203
+src/screens/mine_item_scenarios.lua
+  s_d6797c77d20971::t_2529fe38e46547 4,7,10-12,14,19-24,38-39,63,66,71,77-79,81-84,86-87,104,107,116,128-129,133,163,172,185-186,197-199,226,228-230
+  s_d6797c77d20971::t_a33cbc24d2e04f 27,33,55-58,143-146,150-156
+  s_d6797c77d20971::t_c7b05c45b241cf 187
+  s_d6797c77d20971::t_54ff4a7b006c95 46
+  s_d6797c77d20971::t_4c6a746b415043 31,59-60,62,135-136,140-142
+  s_d6797c77d20971::t_425cd67c015fec 61
+  s_d6797c77d20971::t_4fb040f15f1f84 123-125
+  s_d6797c77d20971::t_77ab9cc88648b8 175
+  s_d6797c77d20971::t_af447f3e44077b 190
+  s_d6797c77d20971::t_a5f9a87fcd8b0f 5
+  s_d6797c77d20971::t_85fc638e089852 1,3,6,8,13,15-17,25-26,28-30,34-37,40-44,49-51,54,64-65,67-70,72-76,80,85,88-96,99-101,103,108-111,117-122,130-132,134,137-138,147-149,157-160,162,164-171,173-174,177-184,188,200-202,204-207,213,215-219,227
+  s_d6797c77d20971::t_0b0822b6e2dcf0 2,45,47-48,139,191-196,220-225
+  s_d6797c77d20971::t_4ffd1ead6c249a 32,52-53,105-106,112-115,126-127,161
+  s_d6797c77d20971::t_abfa3ab972b4dc 102
+  s_d6797c77d20971::t_6c661176dd1ae1 9,18,97
+  s_d6797c77d20971::t_b54fd3992ebf9c 176,208-212
+  s_d6797c77d20971::t_e37889e1258e8d 98,189,214
+  s_d6797c77d20971::t_933fa72029c857 203
+src/platform/player.lua
+  s_d6797c77d20971::t_83d8c97dd14e71 1216-1217,1229
+  s_6abfd3f5a194b4::t_24b23abdc7706a 313,421-427
+  s_6abfd3f5a194b4::t_cbf925466b294e 1215,1246,1248,1252-1262,1265-1270,1277-1279,1285,1287,1292,1294,1307,1329
+  s_6abfd3f5a194b4::t_ca4effe46e8b97 75,113,143,173,208,240,264,445-451,591-593,610-612,638,640,709-710,723,840,872-873,897-898,909,911-912,915-934,936,945,967,1002,1048-1053,1123-1130,1181,1199
+  s_d6797c77d20971::t_7eaba73bba9427 76,144,1218-1223
+  s_6abfd3f5a194b4::t_afa320053bad2d 109,169
+  s_d6797c77d20971::t_308a5d8085a26c 219-220,229-230
+  s_d6797c77d20971::t_4d5c682c1de977 96-97,160-161,319,329-330,332-335,337-338,340,382,388-393
+  s_d6797c77d20971::t_093b49d747292b 328,331,1096-1097
+  s_d6797c77d20971::t_35c21064336612 336
+  s_6abfd3f5a194b4::t_3739d7e2c1d4f6 469-487,494,521,567,631,713,741,829-834,838,1185,1188-1189,1192
+  s_6abfd3f5a194b4::t_afa8f07003dc64 493,495-497,789,794-804,1314
+  s_6abfd3f5a194b4::t_eeed2c093aca2c 1245,1284
+  s_6abfd3f5a194b4::t_dbc32240cd6f80 1298-1306
+  s_a149baf2181030::t_7a5e766fda12c5 1361-1365
+  s_6abfd3f5a194b4::t_416d26ceb521c9 1203-1210
+  s_a149baf2181030::t_4b0a18c2efeb80 1054,1308
+src/platform/projectiles/pellet.lua
+  s_a149baf2181030::t_4434c4117f2ad2 1-3
+src/platform/pickups/spike_shoes.lua
+  s_a149baf2181030::t_c779d2627b5e7d 1-8
+src/platform/enemies/bat.lua
+  s_a149baf2181030::t_c779d2627b5e7d 64-65
+  s_d6797c77d20971::t_1b0773b3b784ed 1-63,66
+src/platform/pickups/sapphire_big.lua
+  s_a149baf2181030::t_c779d2627b5e7d 1-7
+src/platform/effects/blood_trail.lua
+  s_a149baf2181030::t_bfec62e60214ff 1,5
+  s_a149baf2181030::t_cdf80a0956aac9 2-4
+src/platform/tiles/empty.lua
+  s_a149baf2181030::t_0184e0ace562a6 1
+src/platform/effects/rubble.lua
+  s_a149baf2181030::t_cdf80a0956aac9 2-4
+  s_a149baf2181030::t_bfec62e60214ff 1,5
+src/platform/pickups/rope_pile.lua
+  s_a149baf2181030::t_c779d2627b5e7d 1-8
+src/platform/tiles/solid.lua
+  s_a149baf2181030::t_0184e0ace562a6 1-8
+src/platform/items/shotgun.lua
+  s_a149baf2181030::t_cdf80a0956aac9 4-7
+  s_a149baf2181030::t_c779d2627b5e7d 1-3,8-11,14
+  s_a149baf2181030::t_6cf78fdc9f4833 12-13
+src/platform/generated_world.lua
+  s_a149baf2181030::t_0184e0ace562a6 5-6,20-21,32,37-38,44-48
+src/platform/pickups/compass.lua
+  s_a149baf2181030::t_c779d2627b5e7d 1-8
+src/tests/original_hud_item_test.lua
+  s_d6797c77d20971::t_0065739d269ea2 8-9,15,20,24,26-49
+src/platform/items/crate.lua
+  s_a149baf2181030::t_c779d2627b5e7d 1-16,19-22
+  s_a149baf2181030::t_cdf80a0956aac9 17-18
+src/game/run_state.lua
+  s_d6797c77d20971::t_77ab9cc88648b8 33
+  s_6abfd3f5a194b4::t_41d149350b6bd6 80
+src/platform/pickups/parachute.lua
+  s_a149baf2181030::t_c779d2627b5e7d 1-8
+src/platform/items/arrow.lua
+  s_a149baf2181030::t_c779d2627b5e7d 1-6,134
+  s_a149baf2181030::t_4434c4117f2ad2 7-108
+  s_a149baf2181030::t_cdf80a0956aac9 110-112,125
+  s_a149baf2181030::t_6cf78fdc9f4833 109,113-124,126-133
+src/world/entity_generator.lua
+  s_6abfd3f5a194b4::t_e419fa62098e9e 99
+  s_a149baf2181030::t_0184e0ace562a6 4-6,16,18-20,95
+  s_6abfd3f5a194b4::t_309df7adf26915 2,91-92
+src/platform/tools/bomb.lua
+  s_a149baf2181030::t_46c9c1a5ba8459 1-137
+src/platform/pickups/emerald.lua
+  s_a149baf2181030::t_c779d2627b5e7d 1-7,10
+  s_a149baf2181030::t_6cf78fdc9f4833 8-9
+src/platform/pickups/gold_bar.lua
+  s_a149baf2181030::t_c779d2627b5e7d 1-7
+src/platform/traps/arrow_trap_left.lua
+  s_a149baf2181030::t_1e08b3ba0a1b68 1-3
+src/platform/pickups/spectacles.lua
+  s_a149baf2181030::t_c779d2627b5e7d 1-8
+src/platform/world.lua
+  s_d6797c77d20971::t_8ac6768adacd5d 115-117,119-124,129-134,139,141
+  s_6abfd3f5a194b4::t_cbf925466b294e 118,125-128,140,142-143,378-379,382,388-389,396-397
+  s_6abfd3f5a194b4::t_861213d30ae5e4 58
+  s_6abfd3f5a194b4::t_416d26ceb521c9 56-57,59-63
+  s_d6797c77d20971::t_fbaa4f4ad76780 35
+  s_6abfd3f5a194b4::t_afa8f07003dc64 135-138,253,257,263,265,272
+  s_d6797c77d20971::t_6b8a71ab81ef84 144-152
+src/platform/items/machete.lua
+  s_a149baf2181030::t_6cf78fdc9f4833 10-14
+  s_a149baf2181030::t_cdf80a0956aac9 4-5
+  s_a149baf2181030::t_c779d2627b5e7d 1-3,6-9,15
+src/platform/object_assets.lua
+  s_a149baf2181030::t_1e08b3ba0a1b68 1-11
+src/platform/effects/smoke.lua
+  s_a149baf2181030::t_bfec62e60214ff 1,5
+  s_a149baf2181030::t_cdf80a0956aac9 2-4
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "2fa3fe408e64a4afb1bdc82ffe8a005e16561a55",
+  "prompts": {},
+  "sessions": {
+    "s_6abfd3f5a194b4": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0fd32-c31c-7dd3-9284-49ea36b00e78",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Ethan Denny <ethandenny@protonmail.com>"
+    },
+    "s_a149baf2181030": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0fdc3-ae05-7e41-a96b-bd7a333b41c3",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Ethan Denny <ethandenny@protonmail.com>"
+    },
+    "s_d6797c77d20971": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0aff5-fc5f-7363-8ccb-4df05fa2c073",
+        "model": "gpt-6-sol"
+      },
+      "human_author": "Ethan Denny <ethandenny@protonmail.com>"
+    }
+  }
+}
