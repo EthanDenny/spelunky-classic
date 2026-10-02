@@ -21,6 +21,7 @@ function Menu.new(app)
             { label = "Platforming Engine", screen = "platforming_engine" },
             { label = "Scenario Tests", screen = "enemy_ai" },
             { label = "Full Level Playtest", screen = "full_level_playtest" },
+            { label = "Full game", screen = "full_game" },
         },
     }, Menu)
 end

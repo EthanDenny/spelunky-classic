@@ -44,6 +44,7 @@ function App:load()
         platforming_engine = require("src.screens.platforming_engine").new(self),
         enemy_ai = require("src.screens.enemy_ai").new(self),
         full_level_playtest = require("src.screens.full_level_playtest").new(self),
+        full_game = require("src.screens.full_game").new(self),
     }
 
     self:showScreen("menu")

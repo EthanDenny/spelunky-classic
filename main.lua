@@ -57,6 +57,7 @@ local function runSmokeTest()
     require("src.tests.dynamic_world_test").run()
     require("src.tests.gameplay_systems_test").run(app)
     require("src.tests.playtest_log_test").run(app)
+    require("src.tests.full_game_test").run(app)
 
     local screenNames = {
         "menu",
@@ -168,8 +169,7 @@ local function runSmokeTest()
         fullLevel.levelNumber = 1
         fullLevel:generateLevel(8675309)
     end
-    assert(#app.screens.menu.items == 5
-        and app.screens.menu.items[5].screen == "full_level_playtest",
+    assert(app.screens.menu.items[5].screen == "full_level_playtest",
         "Full level playtest must be the fifth menu section")
 
     app:showScreen("menu")

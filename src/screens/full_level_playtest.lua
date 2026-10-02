@@ -60,6 +60,7 @@ end
 function FullLevelPlaytest.new(app)
     return setmetatable({
         app = app,
+        screenName = "full_level_playtest",
         renderer = nil,
         levelNumber = 1,
         subtypeIndex = 1,
@@ -328,7 +329,7 @@ function FullLevelPlaytest:buildSimulation()
     self.weaponCooldown = 0
     self.levelTime = 0
     self.ghostSpawned = false
-    if self.app.playtestLog then self.app.playtestLog:level("full_level_playtest", self) end
+    if self.app.playtestLog then self.app.playtestLog:level(self.screenName, self) end
 end
 
 function FullLevelPlaytest:enter()
@@ -348,6 +349,11 @@ end
 
 FullLevelPlaytest.isNearExit = Exit.isNear
 
+function FullLevelPlaytest:finishMines()
+    self.completed = true
+    self.run:addMessage("MINES COMPLETE — PRESS R FOR A NEW RUN", 999999)
+end
+
 function FullLevelPlaytest:advanceLevel()
     Exit.prepare(self)
     self.exiting = nil
@@ -356,8 +362,7 @@ function FullLevelPlaytest:advanceLevel()
     self.rescues = 0
     self.run:capturePlayer(self.player)
     if self.levelNumber >= MINES_DEPTHS then
-        self.completed = true
-        self.run:addMessage("MINES COMPLETE — PRESS R FOR A NEW RUN", 999999)
+        self:finishMines()
         return
     end
     self.run:capturePlayer(self.player)
@@ -933,7 +938,7 @@ function FullLevelPlaytest:simulationStepBody(input)
     end
     if self.player:isDead() then self.deathTimer = 75 end
     if self.player.y > self.world.height * self.world.tileSize + 32 then
-        self:generateSelectedLevel(self.seed, self.subtypeIndex ~= 1)
+        self:fallOutOfLevel()
         return
     end
     Exit.contact(self)
@@ -941,13 +946,17 @@ function FullLevelPlaytest:simulationStepBody(input)
     if input.up then Exit.begin(self) end
 end
 
+function FullLevelPlaytest:fallOutOfLevel()
+    self:generateSelectedLevel(self.seed, self.subtypeIndex ~= 1)
+end
+
 function FullLevelPlaytest:simulationStep()
     local input = self:getInput()
     local log = self.app.playtestLog
     local before = log and log.capture(self)
-    if log then log:tickStart("full_level_playtest", input, before) end
+    if log then log:tickStart(self.screenName, input, before) end
     self:simulationStepBody(input)
-    if log then log:tick("full_level_playtest", input, before, self) end
+    if log then log:tick(self.screenName, input, before, self) end
 end
 
 function FullLevelPlaytest:update(dt)
