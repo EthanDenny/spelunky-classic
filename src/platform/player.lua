@@ -1,5 +1,6 @@
 local SpriteData = require("src.platform.player_sprite_data")
 local WhipMask = require("src.platform.whip_mask")
+local Ball = require("src.platform.items.ball")
 
 local Player = {}
 Player.__index = Player
@@ -676,6 +677,7 @@ function Player:updateClimbing(world, input, jumpPressed)
     self.vy = (self.vy + self.ay) * yFriction
     self.ax = 0
     self.ay = 0
+    Ball.restrain(self, input)
     self.vx = clamp(self.vx, -self.xVelocityLimit, self.xVelocityLimit)
     self.vy = clamp(self.vy, -self.yVelocityLimit, self.yVelocityLimit)
     if approximatelyZero(self.vx) then self.vx = 0 end
@@ -758,6 +760,7 @@ function Player:updateHanging(world, input, jumpPressed)
         self.vy = self.vy + self.ay
         self.ax = 0
         self.ay = 0
+        Ball.restrain(self, input)
         self.vx = clamp(self.vx, -self.xVelocityLimit, self.xVelocityLimit)
         self.vy = clamp(self.vy, -self.yVelocityLimit, self.yVelocityLimit)
         if approximatelyZero(self.vx) then self.vx = 0 end
@@ -1078,6 +1081,7 @@ function Player:updateNormal(world, input, jumpPressed, jumpReleased)
     self.vy = (self.vy + self.ay) * yFriction
     self.ax = 0
     self.ay = 0
+    Ball.restrain(self, input)
     self.vx = clamp(self.vx, -self.xVelocityLimit, self.xVelocityLimit)
     self.vy = clamp(self.vy, -self.yVelocityLimit, self.yVelocityLimit)
     if approximatelyZero(self.vx) then self.vx = 0 end
@@ -1195,6 +1199,7 @@ function Player:updateBody(world)
         self.vx = math.abs(self.vx) < 0.1 and 0 or self.vx * 0.3
         self.deadBounced = true
     end
+    Ball.restrain(self, self.currentInput or {})
     self.vx = clamp(self.vx, -10, 10)
     self.xVelocityLimit = 10
     self.vy = clamp(self.vy, -self.yVelocityLimit, self.yVelocityLimit)

@@ -128,7 +128,7 @@ function ItemActions.updateMelee(context)
         local destroyed = context.world:destroyTerrain(x, y, 0)
         for _, cell in ipairs(destroyed) do
             context.effects:terrainBreak(cell.pixelX or (cell.x + 0.5) * context.world.tileSize,
-                cell.pixelY or (cell.y + 0.5) * context.world.tileSize, context.world.tileSize)
+                cell.pixelY or (cell.y + 0.5) * context.world.tileSize, context.world.tileSize, cell.entity)
         end
         if #destroyed > 0 and context.effects.random:random(1, spec.breakChance) == 1 then
             item.held = false

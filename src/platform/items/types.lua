@@ -1,6 +1,7 @@
 return {
     arrow = require("src.platform.items.arrow"),
     rock = require("src.platform.items.rock"),
+    ball = require("src.platform.items.ball"),
     jar = require("src.platform.items.jar"),
     skull = require("src.platform.items.skull"),
     chest = require("src.platform.items.chest"),

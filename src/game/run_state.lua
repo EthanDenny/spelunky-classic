@@ -40,11 +40,13 @@ function RunState.new(seed)
         thief = false,
         murderer = false,
         favor = 0,
+        kaliGift = 0,
+        kaliPunish = 0,
         blood = 0,
         hadDarkLevel = false,
         messages = {},
         heldItem = nil,
-        heldDamsel = false,
+        heldCreature = nil,
     }, RunState)
 end
 

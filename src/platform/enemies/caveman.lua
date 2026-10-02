@@ -5,6 +5,10 @@ local Caveman = {
     fallback = "idle",
     mirrorFacing = true,
     creatureConfig = { hp = 3, speed = 1.1 },
+    canBeHeld = true,
+    stunDuration = function(hit) return hit and hit.kind == "bullet" and 20 or 200 end,
+    creatureAnimationPerTick = 0.5,
+    sacrifice = { favor = 2, deadFavor = 1, rewardOffset = 24 },
     animations = {
         idle = { fps = 0, paths = { "assets/original/entities/caveman.png" } },
         run = { fps = 15, paths = {
@@ -138,6 +142,42 @@ function Caveman.creatureStep(self, world, player)
     self.timer = self.timer - 1
     self.vx = self.facing * self.config.speed
     self:groundPhysics(world)
+end
+
+local Physics = require("src.platform.physical_body")
+local Assets = require("src.platform.object_assets")
+local sprites = {}
+function Caveman.initializeCreature(body)
+    body.heavy = true
+    body.definition = { hold = { standing = 4, ducking = 6 } }
+    body.physicsOriginY = -8
+end
+
+function Caveman.stunnedStep(body, world)
+    Physics.stepItem(world, body)
+    if Physics.stopInWeb(world, body) or Physics.probe(world, body, "y", 1) then
+        body.stunned = body.stunned - 1
+    end
+end
+
+function Caveman.onThrown(body)
+    body.state = body.corpse and "dead" or "stunned"
+end
+
+function Caveman.drawCreature(body, renderer)
+    if not body.corpse and not body.held and body.stunned <= 0 then
+        renderer:drawEntity({ kind = "caveman", x = (body.x - 8) / 16,
+            y = (body.y - 16) / 16, properties = body.entity.properties })
+        return
+    end
+    local name = body.corpse and (body.held and "sCavemanDHeldL" or "sCavemanDieLL")
+        or body.held and "sCavemanHeldL" or "sCavemanStunL"
+    local frame = body.corpse and 0 or math.floor(body.animation) % 5
+    local key = name .. frame
+    sprites[key] = sprites[key] or Assets.image("Enemies/Caveman", name, frame)
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.draw(sprites[key], math.floor(body.x), math.floor(body.y - 16),
+        0, body.facing < 0 and 1 or -1, 1, 8, 0)
 end
 
 Caveman.depth = 60

@@ -25,6 +25,9 @@ function Definition.use(context, _, input)
             player.y - 4 + context.effects.random:random(0, 8))
     end
     player.x, player.y = x, y
+    if player.ball then
+        player.ball.x, player.ball.y = x, y
+    end
     player:setState("falling")
     for _, enemy in ipairs(context.enemies) do
         if enemy.alive and enemy:overlapsRectangle(x - 4, y - 4, x + 4, y + 4) then

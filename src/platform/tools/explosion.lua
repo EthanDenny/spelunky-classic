@@ -11,7 +11,7 @@ function Explosion.spawn(self, x, y)
     local destroyed = self.world:destroyTerrain(x, y, 24)
     for _, cell in ipairs(destroyed) do
         self.effects:terrainBreak(cell.pixelX or (cell.x + 0.5) * self.world.tileSize,
-            cell.pixelY or (cell.y + 0.5) * self.world.tileSize, self.world.tileSize)
+            cell.pixelY or (cell.y + 0.5) * self.world.tileSize, self.world.tileSize, cell.entity)
     end
     self.explosions[#self.explosions + 1] = { x = x, y = y, age = 0, alive = true }
     self.effects:explosion(x, y)

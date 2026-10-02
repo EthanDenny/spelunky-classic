@@ -18,7 +18,8 @@ local PLAYER_FIELDS = {
 }
 local ENTITY_FIELDS = {
     "kind", "x", "y", "vx", "vy", "state", "phase", "frame", "health", "hp", "alive", "facing", "timer",
-    "stunTimer", "safeTimer", "cooldown", "held", "opened", "targetX", "falling",
+    "stunTimer", "stunned", "safeTimer", "cooldown", "held", "corpse", "sacrificed",
+    "sacrificeTicks", "opened", "targetX", "falling",
     "moveable", "width", "height", "age", "life", "radius", "damage", "stuck", "sticky",
     "durability", "attackTimer", "alertTimer", "angry", "heavy",
     "spriteName", "animation", "imageSpeed", "squirtTimer",
@@ -26,8 +27,8 @@ local ENTITY_FIELDS = {
 }
 local RUN_FIELDS = {
     "seed", "health", "maxHealth", "bombs", "ropes", "money", "time", "kills",
-    "damsels", "shopkeeperAnger", "thief", "murderer", "favor", "blood",
-    "hasKey", "heldDamsel", "hadDarkLevel",
+    "damsels", "shopkeeperAnger", "thief", "murderer", "favor", "kaliGift", "kaliPunish", "blood",
+    "hasKey", "heldCreature", "hadDarkLevel",
 }
 
 local function copyFields(source, fields)

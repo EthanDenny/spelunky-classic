@@ -297,12 +297,14 @@ function World:destroyTerrain(centerX, centerY, radius)
             local dy = tileY * tileSize + tileSize / 2 - centerY
             if dx * dx + dy * dy <= (radius + tileSize * 0.35) ^ 2
                 and self:has("solid", tileX, tileY) and not self:isProtectedCell(tileX, tileY) then
+                local entity = self.solid[key(tileX, tileY)]
                 self:remove("solid", tileX, tileY)
                 self:remove("moveableSolid", tileX, tileY)
                 if self.level and self.level.tiles[tileY + 1] then
                     self.level.tiles[tileY + 1][tileX + 1] = { kind = "empty" }
                 end
-                destroyed[#destroyed + 1] = { x = tileX, y = tileY }
+                destroyed[#destroyed + 1] = { x = tileX, y = tileY,
+                    entity = type(entity) == "table" and entity or nil }
             end
         end
     end

@@ -67,6 +67,12 @@ function Effects.loadAssets()
     images = {}
     for kind, spec in pairs(Types) do
         images[kind] = {}
+        images[kind].variants = {}
+        for name, path in pairs(spec.variants or {}) do
+            local image = love.graphics.newImage(path)
+            image:setFilter("nearest", "nearest")
+            images[kind].variants[name] = image
+        end
         for index = 1, spec.count or 1 do
             local path = spec.path or spec.directory
                 and string.format("%simage %d.png", spec.directory, index - 1)
@@ -109,13 +115,15 @@ function Effects:explosion(x, y)
     end
 end
 
-function Effects:terrainBreak(x, y, tileSize)
+function Effects:terrainBreak(x, y, tileSize, entity, material)
+    local definition = entity and require("src.platform.objects")[entity.kind]
+    if definition and definition.handlesDestructionEffects then return end
     local half = (tileSize or 16) / 2
     self:add("rubbleLarge", x + self.random:random(-half, half),
-        y + self.random:random(-half, half))
+        y + self.random:random(-half, half)).variant = material
     for _ = 1, 2 do
         self:add("rubble", x + self.random:random(-half, half),
-            y + self.random:random(-half, half))
+            y + self.random:random(-half, half)).variant = material
     end
 end
 
@@ -282,7 +290,9 @@ function Effects:draw()
             frame = spec.loop and ageFrame % spec.count + 1 or math.min(spec.count, ageFrame + 1)
         end
         love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.draw(sprites[particle.kind][frame],
+        local image = particle.variant and sprites[particle.kind].variants[particle.variant]
+            or sprites[particle.kind][frame]
+        love.graphics.draw(image,
             math.floor(particle.x), math.floor(particle.y), 0, 1, 1, spec.origin, spec.origin)
     end
 end

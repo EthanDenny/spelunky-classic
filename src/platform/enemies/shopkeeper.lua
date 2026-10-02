@@ -3,6 +3,9 @@
 local Shopkeeper = {
     creatureConfig = { hp = 20, npc = true },
     creatureHalfWidth = 6,
+    canBeHeld = true,
+    recoveryState = "attack",
+    sacrifice = { favor = 12, deadFavor = 6, rewardOffset = 24 },
 }
 local Physics = require("src.platform.physical_body")
 local Shop = require("src.platform.shop")
@@ -21,6 +24,9 @@ function Shopkeeper.provoke(body)
 end
 
 function Shopkeeper.initialize(body, seed)
+    body.heavy = true
+    body.physicsOriginY = -8
+    body.definition = { hold = { standing = 4, ducking = 6 } }
     body.state = body.entity.properties and body.entity.properties.exitGuard and "patrol" or "idle"
     body.hasGun = true
     body.firing = 0
@@ -29,6 +35,15 @@ function Shopkeeper.initialize(body, seed)
     body.whipCooldown = 0
     body.angered = false
     body.random = love.math.newRandomGenerator(seed or 1)
+end
+
+function Shopkeeper.onThrown(body)
+    if body.corpse then body.state = "dead"
+    else setState(body, "stunned", nil, nil, body.stunned) end
+end
+
+function Shopkeeper.heldStep(body, _, _, game)
+    if body.alive then Shopkeeper.dropGun(body, game) end
 end
 
 function Shopkeeper.dropGun(body, game)
@@ -252,7 +267,8 @@ function Shopkeeper.draw(body)
     if not sprites then
         sprites = {}
         for name, count in pairs({ sShopLeft = 1, sShopRunLeft = 6, sShopThrowL = 7,
-            sShopStunL = 6, sShopFallL = 1, sShopBounceL = 1, sShopDieLL = 1, sShopDieLR = 1 }) do
+            sShopStunL = 6, sShopFallL = 1, sShopBounceL = 1, sShopDieLL = 1, sShopDieLR = 1,
+            sShopHeldL = 6, sShopDHeldL = 1 }) do
             sprites[name] = {}
             for frame = 0, count - 1 do
                 local image = love.graphics.newImage("original-game-reference/source/extracted/spelunky/Sprites/Enemies/Shopkeeper/"
@@ -268,7 +284,9 @@ function Shopkeeper.draw(body)
         sprites.gunRight:setFilter("nearest", "nearest")
     end
     local name = body.vx == 0 and "sShopLeft" or "sShopRunLeft"
-    if body.state == "throw" then name = "sShopThrowL"
+    if body.corpse then name = body.held and "sShopDHeldL" or "sShopDieLL"
+    elseif body.held then name = "sShopHeldL"
+    elseif body.state == "throw" then name = "sShopThrowL"
     elseif body.state == "stunned" then
         name = body.bounced and (body.vy < 0 and "sShopBounceL" or "sShopFallL")
             or (body.vx < 0 and "sShopDieLL" or "sShopDieLR")
@@ -279,7 +297,8 @@ function Shopkeeper.draw(body)
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.draw(image, math.floor(body.x), math.floor(body.y - 16), 0,
         body.facing < 0 and 1 or -1, 1, 8, 0)
-    if body.hasGun and body.state ~= "idle" and body.state ~= "follow" then
+    if body.hasGun and not body.corpse and not body.held
+        and body.state ~= "idle" and body.state ~= "follow" then
         love.graphics.draw(body.facing < 0 and sprites.gunLeft or sprites.gunRight,
             math.floor(body.x + body.facing * 2), math.floor(body.y - 6), 0, 1, 1, 8, 4)
     end

@@ -2,6 +2,7 @@
 -- Kind-specific capabilities live beside the smaller enemies in enemies/.
 local Types = require("src.platform.enemies.types")
 local Holdable = require("src.platform.holdable")
+local PhysicalBody = require("src.platform.physical_body")
 
 local Creature = {}
 Creature.__index = Creature
@@ -133,13 +134,21 @@ end
 
 function Creature:damage(amount, sourceX, hit)
     if not self.alive or self.spec.canDamage and not self.spec.canDamage(self) then return false end
-    if self.spec.damage then return self.spec.damage(self, amount, sourceX, hit) end
+    if self.spec.damage then
+        local damaged = self.spec.damage(self, amount, sourceX, hit)
+        if self.hp <= 0 and self.spec.sacrifice then self.corpse = true end
+        return damaged
+    end
     self.hp = self.hp - (amount or 1)
-    self.stunned = self.hp > 0 and 20 or 0
+    local stun = self.spec.stunDuration
+    if type(stun) == "function" then stun = stun(hit) end
+    self.stunned = self.hp > 0 and (stun or 20) or 0
     if sourceX then self.vx = self.x < sourceX and -3 or 3 end
     self.vy = -3
+    if self.hp > 0 and self.spec.sacrifice then self.state = "stunned" end
     if self.hp <= 0 then
         self.alive = false
+        self.corpse = self.spec.sacrifice ~= nil
         self.state = "dead"
     end
     if self.alive and hit then
@@ -149,9 +158,9 @@ function Creature:damage(amount, sourceX, hit)
 end
 
 function Creature:pickup(player)
-    if not self.alive or not self.spec.canBeHeld or self.held then return false end
+    if not (self.alive or self.corpse) or not self.spec.canBeHeld or self.held then return false end
+    if not self.spec.holdWhenHealthy and not self.corpse and self.stunned <= 0 then return false end
     self.held = true
-    self.state = "held"
     self.vx, self.vy = 0, 0
     self:updateHeldPosition(player)
     return true
@@ -172,7 +181,26 @@ function Creature:updateAI(world, player, context)
 end
 
 function Creature:step(world, player, context)
-    if not self.alive then return end
+    if not (self.alive or self.corpse) then return end
+    if self.held then
+        self:updateHeldPosition(player)
+        self.animation = self.animation + 0.5
+        if self.spec.heldStep then self.spec.heldStep(self, world, player, context) end
+        if self.alive and not self.spec.holdWhenHealthy then
+            if self.stunned > 0 then self.stunned = self.stunned - 1
+            else
+                self.held = false
+                self.state = self.spec.recoveryState or "idle"
+                if context and context.heldNpc == self then context.heldNpc = nil end
+            end
+        end
+        return
+    end
+    if self.corpse then
+        PhysicalBody.stepItem(world, self)
+        PhysicalBody.stopInWeb(world, self)
+        return
+    end
     if self.spec.stepCreature then
         self.spec.stepCreature(self, world, player, context)
         return
@@ -180,7 +208,6 @@ function Creature:step(world, player, context)
     self.animation = self.animation + (self.spec.creatureAnimationPerTick or 0)
     if self.cooldown > 0 then self.cooldown = self.cooldown - 1 end
     if self.webbed > 0 then self.webbed = self.webbed - 1 return end
-    if self.held then self:updateHeldPosition(player) return end
     if self.stunned > 0 then
         if self.spec.stunnedStep then
             self.spec.stunnedStep(self, world)
@@ -190,11 +217,13 @@ function Creature:step(world, player, context)
         end
         return
     end
+    if self.state == "stunned" then self.state = "idle" end
     self:updateAI(world, player, context)
 end
 
 function Creature:resolvePlayerContact(player, previousY)
-    if not self.alive or self.held or self.spec.canContact == false
+    if not self.alive or self.held or (self.spec.sacrifice and self.stunned > 0)
+        or self.spec.canContact == false
         or not self:overlapsPlayer(player) then return end
     if self.spec.canReachPlayer and not self.spec.canReachPlayer(self, player) then return end
     if self.spec.resolvePlayerContact then return self.spec.resolvePlayerContact(self, player, previousY) end
@@ -212,7 +241,7 @@ function Creature:resolvePlayerContact(player, previousY)
 end
 
 function Creature:draw(renderer)
-    if not self.alive then return end
+    if not (self.alive or self.corpse) then return end
     if self.spec.drawCreature then return self.spec.drawCreature(self, renderer) end
     renderer:drawEntity({
         kind = self.kind,

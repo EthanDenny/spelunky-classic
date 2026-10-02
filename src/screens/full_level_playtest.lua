@@ -24,6 +24,7 @@ local Shop = require("src.platform.shop")
 local Shopkeeper = require("src.platform.enemies.shopkeeper")
 local Spikes = require("src.platform.traps.spikes")
 local Exit = require("src.platform.structures.exit")
+local Kali = require("src.platform.kali")
 
 local FullLevelPlaytest = {}
 FullLevelPlaytest.__index = FullLevelPlaytest
@@ -129,7 +130,10 @@ function FullLevelPlaytest:captureHeldItem()
 end
 
 function FullLevelPlaytest:captureHeldNpc()
-    if self.heldNpc and self.heldNpc.kind == "damsel" then self.run.heldDamsel = true end
+    if self.heldNpc then
+        self.run.heldCreature = { kind = self.heldNpc.kind, hp = self.heldNpc.hp,
+            corpse = self.heldNpc.corpse, stunned = self.heldNpc.stunned }
+    end
 end
 
 function FullLevelPlaytest:configureProjectiles()
@@ -280,11 +284,20 @@ function FullLevelPlaytest:buildSimulation()
             self.heldItem = item
         end
     end
-    if self.run.heldDamsel then
-        self.run.heldDamsel = false
-        local damsel = self:spawnEntity("damsel", self.player.x, self.player.y)
-        if damsel then damsel:pickup(self.player) self.heldNpc = damsel end
+    if self.run.heldCreature then
+        local carried = self.run.heldCreature
+        self.run.heldCreature = nil
+        local body = self:spawnEntity(carried.kind, self.player.x, self.player.y)
+        body.hp, body.corpse, body.alive = carried.hp, carried.corpse, not carried.corpse
+        body.stunned = carried.stunned
+        body.state = body.corpse and "dead" or body.stunned > 0 and "stunned" or "idle"
+        body.deathCounted = body.corpse
+        if body.kind == "shopkeeper" and body.corpse then body.hasGun = false end
+        if body:pickup(self.player) then self.heldNpc = body end
     end
+    self.chains = {}
+    self.shakeTicks = 0
+    if self.run.kaliPunish >= 2 then Kali.attachBall(self) end
 
     self.accumulator = 0
     self.cameraX = clamp(spawnX - 160, 0, self.world.width * 16)
@@ -321,7 +334,7 @@ function FullLevelPlaytest:advanceLevel()
         self.run:addMessage("MINES COMPLETE", 120)
         return
     end
-    if self.heldNpc and self.heldNpc.kind == "damsel" then
+    if self.heldNpc and self.heldNpc.kind == "damsel" and self.heldNpc.alive then
         self.run.damsels = self.run.damsels + 1
         self.player.health = math.min(self.player.maxHealth, self.player.health + 1)
         self.heldNpc.rescued = true
@@ -480,7 +493,7 @@ end
 
 function FullLevelPlaytest:pickupNearestNpc()
     for _, creature in ipairs(self.enemies) do
-        if creature.kind == "damsel" and creature.alive and not creature.held
+        if creature.spec and creature.spec.canBeHeld and not creature.held
             and math.abs(creature.x - self.player.x) < 12
             and math.abs(creature.y - self.player.y) < 14 and creature:pickup(self.player) then
             self.heldNpc = creature
@@ -752,6 +765,7 @@ function FullLevelPlaytest:simulationStepBody(input)
     end
     self.traps:update(self.player, self.enemies, self.items, trapTargets)
     self.tools:update(self.player, self.enemies, self.items)
+    Kali.update(self)
     if self.heldItem and self.heldItem.kind == "bomb" and not self.heldItem.alive then
         self.heldItem = nil
     end
@@ -762,7 +776,7 @@ function FullLevelPlaytest:simulationStepBody(input)
     end
 
     for _, enemy in ipairs(self.enemies) do
-        if enemy.alive then
+        if enemy.alive or enemy.corpse then
             local oldState, oldVy = enemy.state, enemy.vy
             enemy:step(self.world, self.player, self)
             if enemy.kind == "bat" and oldState == "HANG" and enemy.state ~= oldState then
@@ -776,7 +790,7 @@ function FullLevelPlaytest:simulationStepBody(input)
             end
             local contact = enemy:resolvePlayerContact(self.player, previousY)
             if contact == "throw" then self:dropHeldItemFromHurt() end
-            if enemy.kind == "damsel" and self:isNearExit()
+            if enemy.kind == "damsel" and enemy.alive and self:isNearExit()
                 and math.abs(enemy.x - self.player.x) < 24 then
                 enemy.alive = false
                 enemy.rescued = true
@@ -785,7 +799,8 @@ function FullLevelPlaytest:simulationStepBody(input)
                 self.sounds:play("kiss")
                 self.run:addMessage("A KISS FOR YOUR TROUBLE", 90)
             end
-        elseif not enemy.deathCounted then
+        end
+        if not enemy.alive and not enemy.deathCounted and not enemy.rescued then
             enemy.deathCounted = true
             if enemy.kind == "caveman" then self.sounds:play("caveman_die") end
             self.run.kills = self.run.kills + 1
@@ -803,7 +818,7 @@ function FullLevelPlaytest:simulationStepBody(input)
                     self.run:addMessage("THE KAPALA FILLS WITH BLOOD", 90)
                 end
             end
-            if enemy.kind == "shopkeeper" then
+            if enemy.kind == "shopkeeper" and not enemy.sacrificed then
                 Shopkeeper.die(enemy, self)
             end
         end
@@ -823,6 +838,7 @@ function FullLevelPlaytest:simulationStepBody(input)
         self:resolveItemPlayerContact(item)
         item.skipEnemyHitOnce = false
     end
+    Kali.updateChains(self)
     ItemActions.recoverArrows(self)
     for _, collectible in ipairs(self.collectibles) do collectible:update(self.world) end
     self.effects:update(self.world)
@@ -961,11 +977,15 @@ end
 
 function FullLevelPlaytest:drawWorld(viewport)
     self:updateCamera(viewport)
+    self.cameraWidth, self.cameraHeight = viewport.logicalWidth, viewport.logicalHeight
     love.graphics.setScissor(viewport.x, viewport.y, viewport.width, viewport.height)
     love.graphics.push()
     love.graphics.translate(viewport.x, viewport.y)
     love.graphics.scale(viewport.scale, viewport.scale)
     love.graphics.translate(-self.cameraX, -self.cameraY)
+    if (self.shakeTicks or 0) > 0 then
+        love.graphics.translate(self.shakeTicks % 2 == 0 and 2 or -2, 1)
+    end
 
     self:drawBackground()
     local queue = DepthQueue.new()
@@ -1004,7 +1024,7 @@ function FullLevelPlaytest:drawWorld(viewport)
     end
     DynamicTerrain.submit(queue, self.world, self.renderer)
     for _, enemy in ipairs(self.enemies) do
-        if enemy.alive then
+        if enemy.alive or enemy.corpse then
             local current = enemy
             queue:add(current.held and Depth.heldItem(self.player) or Depth.entity(current.kind), function()
                 current:draw(self.renderer)
@@ -1014,6 +1034,7 @@ function FullLevelPlaytest:drawWorld(viewport)
     if self.projectiles then self.projectiles:submit(queue) end
     if self.traps then self.traps:submit(queue) end
     if self.tools then self.tools:submit(queue, self.player) end
+    Kali.submit(self, queue)
 
     if not (self.player.invincibleTimer > 0 and math.floor(self.player.invincibleTimer / 2) % 2 == 0) then
         queue:add(Depth.entity("player"),

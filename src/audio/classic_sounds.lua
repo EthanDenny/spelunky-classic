@@ -10,6 +10,7 @@ local CUES = {
     climb1 = "climb1", climb2 = "climb2",
     mattock_break = "mattockbreak", pickup = "pickup", shotgun = "shotgun", spider_jump = "spiderjump",
     teleport = "teleport", trap = "trap", whip = "whip",
+    small_explode = "smallexplode", thump = "thump",
 }
 
 function ClassicSounds.new()

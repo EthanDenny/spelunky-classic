@@ -6,6 +6,12 @@ local Damsel = {
     creatureVerticalBounds = { -12, 0 },
     canContact = false,
     canBeHeld = true,
+    holdWhenHealthy = true,
+    stunDuration = 120,
+    creatureAnimationPerTick = 0.5,
+    -- oDamsel tests status==98 for its live bonus, but THROWN is 2. The
+    -- executable Classic code therefore awards eight for both states.
+    sacrifice = { favor = 8, deadFavor = 8, rewardOffset = 16 },
 }
 
 function Damsel.initializeCreature(self)
@@ -42,6 +48,23 @@ end
 function Damsel.onThrown(self)
     self.state = "stunned"
     self.stunned = 120
+end
+
+local Assets = require("src.platform.object_assets")
+local sprites = {}
+function Damsel.drawCreature(body, renderer)
+    if not body.corpse and body.stunned <= 0 then
+        renderer:drawEntity({ kind = "damsel", x = body.x / 16,
+            y = (body.y - 8) / 16, properties = body.entity.properties })
+        return
+    end
+    local name = body.corpse and "sDamselDieL" or "sDamselStunL"
+    local frame = body.corpse and 0 or math.floor(body.animation) % 5
+    local key = name .. frame
+    sprites[key] = sprites[key] or Assets.image("Character/Damsel", name, frame)
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.draw(sprites[key], math.floor(body.x), math.floor(body.y - 8),
+        0, body.facing < 0 and 1 or -1, 1, 8, 8)
 end
 
 Damsel.depth = 100

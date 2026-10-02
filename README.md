@@ -14,6 +14,8 @@ Gameplay controls load the original 12-line `keys.cfg` and seven-line `settings.
 
 To test a particular Mines level type, use Left/Right (or click a type) in World Generation, or `[`/`]` in Full Level Playtest. Choices are Random, Standard, Idol, Kali Altar, Snake Pit, Shop, and Dark. Selecting Shop, Kali Altar, or Dark from 1–1 moves to 1–2, where those types can generate. The selector searches forward for a seed that naturally produces the type. Generate finds the next matching seed in the preview; in the playtest, N finds the next match and R restarts the current seed. Manual type changes and filtered rerolls start a fresh test run; ordinary exit progression returns to Random. The selected type and actual seed are recorded in playtest logs.
 
+Kali altars accept unheld, stationary stunned bodies and corpses after twenty countdown ticks. Use Down + ACTION to pick up a damsel, stunned caveman/shopkeeper, or corpse, then ACTION to release it over either altar half. Living cavemen give 2 favor and dead ones 1; living stunned shopkeepers give 12 and dead ones 6. Classic's executable damsel rule gives 8 for both living thrown and dead damsels. Gifts appear at 8 favor (unowned equipment), 16 (Kapala), and 32 (99 bombs, or vitality with at least 80 bombs); further vitality starts at 48 and repeats every 16 favor. Destroying an altar, including its support, costs 16 favor and destroys all altars in the level. Punishments escalate from six spiders per Kali head to a persistent ball and chain, then darkness and an immediate ghost. An already haunted dark level gets spiders instead. Favor, gift progress and punishment count persist through exits and reset for a new run.
+
 Mines gameplay screens share the [source-based render-depth rules](src/render/README.md); add new visible objects there rather than introducing a screen-specific draw band.
 
 Legend: **`[ ]`** not started; **`[ ] … [WIP]`** started, but incomplete or not yet validated; **`[x]`** explicitly confirmed by the player in a playtest. Code, assets, and automated tests alone never promote an entry to `[x]`. A confirmed narrow behavior does not confirm its whole category. Update these markers as playtests and source comparisons establish more.
@@ -429,10 +431,10 @@ Legend: **`[ ]`** not started; **`[ ] … [WIP]`** started, but incomplete or no
   - [ ] Hidden Black Market entrance
   - [ ] Golden Door
   - [ ] Altar placement [WIP]
-  - [ ] Sacrifices
-  - [ ] Kali favor
-  - [ ] Kali rewards
-  - [ ] Kali punishments
+  - [x] Sacrifices (Mines damsels, stunned cavemen/shopkeepers, and their corpses)
+  - [x] Kali favor
+  - [x] Kali rewards
+  - [x] Kali punishments (spiders, ball and chain, darkness/ghost)
   - [ ] Moai
   - [ ] Ankh-triggered resurrection
   - [ ] Idol structures [WIP]
