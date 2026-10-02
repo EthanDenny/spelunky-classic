@@ -1,0 +1,97 @@
+src/platform/structures/sacrifice_altar.lua
+  s_a149baf2181030::t_7b2f0ed0d26021 3-31,34-35
+  s_a149baf2181030::t_3fb703ca538806 1,32-33
+  s_a149baf2181030::t_d6b6e37a1a6408 2
+main.lua
+  s_a149baf2181030::t_4054cf982fba79 43
+src/platform/creature.lua
+  s_a149baf2181030::t_3c23c0bffa5825 185-198
+  s_a149baf2181030::t_ccb82871456fbe 143-145
+  s_a149baf2181030::t_be75b2c42b0b34 225-226
+  s_a149baf2181030::t_8549e40fe8003d 220
+  s_a149baf2181030::t_79588fd9839c6f 5,137-141,151,161-162,184,199-203,244
+  s_a149baf2181030::t_298d4399371327 148
+src/platform/item_actions.lua
+  s_a149baf2181030::t_3fb703ca538806 131
+src/platform/environment/chain.lua
+  s_a149baf2181030::t_7b2f0ed0d26021 1-24
+src/observability/playtest_log.lua
+  s_a149baf2181030::t_be75b2c42b0b34 21-22
+  s_a149baf2181030::t_ccb82871456fbe 31
+  s_a149baf2181030::t_8549e40fe8003d 30
+src/tests/kali_altar_test.lua
+  s_a149baf2181030::t_8549e40fe8003d 18,21-24
+  s_a149baf2181030::t_4054cf982fba79 54,148-177,184-205,214,221,244-296
+  s_a149baf2181030::t_2c41fe9bfec055 67-68,91-103,131-135,141,143-144,213,217
+  s_a149baf2181030::t_3fb703ca538806 178-183,222
+  s_a149baf2181030::t_e9f5a8148c9d94 1-17,19-20,25-53,55-66,69-90,104-130,136-140,142,145-147,206-212,215-216,218-220,223-243,297-308
+src/platform/enemies/damsel.lua
+  s_a149baf2181030::t_3c23c0bffa5825 11
+  s_a149baf2181030::t_79588fd9839c6f 9-10,12-14,53-67
+  s_a149baf2181030::t_7f704288d7d6b6 68-69
+src/platform/enemies/shopkeeper.lua
+  s_a149baf2181030::t_79588fd9839c6f 6,8,27-29,40-41,47-48,270-271,287-289,300-301
+  s_a149baf2181030::t_3c23c0bffa5825 7,42-46
+src/platform/objects.lua
+  s_a149baf2181030::t_8549e40fe8003d 21
+src/platform/player.lua
+  s_a149baf2181030::t_3c23c0bffa5825 763
+  s_a149baf2181030::t_4054cf982fba79 1202
+  s_a149baf2181030::t_298d4399371327 1084
+  s_a149baf2181030::t_8549e40fe8003d 3,680
+src/platform/items/teleporter.lua
+  s_a149baf2181030::t_3c23c0bffa5825 28-30
+src/audio/classic_sounds.lua
+  s_a149baf2181030::t_8549e40fe8003d 13
+src/platform/enemies/caveman.lua
+  s_a149baf2181030::t_3c23c0bffa5825 10
+  s_a149baf2181030::t_ccb82871456fbe 9
+  s_a149baf2181030::t_79588fd9839c6f 8,11,147-181
+  s_a149baf2181030::t_82103a7ee86242 182
+src/platform/effects/rubble_large.lua
+  s_a149baf2181030::t_3fb703ca538806 2
+src/screens/full_level_playtest.lua
+  s_a149baf2181030::t_8549e40fe8003d 27,133-136,287-296,298-300,337,496,768,779,793,802-803,821,841,980,986-988,1027,1037
+src/game/run_state.lua
+  s_a149baf2181030::t_8549e40fe8003d 43-44,49
+src/platform/world.lua
+  s_a149baf2181030::t_3fb703ca538806 300,306-307
+src/platform/tools/explosion.lua
+  s_a149baf2181030::t_3fb703ca538806 14
+src/platform/items/ball.lua
+  s_a149baf2181030::t_7b2f0ed0d26021 1-50,52-53,58
+  s_a149baf2181030::t_3c23c0bffa5825 51
+  s_a149baf2181030::t_3fb703ca538806 54-57
+src/platform/structures/kali_head.lua
+  s_a149baf2181030::t_7b2f0ed0d26021 2-21,24-28
+src/platform/effects/rubble.lua
+  s_a149baf2181030::t_3fb703ca538806 2
+src/platform/kali.lua
+  s_a149baf2181030::t_3c23c0bffa5825 66,73,100
+  s_a149baf2181030::t_7b2f0ed0d26021 1-65,67-72,74-99,101-110,114-165
+  s_a149baf2181030::t_be75b2c42b0b34 111-113
+src/platform/items/types.lua
+  s_a149baf2181030::t_8549e40fe8003d 4
+docs/object-source-audit.md
+  s_a149baf2181030::t_6aad00f5867271 18,21,89,93-94,106,127,130,212,216-235
+README.md
+  s_a149baf2181030::t_d0a1b8e8761186 17-18,434-437
+src/platform/effects.lua
+  s_a149baf2181030::t_3fb703ca538806 70-75,118-120,123,126,293-295
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "7aa262e38bfc770ae5b90ece58b67c298d939665",
+  "prompts": {},
+  "sessions": {
+    "s_a149baf2181030": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0fdc3-ae05-7e41-a96b-bd7a333b41c3",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Ethan Denny <ethandenny@protonmail.com>"
+    }
+  }
+}
