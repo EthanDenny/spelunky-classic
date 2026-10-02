@@ -11,6 +11,7 @@ local World = require("src.platform.world")
 local Depth = require("src.render.classic_depth")
 local DepthQueue = require("src.render.depth_queue")
 local MineItemScenarios = require("src.screens.mine_item_scenarios")
+local KaliScenarios = require("src.screens.kali_scenarios")
 
 local EnemyAI = {}
 EnemyAI.__index = EnemyAI
@@ -661,6 +662,10 @@ for _, page in ipairs(MineItemScenarios.definitions(makeWorld, makePlayer)) do
     SCENARIOS[page.name] = page.scenarios
 end
 
+local kaliPage = KaliScenarios.definitions(makeWorld, makePlayer)
+PAGES[#PAGES+1] = { name = kaliPage.name, scenarios = true }
+SCENARIOS[kaliPage.name] = kaliPage.scenarios
+
 function EnemyAI.new(app)
     return setmetatable({
         app = app,
@@ -670,6 +675,7 @@ function EnemyAI.new(app)
         sounds = {},
         accumulator = 0,
         scrollY = 0,
+        sidebarScrollY = 0,
         maxScroll = 0,
         paused = false,
         soundEnabled = false,
@@ -774,6 +780,7 @@ function EnemyAI:resetScenario(scenario)
     end
     scenario.effects = Effects.new(scenario.definition.seed)
     MineItemScenarios.reset(scenario, self.itemRenderer, self)
+    KaliScenarios.reset(scenario, self.itemRenderer, self)
     scenario.projectiles = scenario.definition.projectiles
         and ProjectileSystem.new(scenario.world)
         or scenario.itemGame and scenario.itemGame.projectiles or nil
@@ -815,6 +822,9 @@ end
 
 function EnemyAI:setPage(index)
     self.pageIndex = ((index - 1) % #PAGES) + 1
+    local available = love.graphics.getHeight()-168
+    local top = (self.pageIndex-1)*36
+    self.sidebarScrollY = clamp(self.sidebarScrollY, math.max(0, top+32-available), top)
     self.scrollY = 0
     self.paused = false
     self:resetPage()
@@ -830,6 +840,11 @@ end
 function EnemyAI:stepScenario(scenario)
     local definition = scenario.definition
     scenario.tick = scenario.tick + 1
+    if scenario.kaliGame then
+        KaliScenarios.step(scenario, self)
+        if scenario.tick >= definition.duration then self:resetScenario(scenario) end
+        return
+    end
     local player = scenario.player
     local enemy = scenario.enemy
     local previousPlayerY = player and player.y
@@ -1036,7 +1051,12 @@ function EnemyAI:keypressed(key, _, isRepeat)
 end
 
 function EnemyAI:wheelmoved(_, y)
-    self.scrollY = clamp(self.scrollY - y * 72, 0, self.maxScroll)
+    if love.mouse.getX() < SIDEBAR_WIDTH then
+        self.sidebarScrollY = clamp(self.sidebarScrollY-y*72, 0,
+            math.max(0, #PAGES*36-(love.graphics.getHeight()-168)))
+    else
+        self.scrollY = clamp(self.scrollY-y*72, 0, self.maxScroll)
+    end
 end
 
 local function contains(rect, x, y)
@@ -1090,10 +1110,14 @@ function EnemyAI:drawSidebar(height)
     love.graphics.print(string.format("%d TEST PAGES", #PAGES), 16, 47)
 
     self.pageRows = {}
+    local clipX, clipY, clipWidth, clipHeight = love.graphics.getScissor()
+    love.graphics.setScissor(0, 78, SIDEBAR_WIDTH, height-168)
     for index, enemy in ipairs(PAGES) do
-        local row = { index = index, x = 8, y = 78 + (index - 1) * 36,
+        local row = { index = index, x = 8, y = 78 + (index - 1) * 36-self.sidebarScrollY,
             width = SIDEBAR_WIDTH - 16, height = 32 }
-        self.pageRows[#self.pageRows + 1] = row
+        if row.y >= 78 and row.y+row.height <= height-90 then
+            self.pageRows[#self.pageRows + 1] = row
+        end
         local selected = index == self.pageIndex
         if selected then
             love.graphics.setColor(COLORS.accent)
@@ -1110,7 +1134,8 @@ function EnemyAI:drawSidebar(height)
     end
     love.graphics.setFont(self.app.fonts.small)
     love.graphics.setColor(COLORS.muted)
-    love.graphics.printf("SCENARIOS LOOP AUTOMATICALLY", 14, height - 66,
+    love.graphics.setScissor(clipX, clipY, clipWidth, clipHeight)
+    love.graphics.printf("SCENARIOS LOOP AUTOMATICALLY", 14, height - 74,
         SIDEBAR_WIDTH - 28, "left")
 end
 
@@ -1153,6 +1178,10 @@ function EnemyAI:drawScenarioWorld(scenario, x, y, width)
     local previewWidth, previewHeight = width - 24, 294
     love.graphics.setColor(COLORS.background)
     love.graphics.rectangle("fill", previewX, previewY, previewWidth, previewHeight, 3, 3)
+    if scenario.kaliGame then
+        KaliScenarios.draw(scenario, previewX, previewY, previewWidth, previewHeight, self.app.fonts.small)
+        return
+    end
     local worldWidth = scenario.world.width * 16
     local worldHeight = scenario.world.height * 16
     local scale = math.max(1, math.min(2, math.floor(previewWidth / worldWidth),
@@ -1261,7 +1290,8 @@ function EnemyAI:drawCard(scenario, x, y, width)
         or "READY", x + 12, y + 385)
     if scenario.player then
         love.graphics.setColor(COLORS.text)
-        local status = definition.bomb
+        local status = scenario.kaliGame and string.format("FAVOR %d · HP %d",
+            scenario.kaliGame.run.favor, scenario.player.health) or definition.bomb
             and string.format("HP %d/%d  BOMBS %d", scenario.player.health,
                 scenario.player.maxHealth, scenario.bombsRemaining)
             or string.format("HEALTH %d/%d", scenario.player.health, scenario.player.maxHealth)

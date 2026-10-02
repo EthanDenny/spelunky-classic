@@ -299,6 +299,14 @@ in a deep shaft. The bomb page shows a wall rebound, paste sticking to and
 breaking a wall, a snake caught in the blast, Up and Down throws, and a whip
 blocking the throw. Flames rebound from solid surfaces; destroyed bricks and
 movable blocks shed rubble, while blasted enemies leave blood or skeleton pieces.
+The **Kali Altar** page adds sixteen replays: living/dead damsels, cavemen and
+shopkeepers; holding and releasing a body; equipment, Kapala, bomb and vitality
+rewards; devouring and forgiveness; spiders, ball/chain and darkness/Ghost
+punishments. Each runs the live Mines simulation and rendering, shows favor,
+health and Kali's response, and restarts after seven seconds. Space pauses;
+R restarts. The sidebar scrolls with the wheel while the pointer is over it and
+keeps the selected page visible. Existing item-page numbers are retained.
+
 Scenario sound starts muted and can be enabled with the header button or M key.
 Snake deaths emit three blood particles from the sprite center; a whip hit emits
 one additional particle, following the original collision and step events.
