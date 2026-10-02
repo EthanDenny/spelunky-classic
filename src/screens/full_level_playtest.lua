@@ -271,6 +271,9 @@ function FullLevelPlaytest:buildSimulation()
                 seed = self.seed + index * 97,
                 angry = entity.kind == "shopkeeper" and self.run.shopkeeperAnger > 0,
             })
+            if creature.spec.facePlayerOnSpawn then
+                creature.spec.facePlayerOnSpawn(creature, self.player, entity.properties and entity.properties.facing)
+            end
             self.enemies[#self.enemies + 1] = creature
             self.dynamicEntities[entity] = true
         elseif Item.isCarryable(entity.kind) then
@@ -279,7 +282,7 @@ function FullLevelPlaytest:buildSimulation()
             self.items[#self.items + 1] = item
             self.dynamicEntities[entity] = true
         elseif Item.isCollectible(entity.kind) then
-            self.collectibles[#self.collectibles + 1] = Treasure.new(entity, false)
+            self.collectibles[#self.collectibles + 1] = Treasure.new(entity, false, self)
             self.dynamicEntities[entity] = true
         elseif entity.kind == "fake_bones" then
             self.fakeBones[#self.fakeBones + 1] = FakeBones.new(entity)
@@ -366,18 +369,29 @@ end
 
 FullLevelPlaytest.checkSpikes = Spikes.check
 
+function FullLevelPlaytest:combatActors()
+    local actors = {}
+    for _, enemy in ipairs(self.enemies) do actors[#actors+1] = enemy end
+    for _, treasure in ipairs(self.collectibles) do
+        if treasure.hp then actors[#actors+1] = treasure end
+    end
+    return actors
+end
+
 function FullLevelPlaytest:checkWhip()
     local left = self.player:getWhipHitbox()
     if not left then return end
-    for _, enemy in ipairs(self.enemies) do
+    for _, enemy in ipairs(self:combatActors()) do
         if enemy.alive and self.player:whipCanHit(enemy)
             and self.player:whipOverlapsRectangle(enemy:getBounds()) then
             self.player:markWhipHit(enemy)
             local hit
             if enemy.kind == "shopkeeper" then hit = enemy:damage(0, self.player.x, { kind = "whip" })
             elseif enemy.spec and enemy.spec.melee then hit = enemy.spec.melee(enemy, self, 0)
-            else hit = enemy:damage(1, self.player.x, { kind = "whip" }) end
-            if hit and enemy.kind ~= "damsel" then self.effects:blood(enemy.x, enemy.y-8, 1) end
+            else hit = enemy:damage(1, self.player.x, { kind = "whip", phase = self.player:getWhipPhase() }) end
+            if hit and enemy.kind ~= "damsel" and not (enemy.spec and enemy.spec.bloodless) then
+                self.effects:blood(enemy.x, enemy.y-8, 1)
+            end
             if self.hitSound then self.hitSound:clone():play() end
         end
     end
@@ -490,6 +504,7 @@ function FullLevelPlaytest:checkCollectibles()
                     end
                 else
                     local message = Item.collect(entity.kind, self.run, self.player, self)
+                    if collectible.definition.onCollected then collectible.definition.onCollected(collectible, self) end
                     collectible.alive = false
                     self.sounds:play(Item.pickupSound(entity.kind))
                     if message then self.run:addMessage(message, 75) end
@@ -580,12 +595,14 @@ function FullLevelPlaytest:spawnEntity(kind, x, y, properties)
     elseif Creature.supports(kind) then
         local sprite = self.renderer.entitySprites[kind]
         local creature = Creature.new(entity, sprite and sprite.metadata, { seed = self.seed + #self.enemies })
-        if kind == "skeleton" then creature.facing = entity.properties.facing or -1 end
         creature.x, creature.y = x, y
+        if creature.spec.facePlayerOnSpawn then
+            creature.spec.facePlayerOnSpawn(creature, self.player, entity.properties.facing)
+        end
         self.enemies[#self.enemies + 1] = creature
         return creature
     elseif Item.isCollectible(kind) then
-        local collectible = Treasure.new(entity, true)
+        local collectible = Treasure.new(entity, true, self)
         collectible.x, collectible.y = x, y
         collectible:syncEntity()
         self.collectibles[#self.collectibles + 1] = collectible
@@ -658,7 +675,7 @@ function FullLevelPlaytest:resolveItemEnemyContact(item)
     if item.held or item.opened or item.skipEnemyHitOnce
         or (math.abs(item.vx) <= speed and math.abs(item.vy) <= speed) then return end
     local reach = item.definition.flight == "fragile" and 3 or 2
-    for _, enemy in ipairs(self.enemies) do
+    for _, enemy in ipairs(self:combatActors()) do
         if enemy.alive and (not enemy.stunned or enemy.stunned == 0)
             and enemy:overlapsRectangle(item.x - reach, item.y - reach,
                 item.x + reach, item.y + reach) and PhysicalBody.strikeEnemy(item, enemy) then
@@ -736,9 +753,9 @@ function FullLevelPlaytest:simulationStepBody(input)
         for _, enemy in ipairs(self.enemies) do enemy:step(self.world, self.player, self) end
         for _, item in ipairs(self.items) do item:update(self.world, self.player) end
         for _, treasure in ipairs(self.collectibles) do treasure:update(self.world, self.player) end
-        self.traps:update(self.player, self.enemies, self.items, self.collectibles)
-        self.projectiles:update(self.enemies, self.player, self.items)
-        self.tools:update(self.player, self.enemies, self.items)
+        self.traps:update(self.player, self:combatActors(), self.items, self.collectibles)
+        self.projectiles:update(self:combatActors(), self.player, self.items)
+        self.tools:update(self.player, self:combatActors(), self.items)
         TerrainDestruction.update(self)
         self.effects:update(self.world)
         if self.exiting >= 32 then self:advanceLevel() end
@@ -749,7 +766,7 @@ function FullLevelPlaytest:simulationStepBody(input)
         for _, item in ipairs(self.items) do item:update(self.world, self.player) end
         self.effects:burning(self.player)
         self.effects:update(self.world)
-        self.tools:update(self.player, self.enemies, self.items)
+        self.tools:update(self.player, self:combatActors(), self.items)
         self.player:step(self.world, {})
         self.deathTimer = self.deathTimer - 1
         if self.deathTimer <= 0 then
@@ -819,8 +836,8 @@ function FullLevelPlaytest:simulationStepBody(input)
         self.projectiles.projectiles }) do
         for _, target in ipairs(group) do trapTargets[#trapTargets + 1] = target end
     end
-    self.traps:update(self.player, self.enemies, self.items, trapTargets)
-    self.tools:update(self.player, self.enemies, self.items)
+    self.traps:update(self.player, self:combatActors(), self.items, trapTargets)
+    self.tools:update(self.player, self:combatActors(), self.items)
     TerrainDestruction.update(self)
     Kali.update(self)
     if self.heldItem and self.heldItem.kind == "bomb" and not self.heldItem.alive then
@@ -861,7 +878,7 @@ function FullLevelPlaytest:simulationStepBody(input)
             if enemy.kind == "caveman" then self.sounds:play("caveman_die") end
             if enemy.countsAsKill ~= false then self.run.kills = self.run.kills + 1 end
             local blood = enemy.spec.deathBlood or 0
-            if blood > 0 and not enemy.blastParticlesEmitted then self.effects:blood(enemy.x, enemy.y-8, blood) end
+            if blood > 0 and not enemy.blastParticlesEmitted then self.effects:blood(enemy.x, enemy.spec.deathY and enemy.spec.deathY(enemy) or enemy.y-8, blood) end
             if enemy.spec.onDeath then enemy.spec.onDeath(enemy, self) end
             if enemy.kind == "shopkeeper" and not enemy.sacrificed then
                 Shopkeeper.die(enemy, self)
@@ -869,7 +886,7 @@ function FullLevelPlaytest:simulationStepBody(input)
         end
     end
 
-    self.projectiles:update(self.enemies, self.player, self.items)
+    self.projectiles:update(self:combatActors(), self.player, self.items)
 
     if self.player.health < previousHealth then
         self.sounds:play("hurt")

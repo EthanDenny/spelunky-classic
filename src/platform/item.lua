@@ -142,11 +142,11 @@ end
 
 function Item:update(world, player)
     if not self.alive then return end
-    if not require("src.platform.activity").contains(world, self) then return end
+    if self.definition.update then self.definition.update(self, world, player) end
+    if not self.alive or not require("src.platform.activity").contains(world, self) then return end
     self.justHit = false
     self.impactSide = nil
     if self.cooldown > 0 then self.cooldown = self.cooldown - 1 end
-    if self.definition.update then self.definition.update(self, world, player) end
     if self.held then
         self:updateHeldPosition(player)
         return

@@ -82,7 +82,7 @@ function ItemActions.updateMelee(context)
         context.meleeStrikeAge)
     if name then
         local hits = context.meleeHits[phase]
-        for _, enemy in ipairs(context.enemies) do
+        for _, enemy in ipairs(context.combatActors and context:combatActors() or context.enemies or {}) do
             if enemy.alive and not hits[enemy]
                 and meleeOverlaps(name, spriteFrame, x, y, enemy) then
                 hits[enemy] = true
@@ -90,7 +90,8 @@ function ItemActions.updateMelee(context)
                     enemy:damage(spec.keeperWhipDamage or 0, player.x, { kind = "whip" })
                 elseif enemy.spec and enemy.spec.melee then enemy.spec.melee(enemy, context, spec.damage)
                 else
-                    if enemy:damage(spec.damage, player.x, { kind = "whip", weapon = item.kind }) then
+                    if enemy:damage(spec.damage, player.x, { kind = "whip", weapon = item.kind, phase = phase })
+                        and not (enemy.spec and enemy.spec.bloodless) then
                         context.effects:blood(enemy.x, enemy.y-8, 1)
                     end
                 end

@@ -33,7 +33,7 @@ function ArrowTrap.update(self, trap, player, enemies, items, movingTargets)
     local originY = trap.y + 8
     if not trap.beamLeft then ArrowTrap.initializeBeam(self.world, trap, direction) end
     local function inBeam(target)
-        if not target or target.alive == false or target.held or target.deployed
+        if not target or target.kind == "ghost" or target.alive == false or target.held or target.deployed
             or target.stuck or target.phase == "create" then return false end
         local solidBody = target.moveable or target.kind == "boulder" and target.width
         local targetX = solidBody and target.x + target.width / 2 or target.x
@@ -52,7 +52,7 @@ function ArrowTrap.update(self, trap, player, enemies, items, movingTargets)
             top, bottom = targetY - radius, targetY + radius
         end
         local moving = (target.vx or 0) ~= 0 or (target.vy or 0) ~= 0
-            or target == player and target.spriteName == "sDuckToHangL" and (target.animation or 0) > 6
+            or target == player and target.spriteName == "sDuckToHangL" and (target.animationFrame or 0) > 6
         return targetX+halfWidth > trap.beamLeft and targetX-halfWidth < trap.beamRight
             and bottom > originY-8 and top < originY+8 and moving
     end

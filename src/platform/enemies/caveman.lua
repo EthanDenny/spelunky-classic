@@ -113,7 +113,7 @@ function Caveman.animationFps(self, animation, name)
 end
 
 function Caveman.canDamage(body, hit)
-    return not hit or hit.kind ~= "whip" or hit.weapon == "machete" or body.stunned <= 0
+    return not hit or hit.kind ~= "whip" or body.stunned <= 0
 end
 
 function Caveman.canEnemyDamage(self)

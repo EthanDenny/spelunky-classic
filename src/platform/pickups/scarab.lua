@@ -3,6 +3,9 @@ local Traits = require("src.platform.item_traits")
 local Definition = Traits.money(4000, "coin")
 
 Definition.depth = 40
+Definition.hp = 1
+Definition.bloodless = true
+Definition.deathBlood = 0
 Definition.treasureAnchor = { 8, 8 }
 Definition.treasureBounds = { 4, -4, 4 }
 function Definition.updateTreasure(body, world, player)
@@ -12,10 +15,7 @@ function Definition.updateTreasure(body, world, player)
     if Physics.move(world, body, "x", vx) then body.vx = -vx end
     if Physics.move(world, body, "y", vy) then body.vy = -vy end
     if world:solidAtPoint(body.x, body.y) then
-        body.alive = false
-        if world.game then
-            for _ = 1, 3 do world.game.effects:add("teleport_spark", body.x, body.y, 0, love.math.random(1,3)) end
-        end
+        body:damage(999)
         return
     end
     local function slow(value)
@@ -32,6 +32,22 @@ function Definition.updateTreasure(body, world, player)
         body.vx, body.vy = math.cos(angle)*4, math.sin(angle)*4
         body.counter = love.math.random(10, 30)
     end
+end
+
+function Definition.onCollected(body, game)
+    local random = game.effects.random
+    for _ = 1, 3 do
+        game.effects:add("teleport_spark", body.x-2+random:random(0,4), body.y-2+random:random(0,4))
+    end
+end
+
+function Definition.onDeath(body, game)
+    local random = game.effects.random
+    for _ = 1, 3 do
+        game.effects:add("teleport_spark", body.x-6+random:random(0,14),
+            body.y-6+random:random(0,14), 0, random:random(1,3))
+    end
+    Definition.onCollected(body, game)
 end
 
 return Definition

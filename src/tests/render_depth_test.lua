@@ -182,8 +182,14 @@ function Test.run(app)
         game:spawnEntity("diamond", 112, 80)
         game:spawnEntity("ghost", 144, 96)
         game.effects:add("teleport_spark", 120, 80)
+        game.effects:add("blood_spark", 128, 80)
         local entityDraw, tileDraw, itemDraw = renderer.drawEntity, renderer.drawTile, renderer.drawItem
         local order = {}
+        local particleDraw = game.effects.drawParticle
+        game.effects.drawParticle = function(self, particle, ...)
+            order[#order+1] = particle.kind
+            return particleDraw(self, particle, ...)
+        end
         renderer.drawEntity = function(self, entity)
             order[#order+1] = entity.kind
             return entityDraw(self, entity)
@@ -203,6 +209,7 @@ function Test.run(app)
             before(order, "flare", "brick")
             before(order, "lamp_item", "brick")
             before(order, "diamond", "brick")
+            before(order, "brick", "blood_spark")
             game.player.equipment.spectacles = true
             order = {}
             game:drawWorld(view)
@@ -213,6 +220,7 @@ function Test.run(app)
             game:drawWorld(view)
         end)
         renderer.drawEntity, renderer.drawTile, renderer.drawItem = entityDraw, tileDraw, itemDraw
+        game.effects.drawParticle = particleDraw
         assert(ok, err)
     end
 

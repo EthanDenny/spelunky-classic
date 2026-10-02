@@ -89,7 +89,7 @@ local function advanceAnimation(spider, context)
 end
 
 function GiantSpider.step(spider, world, player, context)
-    spider.whipped = math.max(0, (spider.whipped or 0)-1)
+    if spider.state ~= "hang" then spider.whipped = math.max(0, (spider.whipped or 0)-1) end
     if spider.state == "hang" then
         local top = spider.y - spider.height
         local left = spider.x - spider.width / 2
@@ -103,6 +103,7 @@ function GiantSpider.step(spider, world, player, context)
             -- object. Our physics position is bottom-centered, so add 16.
             spider.y = spider.y + 16
             spider.height = 32
+            spider.whipped = 10
             spider.state = "recover"
             spider.timer = spider.rng:random(5, 20)
             setSprite(spider, "sGiantSpiderFlip", 0.8)
@@ -185,7 +186,8 @@ function Spider.canReachPlayer(self, player)
 end
 
 function Spider.damage(self, amount, sourceX, hit)
-    if hit and hit.kind == "whip" and self.state ~= "hang" then
+    if hit and self.state ~= "hang"
+        and (hit.kind == "item" or hit.kind == "whip" and hit.phase ~= "back") then
         if (self.whipped or 0) > 0 then return false end
         self.whipped, amount = 10, 1
     end
@@ -207,12 +209,14 @@ end
 
 Spider.depth = 40
 Spider.deathBlood = 4
+function Spider.deathY(body) return body.y-body.height+24 end
 function Spider.onDeath(body, game)
-    game:spawnEntity("paste", body.x, body.y-4)
+    local y = Spider.deathY(body)
+    game:spawnEntity("paste", body.x, y)
     local random = game.effects.random
     for _ = 1, random:random(1,3) do
         local gem = game:spawnEntity(({ "emerald_big", "sapphire_big", "ruby_big" })[
-            random:random(1,3)], body.x, body.y-8)
+            random:random(1,3)], body.x, y)
         gem.vx, gem.vy = random:random(0,3)-random:random(0,3), -2
     end
 end

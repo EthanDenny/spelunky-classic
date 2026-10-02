@@ -27,7 +27,6 @@ function Ghost.stepCreature(body, _, player)
     local dx, dy = player.x-body.x, player.y-(body.y-8)
     local distance = math.sqrt(dx*dx+dy*dy)
     if distance == 0 then body.vx, body.vy = 0, 0 return end
-    body.facing = dx < 0 and -1 or 1
     if dx < 0 and body.spriteName == "sGhostRight" then
         body.spriteName, body.animation = "sGhostTurnLeft", 0
     elseif dx >= 0 and body.spriteName == "sGhostLeft" then

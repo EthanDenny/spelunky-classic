@@ -59,7 +59,12 @@ function Test.run()
             assert(game.player.health == 4 and game.run.blood == 0)
             for _, blood in ipairs(game.effects.particles) do blood.age = 5 end
             game.effects:collectBlood(game.player, game.run)
-            assert(game.player.health == 5 and game.run.blood == 0 and #game.effects.particles == 1 and game.effects.particles[1].kind == "heart")
+            local sparks, hearts = 0, 0
+            for _, effect in ipairs(game.effects.particles) do
+                if effect.kind == "blood_spark" then sparks = sparks+1 end
+                if effect.kind == "heart" then hearts = hearts+1 end
+            end
+            assert(game.player.health == 5 and game.run.blood == 0 and sparks == 9 and hearts == 1)
             for _ = 1, 9 do
                 local blood = game.tools.effects:add("blood", 80, 104)
                 blood.age = 5
@@ -110,7 +115,8 @@ function Test.run()
             damsel.held, game.heldNpc = true, damsel
             game.world:set("web", 10, 4)
             game.tools:update(game.player, game.enemies, game.items)
-            assert(not damsel.alive and not damsel.held and not game.heldNpc)
+            assert(not damsel.alive and damsel.held and game.heldNpc == damsel,
+                "oExplosion does not release a carried damsel")
             assert(not skull.alive and bomb.timer >= 4 and bomb.timer <= 8
                 and not held.held and not game.heldItem and not game.world:has("web", 10, 4))
         end },
@@ -166,15 +172,18 @@ function Test.run()
             game:checkWhip()
             assert(body.alive and body.hp == 2 and body.stunned > 0 and game.run.kills == 0)
             assert(#game.effects.particles == 1 and game.effects.particles[1].kind == "blood")
+            assert(not body:damage(2, game.player.x, { kind = "whip", weapon = "machete", phase = "front" })
+                and body.hp == 2, "Machete whip collisions retain the caveman's stunned immunity")
         end },
         { "giant spider death releases paste and scattered gems", function()
             local game = fixture()
             local spider = game:spawnEntity("giant_spider", 200, 96)
             spider:damage(100)
             game:simulationStepBody({})
-            assert(game.items[1].kind == "paste" and #game.collectibles >= 1 and #game.collectibles <= 3)
+            assert(game.items[1].kind == "paste" and game.items[1].y == 104
+                and #game.collectibles >= 1 and #game.collectibles <= 3)
             for _, gem in ipairs(game.collectibles) do
-                assert(gem.alive and gem.vy < 0 and gem.pickupDelay > 0)
+                assert(gem.alive and gem.y == 102 and gem.vy < 0 and gem.pickupDelay > 0)
             end
             local count = #game.collectibles
             game:simulationStepBody({})
@@ -186,9 +195,12 @@ function Test.run()
             weapon:pickup(game.player)
             game.heldItem = weapon
             local ghost = game:spawnEntity("ghost", 80, 104)
+            ghost.x = game.player.x+1
+            ghost:step(game.world, game.player, game)
             ghost:resolvePlayerContact(game.player, game.player.y, game)
             assert(game.player:isDead() and game.player.visible == false and not weapon.held
-                and not game.heldItem and game.items[2].kind == "skull")
+                and not game.heldItem and game.items[2].kind == "skull" and weapon.vx == 2,
+                "Ghost turns change sprites, not its source RIGHT-facing drop impulse")
             for _ = 1, 71 do ghost:step(game.world, game.player, game) end
             assert(not ghost.alive)
         end },
@@ -260,6 +272,119 @@ function Test.run()
             assert(not game.completed)
             game:simulationStepBody({})
             assert(game.completed)
+        end },
+        { "enemy activation uses the source sprite anchor and asymmetric viewport bounds", function()
+            local game = fixture()
+            game.world.activeView = { x = 0, y = 0, width = 100, height = 120 }
+            local caveman = game:spawnEntity("caveman", 112, 112)
+            caveman.timer, caveman.sightTimer = 20, 5
+            caveman:step(game.world, game.player, game)
+            assert(caveman.timer == 20 and caveman.sightTimer == 5)
+            caveman.x = 111
+            caveman:step(game.world, game.player, game)
+            assert(caveman.timer == 19)
+        end },
+        { "gem collection alarms advance while offscreen movement pauses", function()
+            local game = fixture()
+            game.world.activeView = { x = 0, y = 0, width = 100, height = 120 }
+            local gem = game:spawnEntity("ruby_big", 160, 60)
+            gem.vx = 4
+            for _ = 1, 20 do gem:update(game.world, game.player) end
+            assert(gem.pickupDelay == 0 and gem.x == 160)
+        end },
+        { "traps ignore ghosts and detect the late crouch-to-hang frame", function()
+            local game = fixture()
+            local entity = { kind = "arrow_trap_right", x = 2, y = 3 }
+            game.level.entities = { entity }
+            game.world:set("solid", 2, 3, entity)
+            game.traps = Traps.new(game.world, game.level)
+            local ghost = game:spawnEntity("ghost", 80, 64)
+            ghost.vx = 1
+            game.traps:update(game.player, { ghost }, {})
+            assert(not game.traps.traps[1].fired, "oGhost is not an oEnemy sensor target")
+            game.player.x, game.player.y = 80, 56
+            game.player.spriteName, game.player.animationFrame = "sDuckToHangL", 7
+            game.player.vx, game.player.vy = 0, 0
+            game.traps:update(game.player, {}, {})
+            assert(game.traps.traps[1].fired)
+        end },
+        { "lighting uses the lamp anchor and selects the nearest explosion before its frame", function()
+            local game = fixture()
+            local Lighting = require("src.platform.lighting")
+            game.level.entities = { { kind = "lamp", x = 5, y = 6 } }
+            game.player.x, game.player.y = 80, 96
+            assert(Lighting.darkness(game) == 0)
+            game.level.entities = {}
+            game.tools.explosions = {
+                { x = 100, y = 96, age = 10, alive = true },
+                { x = 120, y = 96, age = 3, alive = true },
+            }
+            assert(math.abs(Lighting.darkness(game)-0.625) < 0.001)
+        end },
+        { "giant spiders retain front-hit cooldowns and inherited back-whip damage", function()
+            local game = fixture()
+            local spider = game:spawnEntity("giant_spider", 240, 64)
+            spider:step(game.world, game.player, game)
+            assert(spider.state ~= "hang")
+            assert(not spider:damage(1, 200, { kind = "item", vx = 4, vy = 0 }))
+            for _ = 1, 10 do spider:step(game.world, game.player, game) end
+            assert(spider:damage(1, 200, { kind = "item", vx = 4, vy = 0 }))
+            assert(not spider:damage(1, 200, { kind = "item", vx = 4, vy = 0 }))
+            assert(not spider:damage(2, 200, { kind = "whip", phase = "front" }))
+            local hp = spider.hp
+            assert(spider:damage(2, 200, { kind = "whip", phase = "back" }) and spider.hp == hp-2,
+                "oWhipPre inherits damage while oWhip respects the giant's hit cooldown")
+        end },
+        { "skeleton death drops its skull at the source center", function()
+            local game = fixture()
+            local skeleton = game:spawnEntity("skeleton", 160, 104)
+            skeleton:damage(10)
+            skeleton.spec.onDeath(skeleton, game)
+            assert(game.items[1].kind == "skull" and game.items[1].y == 96)
+        end },
+        { "stomps reset fall accumulation and preserve actor-specific bounce", function()
+            local game = fixture()
+            local caveman = game:spawnEntity("caveman", 160, 112)
+            game.player.x, game.player.y, game.player.vy, game.player.fallTimer = 160, 96, 4, 32
+            assert(caveman:resolvePlayerContact(game.player, 90, game) == "stomp")
+            assert(caveman.hp == 0 and game.player.fallTimer == 0 and game.player.vy == -6)
+            local spider = game:spawnEntity("giant_spider", 240, 112)
+            spider.state, spider.height = "idle", 32
+            game.player.x, game.player.y, game.player.vy, game.player.fallTimer = 240, 96, 4, 0
+            assert(spider:resolvePlayerContact(game.player, 90, game) == "stomp")
+            assert(math.abs(game.player.vy+6.8) < 0.001)
+        end },
+        { "only rubble and detritus inherit their source viewport destruction", function()
+            local game = fixture()
+            game.world.activeView = { x = 0, y = 0, width = 100, height = 120 }
+            local rubble = game.effects:add("rubble", 125, 40)
+            local spark = game.effects:add("teleport_spark", 125, 40)
+            local blood = game.effects:add("blood", 110, 40)
+            game.effects:update(game.world)
+            local alive = {}
+            for _, effect in ipairs(game.effects.particles) do alive[effect] = true end
+            assert(alive[rubble] and alive[spark] and not alive[blood])
+        end },
+        { "skeletons face the player when spawned on either side", function()
+            local game = fixture()
+            local left = game:spawnEntity("skeleton", 40, 104)
+            local right = game:spawnEntity("skeleton", 120, 104)
+            assert(left.facing == 1 and right.facing == -1)
+        end },
+        { "scarabs emit collection sparks and participate in combat", function()
+            local game = fixture()
+            local collectible = game:spawnEntity("scarab", 80, 104)
+            game:checkCollectibles()
+            assert(not collectible.alive and #game.effects.particles == 3)
+            local target = game:spawnEntity("scarab", game.player.x+16, game.player.y)
+            game.player.facing, game.player.whipping, game.player.animationFrame = 1, true, 5
+            game:checkWhip()
+            assert(not target.alive and #game.effects.particles == 9,
+                "A bloodless scarab produces six death sparks and no whip blood")
+            local blastTarget = game:spawnEntity("scarab", 240, 64)
+            game.tools:explode(240, 64)
+            game:simulationStepBody({})
+            assert(not blastTarget.alive)
         end },
     }
     local failures = {}

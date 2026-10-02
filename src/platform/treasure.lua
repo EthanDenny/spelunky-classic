@@ -7,7 +7,7 @@ Treasure.__index = Treasure
 local PhysicalBody = require("src.platform.physical_body")
 local ItemDefinitions = require("src.platform.item_definitions")
 
-function Treasure.new(entity, released)
+function Treasure.new(entity, released, game)
     local definition = ItemDefinitions[entity.kind]
     local pickup = assert(definition and definition.pickup, "Unknown treasure: " .. entity.kind)
     assert(pickup.money, "Non-treasure entity: " .. entity.kind)
@@ -16,6 +16,7 @@ function Treasure.new(entity, released)
         kind = entity.kind,
         properties = entity.properties or {},
         definition = definition,
+        spec = definition, hp = definition.hp, game = game,
         alive = true,
         active = true,
         collisionBounds = definition.treasureBounds,
@@ -39,6 +40,23 @@ function Treasure:getVerticalBounds()
     return -4, 4
 end
 
+function Treasure:getBounds()
+    local half = self:getCollisionHalfWidth()
+    local top, bottom = self:getVerticalBounds()
+    return self.x-half, self.y+top, self.x+half, self.y+bottom
+end
+
+function Treasure:damage(amount, _, hit)
+    if not self.alive or not self.hp then return false end
+    self.hp = self.hp-amount
+    if hit then self.vx, self.vy = hit.vx or self.vx, hit.vy or self.vy end
+    if self.hp <= 0 then
+        self.alive = false
+        if self.definition.onDeath and self.game then self.definition.onDeath(self, self.game) end
+    end
+    return true
+end
+
 function Treasure:syncEntity()
     local anchor = self.definition.treasureAnchor
     self.entity.x = (self.x - (anchor and anchor[1] or 0)) / 16
@@ -47,8 +65,11 @@ end
 
 function Treasure:update(world, player)
     if not self.alive then return end
-    if not require("src.platform.activity").contains(world, self) then return end
     if self.pickupDelay > 0 then self.pickupDelay = self.pickupDelay - 1 end
+    local Activity = require("src.platform.activity")
+    if self.hp then
+        if not Activity.enemy(world, self) then return end
+    elseif not Activity.contains(world, self) then return end
     if not self.active then return end
     if self.definition.updateTreasure then
         self.definition.updateTreasure(self, world, player)

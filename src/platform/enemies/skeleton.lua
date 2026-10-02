@@ -82,6 +82,9 @@ function Skeleton.canContact(self)
 end
 
 Skeleton.creatureStep = Skeleton.step
+function Skeleton.facePlayerOnSpawn(body, player, facing)
+    body.facing = facing or (player.x < body.x and -1 or 1)
+end
 
 function Skeleton.drawCreature(self)
     local sprites = Skeleton.creatureSprites

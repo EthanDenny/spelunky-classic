@@ -135,7 +135,8 @@ function Kali.update(game)
     end
     for _, body in ipairs(game.enemies) do
         local spec = body.spec and body.spec.sacrifice
-        if spec and (body.alive or body.corpse) then
+        if spec and (body.alive or body.corpse)
+            and (body.kind == "damsel" or require("src.platform.activity").enemy(game.world, body)) then
             if body.held or body.vx ~= 0 or body.vy ~= 0 then body.sacrificeTicks = 20
             elseif body.corpse or body.state == "stunned" or body.stunned > 0 then
                 local altar = Altar.at(game, body.x, body.y)

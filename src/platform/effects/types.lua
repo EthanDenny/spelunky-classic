@@ -1,4 +1,5 @@
 return {
+    blood_spark = require("src.platform.effects.blood_spark"),
     heart = require("src.platform.effects.heart"),
     burn = require("src.platform.effects.burn"),
     blood = require("src.platform.effects.blood"),

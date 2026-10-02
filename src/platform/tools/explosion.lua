@@ -72,12 +72,11 @@ function Explosion.update(self, player, enemies, items)
                     local vx = (enemy.x < explosion.x and -1 or 1)*self.effects.random:random(4,6)
                     if enemy:damage(enemy.kind == "damsel" and 100 or 30, explosion.x,
                         { kind = "explosion", vx = vx, vy = -6 }) then
-                        release(self, enemy)
                         enemy.vx, enemy.vy, enemy.burning = vx, -6, 50
                         if not enemy.alive then
                             if enemy.kind == "skeleton" then
                                 skeletons[#skeletons+1] = enemy
-                            else self.effects:blood(enemy.x, enemy.y-8, enemy.spec.deathBlood or 0) end
+                            else self.effects:blood(enemy.x, enemy.spec.deathY and enemy.spec.deathY(enemy) or enemy.y-8, enemy.spec.deathBlood or 0) end
                             enemy.blastParticlesEmitted = true
                         end
                     end

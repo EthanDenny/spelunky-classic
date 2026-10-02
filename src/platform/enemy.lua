@@ -173,7 +173,7 @@ end
 
 function Enemy:step(world, player)
     if not self.alive then return end
-    if not require("src.platform.activity").contains(world, self) then return end
+    if not require("src.platform.activity").enemy(world, self) then return end
     self.justAlerted = false
     self.spec.step(self, world, player)
     if world:solidAtPoint(self.x, self.y-8) then
@@ -196,7 +196,7 @@ end
 
 function Enemy:damage(amount, sourceX, hit)
     if not self.alive or self.spec.canEnemyDamage
-        and not self.spec.canEnemyDamage(self) and (not hit or (hit.kind ~= "bullet" and hit.kind ~= "explosion" and hit.weapon ~= "machete")) then return false end
+        and not self.spec.canEnemyDamage(self) and (not hit or (hit.kind ~= "bullet" and hit.kind ~= "explosion")) then return false end
     self.hp = self.hp - (amount or 1)
     if self.hp <= 0 then
         self.alive = false
@@ -222,6 +222,7 @@ function Enemy:resolvePlayerContact(player, previousPlayerY)
         self:damage((math.floor((player.fallTimer or 0)/16)+1)
             * (player.equipment.spike_shoes and 3 or 1), player.x)
         player.vy = -6 - 0.2 * player.vy
+        player.fallTimer = 0
         player.jumpTime = 10
         player.jumpReleased = true
         player:setState("jumping")

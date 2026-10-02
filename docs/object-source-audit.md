@@ -260,7 +260,7 @@ New individual object modules:
 | [diamond.lua](../src/platform/pickups/diamond.lua) | `oDiamond` | $5000 ghost-converted treasure, twenty-tick collection alarm |
 | [lamp_item.lua](../src/platform/items/lamp_item.lua) | `oLampItem` | Heavy carryable light released from supported lamps |
 | [flare.lua](../src/platform/items/flare.lua) | `oFlare` | Carryable light with periodic source sparks |
-| [heart.lua](../src/platform/effects/heart.lua) | `oSmoochHeart` | Thirty-tick rising healing effect |
+| [heart.lua](../src/platform/effects/heart.lua) | `oHeart` (sprite `sSmoochHeart`) | Thirty-tick rising healing effect |
 | [burn.lua](../src/platform/effects/burn.lua) | `oBurn` | Animated rising burning wisps with terrain cleanup |
 
 The original source comments out both the F flare action and initial dark-level flare creation. The flare object is supported when spawned; no active player flare action was invented. Spectacles affect buried-object depth, not a larger circular darkness radius. Scarabs are not light sources. Bullets ignore ordinary enemy invincibility in the source, but rescuing damsels let bullets pass through. The source dice really do choose random faces on fast ticks.
@@ -268,3 +268,51 @@ The original source comments out both the F flare action and initial dark-level 
 The [Mines completion tests](../src/tests/mines_completion_test.lua) cover 21 behavior scenarios through real owners and simulation ticks. All 21 fail against an isolated pre-change checkout for the missing behaviors or systems and pass after implementation. Existing supply, rope, explosion, web, loot, and Kali transition tests were updated where the source disproved their old expectations. The live [render-order regression](../src/tests/render_depth_test.lua) exercises actual flare/lamp/diamond/ghost/effect submissions, spectacles occlusion and player exit rendering. The full `love . --smoke-test` suite and `git diff --check` pass.
 
 This implements the identified functional Mines gaps. It does not certify exact GameMaker opaque-pixel masks, collision/event ordering, equal-depth ties, or every animation against the original executable. Small-enemy obstacle steering and fine movement/state timing remain adaptations. The standalone Enemy AI screen retains a visual-only skeleton-skull fallback; generated Mines use the carryable item. Water/lava, tutorial rules and later-area scaling/gameplay remain outside the Mines scope.
+
+
+## Accuracy recheck after Mines completion (2026-10-02)
+
+Rechecked the per-object split, initial repairs, Kali implementation and Mines completion (`2fa3fe4` through `d9b976a`) against the bundled extracted source. The tables above record earlier snapshots; this section supersedes their overlapping claims. The reference authority remains [SOURCE_OF_TRUTH.md](../original-game-reference/SOURCE_OF_TRUTH.md). This is a source-event review with executable clone regressions, not an original-executable parity certification.
+
+The review follows object inheritance as well as child events: XML metadata alone does not describe live depth, Destroy inheritance, alarms, or collision behavior. Native GameMaker action events were also checked where the extracted GML is empty. Coordinate assertions below translate source sprite origins to the clone's body anchors.
+
+### Confirmed discrepancies repaired
+
+| Owner / behavior | Correction | Independent source anchor |
+|---|---|---|
+| Enemy activity and Kali | Use the source top-left anchor and asymmetric viewport margins; giant spiders use their own margins. Enemy sacrifice countdowns pause outside their Step region. Damsel sacrifice processing remains outside its movement gate. Exit animation continues before the movement gate. | `oEnemy`, `oGiantSpider`, `oDamsel` Step |
+| Treasure/item alarms | Gem collection delays and flare alarms continue just outside the movement region. Item-specific cleanup runs before movement gating. This does not implement GameMaker's entire instance activation system. | `oTreasure` Alarm 0/Step, `oFlare` Alarm 0, `oJetpack` Step, `oLevel` activation region |
+| Trap sensing | Ghosts are excluded because `oGhost` is not an `oEnemy` child. Late crouch-to-hang sensing reads the player's actual animation frame. | `oArrowTrapTest` Step |
+| Explosions and held actors | Retain held damsels/enemies through explosion collisions. Only the source `oItem` collision releases the held item. The previous held-NPC release implementation and test expectation were incorrect. | `oExplosion` collisions with `oDamsel`, `oEnemy`, `oItem` |
+| Giant spider hits | Active conversion starts a ten-tick hit cooldown. Thrown items and front whips respect it; back whips retain inherited damage. Front hits apply one damage. | `oGiantSpider` Create/Step, Collision with `oWhip`, inherited `oWhipPre` |
+| Caveman immunity | A machete does not bypass stunned immunity. Bullet/explosion exceptions remain. | `oCaveman` whip collisions, `oBullet`, `oExplosion` |
+| Stomps | Reset fall accumulation. Cavemen/shopkeepers use a -6 bounce; ordinary enemies and giant spiders use -6 minus 0.2 times incoming vertical speed. | `oEnemy`, `oCaveman`, `oGiantSpider` character collisions |
+| Skeletons | Face the player on generated and dynamic creation unless an explicit facing is provided. Drop the carryable skull at the source center, without the Ghost-only vertical offset. | `oSkeleton` Create/Step; `oGhost` character collision |
+| Giant spider drops | Paste, gems and death blood use the same source position, with the hanging-to-active sprite-height conversion. | `oGiantSpider` Step death branch |
+| Ghost drop direction | Turning changes the sprite without rewriting the source's RIGHT facing field; contact therefore retains the rightward equipment impulse. | `oGhost` Create/Step/character collision |
+| Lighting | Use static lamps' source origins; select the nearest explosion before applying its animation-dependent distance adjustment. | `oPlayer1` Step darkness calculation |
+| Particle cleanup and distribution | Detritus uses a four-pixel viewport margin; rubble uses thirty-two. Flare sparks and burning wisps do not inherit that viewport deletion. Rubble positions use two random draws' difference. | `oDetritus`, `oRubblePiece`, `oFlareSpark`, `oBurn`, solid Destroy events |
+| Kapala effects | Each consumed droplet produces a BloodSpark in addition to the nine-droplet healing heart. Added the individual [blood_spark.lua](../src/platform/effects/blood_spark.lua) object with source sprite, depth 1, speed 0.5 and steady random upward velocity. | `oPlayer1` blood collision, `oBloodSpark`, `oDrawnSprite` |
+| Flare/lamp metadata | Static previews use flare depth 30 and lamp-item depth 100; live inherited item depths still apply. Flare sparks use the source offset distribution and two-tick alarm. | `oFlare` XML/Create/Alarm 0, `oLampItem` XML, `oItem` Step |
+| Scarab inheritance | Scarabs remain money pickups in their individual module and now participate in whips, weapons, thrown-item/projectile/trap and explosion targets. Collection emits three sparks; death adds three downward sparks. Bloodless hits emit no blood. | `oScarab` Create/Step/Destroy/character collision, inherited `oEnemy` collisions, `scrCreateBlood` |
+
+### Checked without changing the source-backed contract
+
+Kali sacrifice values, the twenty-first eligible tick, gift branch order and thresholds, ownership scan, anger recovery, punishment escalation, ball/chain rules, teleport attachment and exit persistence align with the inspected events/scripts. The Damsel living/dead credit quirk remains intentional. Held actor depths 0/51 are correct because player End Step overrides enemy Step. Supplies, cash delays, hidden-item selection, rope fallback, bomb attachment, timed Ghost spawning, gem conversion and exit transition branches retain their checked contracts. Player flare actions and initial dark-level flare creation remain commented out in the source. The correct healing object name is `oHeart`; `sSmoochHeart` is its sprite.
+
+### Remaining source differences and limits
+
+| Area | Remaining difference / verification limit |
+|---|---|
+| Enemy AI | Fine Step ordering and state timing remain adapted. For example, snakes start with a different timer/velocity; caveman sight uses an immediate ray rather than an `oEnemySight` actor. Small-enemy steering, stunned movement and giant-spider state/animation timing are not exact source implementations. |
+| Dark Mines generation | `MinesVariants.apply` performs post-generation placement with its own random stream. Source `scrEntityGen` chooses giant spider/lamp/scarab/bat/spider during placement, with different branch order and start-room/bottom restrictions. Exact spawn distributions and seed parity are not established. |
+| Solid Destroy inheritance | `World:remove` still applies shop-wall, spike and cave-lip cleanup broadly. Source children such as blocks, push blocks, altar halves, signs and arrow traps override Destroy without inheriting all `oSolid` consequences; explosions separately remove unsupported spikes/lips. Lamp drops already respect child inheritance. Direct non-explosion destruction therefore still needs an inheritance-aware cleanup pass. |
+| Lamp animation | Static lamp rendering still omits the source's flicker at image speed 0.5. |
+| Engine lifecycle | Pixel masks, collision/Step/End Step ordering, equal-depth ties, population caps, global instance activation and every native animation alarm remain unverified against the original executable. Offscreen alarm repairs cover the inspected active-region case, not universal deactivation parity. Scarab Destroy's use of `other` also leaves exact runtime spark positions unverified. |
+| Scope | The initial table's unresolved details not explicitly superseded here remain open, including visual-only skull fallback behavior and non-Mines environments. Functional coverage does not establish complete source equivalence. |
+
+### Validation
+
+The full `love . --smoke-test` suite passes, including **31 Mines completion scenarios**, **11 Kali scenarios**, and the live render-order check for BloodSpark over terrain. Against an isolated `d9b976a` snapshot, the updated Mines test owner fails **15 scenario groups** for the intended discrepancies, and the new Kali offscreen-sacrifice case fails independently. The remaining cases preserve already implemented behavior. The snapshot uses the original implementation and assets without adding test-only production seams. `git diff --check` passes.
+
+Separate Udjat progression and held-item placement work in this shared checkout is preserved and excluded from this audit's commit.

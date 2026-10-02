@@ -204,8 +204,8 @@ end
 
 function Creature:step(world, player, context)
     if not (self.alive or self.corpse) then return end
-    if not require("src.platform.activity").contains(world, self, self.kind == "giant_spider" and 32 or 20) then return end
     if self.spec.updateExit and self.spec.updateExit(self) then return end
+    if not require("src.platform.activity").enemy(world, self) then return end
     if self.held then
         self:updateHeldPosition(player)
         self.animation = self.animation + 0.5
@@ -260,7 +260,8 @@ function Creature:resolvePlayerContact(player, previousY, context)
         local damage = (math.floor((player.fallTimer or 0)/16)+1)
             * (player.equipment and player.equipment.spike_shoes and 3 or 1)
         self:damage(damage, player.x)
-        player.vy = -6
+        player.vy = self.spec.sacrifice and -6 or -6-0.2*player.vy
+        player.fallTimer = 0
         player:setState("jumping")
         return "stomp"
     end

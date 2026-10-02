@@ -101,7 +101,10 @@ function Effects:add(kind, x, y, vx, vy)
     if definition.randomGravity then
         particle.gravity = self.random:random(1, 6) * 0.1
     elseif definition.gravity then particle.gravity = definition.gravity end
-    if definition.initialVy and vy == nil then particle.vy = definition.initialVy end
+    if definition.initialVy and vy == nil then
+        particle.vy = type(definition.initialVy) == "function"
+            and definition.initialVy(self.random) or definition.initialVy
+    end
     self.particles[#self.particles + 1] = particle
     return particle
 end
@@ -120,11 +123,11 @@ function Effects:terrainBreak(x, y, tileSize, entity, material)
     if definition and definition.handlesDestructionEffects then return end
     material = material or definition and definition.rubbleMaterial
     local half = (tileSize or 16) / 2
-    self:add("rubbleLarge", x + self.random:random(-half, half),
-        y + self.random:random(-half, half)).variant = material
+    self:add("rubbleLarge", x + self.random:random(0, half)-self.random:random(0, half),
+        y + self.random:random(0, half)-self.random:random(0, half)).variant = material
     for _ = 1, 2 do
-        self:add("rubble", x + self.random:random(-half, half),
-            y + self.random:random(-half, half)).variant = material
+        self:add("rubble", x + self.random:random(0, half)-self.random:random(0, half),
+            y + self.random:random(0, half)-self.random:random(0, half)).variant = material
     end
 end
 
@@ -175,7 +178,7 @@ function Effects:skeletonBreak(x, y, items)
     local vx = self.random:random(0,3)-self.random:random(0,3)
     local vy = -self.random:random(1,3)
     if items then
-        local skull = require("src.platform.item").new({ kind = "skull", x = x/16, y = (y-2)/16 })
+        local skull = require("src.platform.item").new({ kind = "skull", x = x/16, y = y/16 })
         skull.vx, skull.vy = vx, vy
         items[#items+1] = skull
     else
@@ -201,6 +204,7 @@ function Effects:collectBlood(player, run)
             and blood.x+4 > player.x-half and blood.x-4 < player.x+half
             and blood.y+4 > player.y+top and blood.y-4 < player.y+bottom then
             table.remove(self.particles, index)
+            self:add("blood_spark", blood.x, blood.y)
             run.blood = run.blood + 1
             if run.blood > 8 then
                 run.blood = 0
@@ -226,7 +230,8 @@ function Effects:update(world)
         particle.age = particle.age + 1
         local spec = Types[particle.kind]
         if spec.motion == "detritus" then
-            if particle.life <= 0 then
+            if particle.life <= 0 or spec.viewMargin
+                and not require("src.platform.activity").contains(world, particle, spec.viewMargin) then
                 table.remove(self.particles, index)
             else
                 particle.life = particle.life - 1
@@ -298,7 +303,7 @@ function Effects:update(world)
             if spec.resetVertical then particle.vy = 0
             elseif spec.motion ~= "flame" then particle.vy = particle.vy + (spec.gravity or 0) end
             if particle.age >= particle.life
-                or spec.stopAtTerrain and not require("src.platform.activity").contains(world, particle)
+                or spec.viewMargin and not require("src.platform.activity").contains(world, particle, spec.viewMargin)
                 or particle.x < -16 or particle.y < -16
                 or particle.x > world.width * 16 + 16
                 or particle.y > world.height * 16 + 16

@@ -294,6 +294,17 @@ function Test.run(app)
             assert(game.run.kaliPunish == 0 and game.run.kaliGift == 0 and game.run.favor == 0
                 and not game.player.ball and #game.chains == 0, "A fresh run must reset Kali's progress")
         end },
+        { "offscreen enemy sacrifices pause with their inherited Step event", function()
+            local game = fixture()
+            local body = sacrificeBody(game, "caveman", false, 184)
+            game.world.activeView = { x = 0, y = 0, width = 100, height = 120 }
+            local Kali = require("src.platform.kali")
+            for _ = 1, 30 do Kali.update(game) end
+            assert(body.alive and game.run.favor == 0)
+            game.world.activeView = nil
+            for _ = 1, 21 do Kali.update(game) end
+            assert(not body.alive and game.run.favor == 2)
+        end },
     }
     local failures = {}
     for _, case in ipairs(cases) do

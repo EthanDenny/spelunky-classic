@@ -4,4 +4,5 @@ return { path = "original-game-reference/source/extracted/spelunky/Sprites/Effec
     life = math.huge,
     gravity = 0.6,
     stopAtTerrain = true,
+    viewMargin = 32,
 }

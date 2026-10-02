@@ -1,6 +1,7 @@
 return { prefix = "assets/original/animations/sBlood/", count = 3, origin = 4,
     life = 60,
     motion = "detritus",
+    viewMargin = 4,
     randomGravity = true,
     trail = true,
     floorLife = 20,
