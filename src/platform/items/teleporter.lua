@@ -10,7 +10,8 @@ function Definition.use(context, _, input)
     local tiles = context.effects.random:random(4, 8)
     local x, y = player.x, player.y
     if input.up then
-        y = math.max(16, y - 16 * tiles)
+        y = y - 16 * tiles
+        while y < 16 do y = y + 16 end
     else
         x = math.max(8, math.min(context.world.width * context.world.tileSize - 8,
             x + player.facing * 16 * tiles))

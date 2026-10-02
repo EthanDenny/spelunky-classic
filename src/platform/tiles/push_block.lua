@@ -1,8 +1,10 @@
 local PushBlock = { solid = true, dynamic = true, moveable = true, depth = 110, image = "block" }
 
 local function moveVertical(world, block)
-    block.vy = math.min(10, (block.vy or 0) + (block.falling and 1 or 0))
-    local pixels = math.floor(math.abs(block.vy))
+    -- gameStepEvent accelerates by oMoveableSolid.myGrav, then its y loop
+    -- rounds positive travel upward rather than carrying a fractional remainder.
+    block.vy = math.min(8, (block.vy or 0) + (block.falling and 0.6 or 0))
+    local pixels = math.ceil(math.abs(block.vy))
     local direction = block.vy < 0 and -1 or 1
     for _ = 1, pixels do
         local nextY = block.y + direction

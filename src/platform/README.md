@@ -75,6 +75,8 @@ features or claiming executable-level parity.
 
 ## Object modules
 
+See the [individual object source audit](../../docs/object-source-audit.md) for the category-by-category comparison of all 96 modules, including inherited behavior, verified constants, corrections and remaining alignment gaps.
+
 Each implemented kind has its own Lua module. Shared systems consume the
 capabilities and hooks declared by those modules:
 

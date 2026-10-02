@@ -18,6 +18,18 @@ end
 
 function Test.run()
     do
+        local level = emptyLevel(8, 40)
+        level.tiles[2][4] = { kind = "push_block" }
+        local world = GeneratedWorld.fromLevel(level)
+        local block = world.dynamicSolids[1]
+        for _ = 1, 3 do DynamicTerrain.update(world) end
+        assert(block.y == 21,
+            "Unsupported push blocks must move 1, 2, then 2 pixels under Classic's 0.6 gravity")
+        for _ = 1, 20 do DynamicTerrain.update(world) end
+        assert(block.vy == 8, "Falling push blocks must stop accelerating at eight pixels per tick")
+    end
+
+    do
         local level = emptyLevel(8, 6)
         for x = 1, 8 do level.tiles[6][x] = { kind = "brick" } end
         level.tiles[5][4] = { kind = "push_block" }

@@ -7,6 +7,8 @@ local Treasure = require("src.platform.treasure")
 local ToolSystem = require("src.platform.tool_system")
 local Creature = require("src.platform.creature")
 local FullLevelPlaytest = require("src.screens.full_level_playtest")
+local ItemActions = require("src.platform.item_actions")
+local Effects = require("src.platform.effects")
 
 local Test = {}
 
@@ -31,6 +33,62 @@ function Test.run()
         item:update(world, Player.new(16, 16))
     end
     local cases = {
+        { "bomb boxes and jetpacks use heavy carry and throw behavior", function()
+            for _, kind in ipairs({ "bomb_box", "jetpack" }) do
+                local player = Player.new(72, 80)
+                player.facing, player.vx = 1, 2
+                local item = object(kind, 72, 80)
+                item:pickup(player)
+                assert(item.y == 76, kind .. " must sit four pixels above a standing player")
+                player:setState(Player.STATES.ducking)
+                player.vx = 0
+                item:updateHeldPosition(player)
+                assert(item.y == 78, kind .. " must sit two pixels above a crouching player")
+                player:setState(Player.STATES.standing)
+                player.vx = 2
+                item:throw(player, { up = true })
+                assert(item.vx == 6 and item.vy == -4,
+                    kind .. " must use the heavy upward launch velocities")
+            end
+        end },
+        { "upward teleport preserves the pixel offset at the room ceiling", function()
+            local player = Player.new(72, 22)
+            local teleporter = object("teleporter", 72, 22)
+            teleporter:pickup(player)
+            local context = { player = player, world = World.new(40, 20, 16),
+                effects = Effects.new(17), enemies = {}, heldItem = teleporter,
+                sounds = { play = function() end } }
+            assert(ItemActions.use(context, teleporter, { up = true }))
+            assert(player.x == 72 and player.y == 22 and player.state == "falling",
+                "Ceiling-limited teleport must add whole tiles until y >= 16")
+        end },
+        { "ghosts pursue distant players through terrain at one pixel per tick", function()
+            local world = World.new(40, 40, 16)
+            world:fill("solid", 4, 4, 3, 3)
+            for _, distance in ipairs({ 50, 400 }) do
+                local ghost = Creature.new({ kind = "ghost", x = 5, y = 5 },
+                    { width = 24, height = 24 })
+                local x, y = ghost.x, ghost.y
+                local player = Player.new(x + distance * 0.6, y - 8 + distance * 0.8)
+                ghost:step(world, player)
+                close(ghost.x, x + 0.6, "Ghost horizontal pursuit")
+                close(ghost.y, y + 0.8, "Ghost vertical pursuit")
+            end
+        end },
+        { "ghost contact respects protection and cannot be stomped", function()
+            local ghost = Creature.new({ kind = "ghost", x = 5, y = 5 },
+                { width = 24, height = 24 })
+            local player = Player.new(ghost.x, ghost.y - 8)
+            player.invincibleTimer = 10
+            player.vy = 3
+            player:setState(Player.STATES.falling)
+            assert(ghost:resolvePlayerContact(player, ghost.y - 24) == "invincible"
+                and player.health == 4 and player.vy == 3 and player.invincibleTimer == 10,
+                "Protected falling players must pass through ghosts without bouncing")
+            player.invincibleTimer = 0
+            assert(ghost:resolvePlayerContact(player, ghost.y - 24) == "hurt" and player:isDead(),
+                "An unprotected falling player must die on ghost contact, even from above")
+        end },
         { "fractional motion follows the global tick", function()
             local world = World.new(20, 20, 16)
             world.time = 1

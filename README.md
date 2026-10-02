@@ -6,6 +6,8 @@ The playable implementation currently focuses on **Mines 1–4 only**. World Gen
 
 Implemented objects live in individual Lua modules under `src/platform/` (`items/shotgun.lua`, `pickups/compass.lua`, `enemies/skeleton.lua`, `tiles/brick.lua`, etc.). See [object module conventions](src/platform/README.md#object-modules) for the registries and shared systems.
 
+The [step-by-step object source audit](docs/object-source-audit.md) compares all 96 individual modules with Classic's objects and inherited events, records verified details and remaining gaps, and documents the behavioral fixes and regression results. Module separation does not establish complete source parity.
+
 Normal playtest sessions log automatically to `playtest-logs/` in Love's save directory. `latest.txt` points to the most recent JSONL session; press F9 during a test to add a bookmark for later diagnosis. The smoke suite does not create a playtest session.
 
 Gameplay controls load the original 12-line `keys.cfg` and seven-line `settings.cfg` format. A file in Love's save directory takes priority; otherwise the real files in `original-game-reference/` are used. The shipped keyboard bindings are arrows to move/climb, Z jump, X action/pickup/throw, Shift run, A bomb, and S rope—WASD does not move the player. Hold Up+A for a high bomb throw or Down+A for a short grounded drop; Down+S drops a rope beside a ledge. Blocked placements do not spend a rope. R resets the Platforming Engine room's supply and restarts the selected Mines level with full health, four bombs, and no gold. The loaded `downToRun` setting affects movement. Other settings are parsed but not yet applied to the Love display/audio adapters; the C switch, F flare, and P purchase actions are not yet implemented.
