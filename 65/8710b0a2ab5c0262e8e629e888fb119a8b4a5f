@@ -1,0 +1,35 @@
+src/tests/kali_scenarios_test.lua
+  s_a149baf2181030::t_575ff331cda474 1-20,31-66,68-86
+  s_a149baf2181030::t_79ffc60a10f3ca 21-30
+  s_a149baf2181030::t_fec4d36392a9e1 67
+src/screens/enemy_ai.lua
+  s_a149baf2181030::t_c2d35971b20436 14,665-668,678,783,825-827,843,845-847,1054-1059,1113-1114,1116,1118-1120,1137,1181-1184,1293-1294
+  s_a149baf2181030::t_fec4d36392a9e1 844
+  s_a149baf2181030::t_79ffc60a10f3ca 1138
+src/platform/README.md
+  s_a149baf2181030::t_fec4d36392a9e1 302-308
+  s_a149baf2181030::t_db80240aeb867b 309
+src/screens/kali_scenarios.lua
+  s_a149baf2181030::t_f087160c18997b 113
+  s_a149baf2181030::t_c2d35971b20436 1-2,4-54,56-96,101,103-109,111-112,114-123,125-130,135-176
+  s_a149baf2181030::t_79ffc60a10f3ca 3,55,97-100,110
+  s_a149baf2181030::t_fec4d36392a9e1 102,124,131-134
+main.lua
+  s_a149baf2181030::t_575ff331cda474 52
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "658710b0a2ab5c0262e8e629e888fb119a8b4a5f",
+  "prompts": {},
+  "sessions": {
+    "s_a149baf2181030": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0fdc3-ae05-7e41-a96b-bd7a333b41c3",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Ethan Denny <ethandenny@protonmail.com>"
+    }
+  }
+}
