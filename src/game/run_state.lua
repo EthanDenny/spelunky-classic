@@ -30,6 +30,7 @@ function RunState.new(seed)
         maxHealth = 4,
         bombs = 4,
         ropes = 4,
+        arrows = 0,
         money = 0,
         time = 0,
         kills = 0,
@@ -76,7 +77,7 @@ end
 
 function RunState:angerShopkeepers(reason)
     self.thief = true
-    self.shopkeeperAnger = math.max(3, self.shopkeeperAnger + 1)
+    self.shopkeeperAnger = self.shopkeeperAnger + (self.shopkeeperAnger > 0 and 3 or 2)
     self:addMessage(reason or "STOP, THIEF!", 120)
 end
 

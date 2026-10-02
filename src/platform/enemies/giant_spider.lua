@@ -164,4 +164,42 @@ function GiantSpider.draw(spider)
         math.floor(spider.y - spider.height))
 end
 
-return GiantSpider
+
+local Spider = {
+    creatureConfig = { hp = 10, width = 32 },
+    creatureVerticalBounds = { -16, 0 },
+    stepCreature = GiantSpider.step,
+    drawCreature = GiantSpider.draw,
+    initializeCreature = GiantSpider.initialize,
+}
+
+function Spider.creatureHalfWidth(self)
+    return self.state == "hang" and 16 or math.max(3, self.width / 2 - 2)
+end
+
+function Spider.canReachPlayer(self, player)
+    local center = self.state == "hang" and self.x - 8 or self.x
+    local reach = self.state == "hang" and 12 or 16
+    return math.abs(player.x - center) <= reach
+end
+
+function Spider.damage(self, amount, sourceX, hit)
+    self.hp = self.hp - (amount or 1)
+    if self.hp <= 0 then self.alive, self.state = false, "dead" end
+    if self.alive and hit then self.vx, self.vy = hit.vx or self.vx, hit.vy or self.vy end
+    return true
+end
+
+function Spider.contactPlayer(self, player)
+    -- The hanging mask uses a shifted center; active contact has a different
+    -- damage/launch rule in the Classic object collision events.
+    local active = self.state ~= "hang"
+    local hurt = player:hurt(self.x - self.width / 2,
+        active and 2 or 1, self.kind, nil, "enemy_contact")
+    if hurt and active and player.y < self.y - self.height then player.vy = -6 end
+    return hurt and "hurt" or "invincible"
+end
+
+Spider.depth = 40
+
+return Spider

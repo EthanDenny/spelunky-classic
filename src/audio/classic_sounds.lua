@@ -3,12 +3,13 @@ local ClassicSounds = {}
 ClassicSounds.__index = ClassicSounds
 
 local CUES = {
-    bat = "bat", bowpull = "bowpull", break_item = "break",
+    arrowtrap = "arrowtrap", bat = "bat", bowpull = "bowpull", break_item = "break",
     caveman_die = "cavemandie", chest_open = "chestopen",
     coin = "coin", crunch = "crunch", gem = "gem",
-    giant_spider = "giantspider", hurt = "hurt", jump = "jump", kiss = "kiss",
+    giant_spider = "giantspider", hit = "hit", hurt = "hurt", jump = "jump", kiss = "kiss",
     climb1 = "climb1", climb2 = "climb2",
-    pickup = "pickup", spider_jump = "spiderjump",
+    mattock_break = "mattockbreak", pickup = "pickup", shotgun = "shotgun", spider_jump = "spiderjump",
+    teleport = "teleport", trap = "trap", whip = "whip",
 }
 
 function ClassicSounds.new()

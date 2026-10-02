@@ -1,6 +1,8 @@
 local Templates = require("src.world.mines_templates")
 local EntityGenerator = require("src.world.entity_generator")
 
+local Tiles = require("src.platform.tiles.types")
+
 local MinesGenerator = {}
 
 local LEVEL_WIDTH = 42
@@ -58,10 +60,7 @@ local function isSolid(tile)
         return false
     end
 
-    return tile.kind == "brick"
-        or tile.kind == "block"
-        or tile.kind == "smooth_brick"
-        or tile.kind == "push_block"
+    return Tiles[tile.kind] and Tiles[tile.kind].solid or false
 end
 
 local function addEntity(level, kind, x, y, properties)

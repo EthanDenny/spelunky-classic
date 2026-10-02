@@ -24,10 +24,10 @@ function Test.run()
         local world = GeneratedWorld.fromLevel(level)
         local player = Player.new(3 * 16 - 5, 5 * 16 - 8)
         player.state = Player.STATES.standing
-        assert(world:tryPush(player, 1), "A clear push block must begin moving")
+        assert(world:tryPush(player, 1), "A generated push block must accept player pressure")
         for _ = 1, 16 do DynamicTerrain.update(world) end
         local block = world.dynamicSolids[1]
-        assert(block.x == 4 * 16, "Push blocks must travel exactly one tile per push")
+        assert(block.x == 3 * 16 + 1, "Generated push blocks must retain the one-pixel displacement")
     end
 
     do

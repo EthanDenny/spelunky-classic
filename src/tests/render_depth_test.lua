@@ -4,6 +4,8 @@ local Enemy = require("src.platform.enemy")
 local MinesGenerator = require("src.world.mines_generator")
 local MinesVariants = require("src.world.mines_variants")
 local RunState = require("src.game.run_state")
+local Item = require("src.platform.item")
+local Player = require("src.platform.player")
 
 local Test = {}
 
@@ -170,6 +172,70 @@ function Test.run(app)
     before(liveOrder, "player", "bat")
     before(liveOrder, "bat", "lip")
     before(liveOrder, "lip", "effects")
+
+    local heldImages, heldAngles = {}, {}
+    local drawImage = love.graphics.draw
+    love.graphics.draw = function(image, ...)
+        heldImages[#heldImages + 1] = image
+        local args = { ... }
+        heldAngles[#heldAngles + 1] = args[3]
+        return drawImage(image, ...)
+    end
+    local heldOk, heldError = pcall(function()
+        for _, kind in ipairs({ "mattock", "machete", "pistol", "shotgun",
+            "bow", "web_cannon", "key" }) do
+            local item = { kind = kind, x = 80, y = 80, facing = -1 }
+            heldImages = {}
+            renderer:drawItem(item)
+            assert(heldImages[1] == renderer.entitySprites[kind .. "_left"].image,
+                "A left-facing held " .. kind .. " must use its original left sprite")
+            heldImages = {}
+            renderer:drawItem(item, 1)
+            assert(heldImages[1] == renderer.entitySprites[kind].image,
+                "Turning right must restore the original right sprite for " .. kind)
+        end
+        assert(renderer.entitySprites.key_left.metadata.originY == 6,
+            "The original left key sprite has a different origin from the right sprite")
+        local bow = { kind = "bow", x = 80, y = 80, facing = 1,
+            held = true, bowStrength = 10 }
+        heldImages = {}
+        renderer:drawItem(bow)
+        assert(heldImages[1] == renderer.itemAnimationSprites.bowRight[4],
+            "A fully drawn bow must display its fourth Classic frame")
+        local chest = { kind = "chest", x = 80, y = 80, opened = true }
+        heldImages = {}
+        renderer:drawItem(chest)
+        assert(heldImages[1] == renderer.itemAnimationSprites.chestOpen,
+            "An opened chest must show the open sprite instead of disappearing")
+        local die = { kind = "die", x = 80, y = 80, diceValue = 5,
+            diceRolling = false }
+        heldImages = {}
+        renderer:drawItem(die)
+        assert(heldImages[1] == renderer.itemAnimationSprites.diceFaces[5],
+            "A settled die must show the rolled face")
+        die.diceRolling, die.diceAge = true, 5
+        heldImages = {}
+        renderer:drawItem(die)
+        assert(heldImages[1] == renderer.itemAnimationSprites.diceRoll[6],
+            "A moving die must show a rolling frame")
+        local arrow = { kind = "arrow", x = 80, y = 80, held = true,
+            arrowAngle = -math.pi / 2, facing = 1, vx = 0, vy = 0 }
+        heldAngles = {}
+        renderer:drawItem(arrow, 1)
+        assert(heldAngles[1] == 0,
+            "A held arrow must point horizontally even if it was picked up mid-flight")
+        local swinger = Player.new(80, 80)
+        swinger.facing = 1
+        swinger.meleeFacing = -1
+        swinger.meleeVisualPhase = "front"
+        swinger.meleeStrikeAge = 0
+        heldImages = {}
+        renderer:drawMeleeSwing(swinger, Item.new({ kind = "machete", x = 5, y = 5 }))
+        assert(heldImages[1] == renderer.meleeSprites.sSlashLeft[1],
+            "Turning mid-swing must not flip an already spawned slash")
+    end)
+    love.graphics.draw = drawImage
+    assert(heldOk, heldError)
 end
 
 return Test

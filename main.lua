@@ -39,10 +39,12 @@ local function runSmokeTest()
     require("src.tests.font_test").run(app)
     require("src.tests.animation_catalog_test").run()
     require("src.tests.shop_item_physics_test").run(app)
+    require("src.tests.shop_behaviour_test").run()
     require("src.tests.platform_player_test").run()
     require("src.tests.platform_item_test").run()
     require("src.tests.platforming_engine_test").run(app)
     require("src.tests.enemy_ai_test").run(app)
+    require("src.tests.mine_item_scenarios_test").run(app)
     require("src.tests.bomb_scenarios_test").run(app)
     require("src.tests.boulder_statue_scenarios_test").run(app)
     require("src.tests.mines_generator_test").run()
@@ -119,6 +121,8 @@ local function runSmokeTest()
             y = (fullLevel.player.y + 4) / 16,
         }, { width = 8, height = 8 })
         fullLevel.items = { pickup }
+        fullLevel.collectibles = {}
+        fullLevel.tools.bombs = {}
         assert(fullLevel:pickupNearestItem() and fullLevel.heldItem == pickup and pickup.held,
             "Full level playtest must pick up the nearest carry object")
         fullLevel:buildSimulation()

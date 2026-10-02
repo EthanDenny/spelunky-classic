@@ -6,9 +6,11 @@ local Player = require("src.platform.player")
 local ProjectileSystem = require("src.platform.projectile_system")
 local ToolSystem = require("src.platform.tool_system")
 local TrapSystem = require("src.platform.trap_system")
+local Treasure = require("src.platform.treasure")
 local World = require("src.platform.world")
 local Depth = require("src.render.classic_depth")
 local DepthQueue = require("src.render.depth_queue")
+local MineItemScenarios = require("src.screens.mine_item_scenarios")
 
 local EnemyAI = {}
 EnemyAI.__index = EnemyAI
@@ -30,8 +32,7 @@ local PAGES = {
     { name = "Skeleton", scenarios = true },
     { name = "Ropes", scenarios = true },
     { name = "Bombs", scenarios = true },
-    { name = "Boulder", scenarios = true },
-    { name = "Statue", scenarios = true },
+    { name = "Boulder & Statue", scenarios = true },
 }
 
 local COLORS = {
@@ -488,7 +489,7 @@ local BOMB_SCENARIOS = {
     {
         title = "Wall rebound",
         description = "An unpasted bomb rebounds from brick and blasts the nearby thrower.",
-        duration = 115, throwTick = 5, bomb = true, seed = 101,
+        duration = 160, throwTick = 5, bomb = true, seed = 101,
         build = function(assets)
             local world = makeWorld()
             world:fill("solid", 8, 5, 1, 2)
@@ -498,7 +499,7 @@ local BOMB_SCENARIOS = {
     {
         title = "Paste sticks to a wall",
         description = "With paste, the bomb stays on the wall until its fuse explodes.",
-        duration = 115, throwTick = 5, bomb = true, seed = 102,
+        duration = 160, throwTick = 5, bomb = true, seed = 102,
         build = function(assets)
             local world = makeWorld()
             world:fill("solid", 7, 5, 1, 2)
@@ -510,12 +511,12 @@ local BOMB_SCENARIOS = {
     {
         title = "Blast catches a snake",
         description = "The wall catches a paste bomb; its blast reaches the snake beyond it.",
-        duration = 115, throwTick = 5, bomb = true, seed = 103,
+        duration = 160, throwTick = 5, bomb = true, seed = 103,
         build = function(assets)
             local world = makeWorld()
             world:fill("solid", 7, 5, 1, 2)
             local snake = Enemy.new("snake", 8 * 16 + 8, 7 * 16, { seed = 103 })
-            snake:setState(Enemy.STATES.idle, 110)
+            snake:setState(Enemy.STATES.idle, 160)
             local player = makePlayer(4 * 16 + 8, assets)
             player.equipment.paste = true
             return world, snake, player
@@ -524,7 +525,7 @@ local BOMB_SCENARIOS = {
     {
         title = "Upward lob",
         description = "Holding up launches the bomb steeply toward the ceiling.",
-        duration = 115, throwTick = 5, bomb = true, seed = 104,
+        duration = 160, throwTick = 5, bomb = true, seed = 104,
         input = function(tick) return { up = tick == 5 } end,
         build = function(assets)
             local world = makeWorld()
@@ -534,7 +535,7 @@ local BOMB_SCENARIOS = {
     {
         title = "Grounded drop",
         description = "Holding down drops the bomb with little sideways speed.",
-        duration = 115, throwTick = 5, bomb = true, seed = 105,
+        duration = 160, throwTick = 5, bomb = true, seed = 105,
         input = function(tick) return { down = tick == 5 } end,
         build = function(assets)
             return makeWorld(), nil, makePlayer(4 * 16 + 8, assets)
@@ -565,7 +566,7 @@ local function boulderPlayer(assets)
     return player
 end
 
-local BOULDER_SCENARIOS = {
+local BOULDER_STATUE_SCENARIOS = {
     {
         title = "Fall, bounce, roll",
         description = "A released boulder falls, bounces, then rolls toward the player's side.",
@@ -586,9 +587,40 @@ local BOULDER_SCENARIOS = {
                 { entities = {} }, { x = 9 * 16, y = 5 * 16 }
         end,
     },
-}
-
-local STATUE_SCENARIOS = {
+    {
+        title = "Crush a push block",
+        description = "A rolling boulder destroys a movable block in its path.",
+        duration = 155, eventDuration = 155, boulderTick = 5, targetKind = "block",
+        build = function(assets)
+            local world = boulderWorld()
+            local block = world:addDynamicSolid({ kind = "push_block", x = 5 * 16,
+                y = 9 * 16, moveable = true })
+            return world, nil, boulderPlayer(assets),
+                { entities = {} }, { x = 9 * 16, y = 5 * 16 }, block
+        end,
+    },
+    {
+        title = "Crush a snake",
+        description = "The boulder runs over a grounded snake before reaching the player.",
+        duration = 155, eventDuration = 155, boulderTick = 5,
+        build = function(assets)
+            local snake = Enemy.new("snake", 6 * 16 + 8, 10 * 16, { seed = 107 })
+            snake:setState(Enemy.STATES.idle, 150)
+            return boulderWorld(), snake, boulderPlayer(assets),
+                { entities = {} }, { x = 9 * 16, y = 5 * 16 }
+        end,
+    },
+    {
+        title = "Ruby meets the boulder",
+        description = "Loose treasure responds to the boulder's solid body; it is not destroyed.",
+        duration = 155, eventDuration = 155, boulderTick = 5, targetKind = "treasure",
+        build = function(assets)
+            local ruby = Treasure.new({ kind = "ruby_big", x = 6.5,
+                y = 9.75, properties = {} })
+            return boulderWorld(), nil, boulderPlayer(assets),
+                { entities = {} }, { x = 9 * 16, y = 5 * 16 }, ruby
+        end,
+    },
     {
         title = "Idol arms the statue",
         description = "Taking the idol starts the head's 100-step alarm. Its face opens and releases a boulder.",
@@ -622,9 +654,12 @@ local SCENARIOS = {
     Skeleton = SKELETON_SCENARIOS,
     Ropes = ROPE_SCENARIOS,
     Bombs = BOMB_SCENARIOS,
-    Boulder = BOULDER_SCENARIOS,
-    Statue = STATUE_SCENARIOS,
+    ["Boulder & Statue"] = BOULDER_STATUE_SCENARIOS,
 }
+for _, page in ipairs(MineItemScenarios.definitions(makeWorld, makePlayer)) do
+    PAGES[#PAGES + 1] = { name = page.name, scenarios = true }
+    SCENARIOS[page.name] = page.scenarios
+end
 
 function EnemyAI.new(app)
     return setmetatable({
@@ -650,6 +685,8 @@ function EnemyAI:loadAssets()
     self.images.background:setWrap("repeat", "repeat")
     self.images.tikiHead = loadImage("assets/original/entities/giant_tiki_head.png")
     self.images.idol = loadImage("assets/original/mines/gold_idol.png")
+    self.images.ruby = loadImage("assets/original/mines/ruby_big.png")
+    self.images.block = loadImage("assets/original/mines/block.png")
     self.images.tikiBody = loadImage("original-game-reference/source/extracted/spelunky/Backgrounds/bgTiki.png")
     self.images.tikiArms = loadImage("original-game-reference/source/extracted/spelunky/Backgrounds/bgTikiArms.png")
     self.tikiArmLeft = love.graphics.newQuad(0, 16, 16, 16, self.images.tikiArms:getDimensions())
@@ -666,6 +703,8 @@ function EnemyAI:loadAssets()
     self.sounds.explosion = love.audio.newSource("original-game-reference/sound/explosion.wav", "static")
     Enemy.loadAssets()
     Effects.loadAssets()
+    self.itemRenderer = self.app.screens.world_generation
+    self.itemRenderer:loadAssets()
 end
 
 function EnemyAI:playScenarioSound(name)
@@ -678,8 +717,11 @@ function EnemyAI:playScenarioSound(name)
 end
 
 function EnemyAI:resetScenario(scenario)
-    scenario.world, scenario.enemy, scenario.player, scenario.level, scenario.boulderOrigin =
+    scenario.world, scenario.enemy, scenario.player, scenario.level, scenario.boulderOrigin,
+        scenario.target =
         scenario.definition.build(self.playerAssets)
+    scenario.block = scenario.definition.targetKind == "block" and scenario.target or nil
+    scenario.treasure = scenario.definition.targetKind == "treasure" and scenario.target or nil
     scenario.backgroundQuad = scenario.world.height ~= 9 and love.graphics.newQuad(0, 0,
         scenario.world.width * 16, scenario.world.height * 16,
         self.images.background:getDimensions()) or self.backgroundQuad
@@ -731,8 +773,10 @@ function EnemyAI:resetScenario(scenario)
         end
     end
     scenario.effects = Effects.new(scenario.definition.seed)
+    MineItemScenarios.reset(scenario, self.itemRenderer, self)
     scenario.projectiles = scenario.definition.projectiles
-        and ProjectileSystem.new(scenario.world) or nil
+        and ProjectileSystem.new(scenario.world)
+        or scenario.itemGame and scenario.itemGame.projectiles or nil
     if scenario.player and not self.playerAssets then
         self.playerAssets = {
             images = scenario.player.images,
@@ -792,7 +836,8 @@ function EnemyAI:stepScenario(scenario)
 
     if player then
         local input = definition.input and definition.input(scenario.tick) or {}
-        input.attack = scenario.tick == definition.attackTick
+        input.attack = input.attack or scenario.tick == definition.attackTick
+        MineItemScenarios.prepare(scenario, input)
         player:step(scenario.world, input)
         if player.whipJustCracked then self:playScenarioSound("whip") end
         if definition.bomb and scenario.tick == definition.throwTick then
@@ -918,9 +963,19 @@ function EnemyAI:stepScenario(scenario)
             scenario.eventTick = scenario.tick
         end
         local bouldersBefore = #scenario.traps.boulders
+        local enemyWasAlive = enemy and enemy.alive
+        local blockWasAlive = scenario.block and scenario.block.alive
         scenario.traps:update(player, enemy and { enemy } or {}, {})
+        if scenario.treasure then scenario.treasure:update(scenario.world) end
         if #scenario.traps.boulders > bouldersBefore then
             scenario.event = "STATUE OPENED: BOULDER"
+            scenario.eventTick = scenario.tick
+        elseif enemyWasAlive and not enemy.alive then
+            scenario.effects:blood(enemy.x, enemy.y - 8, 3)
+            scenario.event = "SNAKE CRUSHED"
+            scenario.eventTick = scenario.tick
+        elseif blockWasAlive and not scenario.block.alive then
+            scenario.event = "PUSH BLOCK CRUSHED"
             scenario.eventTick = scenario.tick
         elseif scenario.hadBrick and definition.boulderTick and scenario.tick > definition.boulderTick
             and scenario.world:has("solid", 5, 8) == false then
@@ -928,7 +983,12 @@ function EnemyAI:stepScenario(scenario)
             scenario.eventTick = scenario.tick
         end
     end
-    if scenario.projectiles then scenario.projectiles:update({}, player) end
+    if scenario.projectiles then
+        local itemGame = scenario.itemGame
+        scenario.projectiles:update(itemGame and itemGame.enemies or {}, player,
+            itemGame and itemGame.items or nil)
+    end
+    MineItemScenarios.step(scenario, scenario.itemInput)
     scenario.effects:update(scenario.world)
 
     if scenario.tick >= definition.duration
@@ -1132,6 +1192,12 @@ function EnemyAI:drawScenarioWorld(scenario, x, y, width)
             love.graphics.draw(image, tileX * 16, tileY * 16)
         end)
     end)
+    if scenario.block and scenario.block.alive then
+        queue:add(Depth.tile("push_block"), function()
+            love.graphics.setColor(1, 1, 1, 1)
+            love.graphics.draw(self.images.block, scenario.block.x, scenario.block.y)
+        end)
+    end
     if scenario.player then
         if scenario.player.invincibleTimer == 0
             or math.floor(scenario.player.invincibleTimer / 2) % 2 == 1 then
@@ -1150,11 +1216,19 @@ function EnemyAI:drawScenarioWorld(scenario, x, y, width)
                 math.floor(scenario.idol.y - 12))
         end)
     end
+    if scenario.treasure and scenario.treasure.alive then
+        queue:add(Depth.entity("ruby_big"), function()
+            love.graphics.setColor(1, 1, 1, 1)
+            love.graphics.draw(self.images.ruby, math.floor(scenario.treasure.x - 4),
+                math.floor(scenario.treasure.y - 4))
+        end)
+    end
     if scenario.traps then scenario.traps:submit(queue) end
     if scenario.enemy and scenario.enemy.alive then
         queue:add(Depth.entity(scenario.enemy.kind), function() scenario.enemy:draw() end)
     end
     if scenario.projectiles then scenario.projectiles:submit(queue) end
+    MineItemScenarios.submit(queue, scenario, self.itemRenderer)
     queue:add(Depth.EFFECT, function() scenario.effects:draw() end)
     queue:draw()
     if scenario.enemy and scenario.enemy.alive then

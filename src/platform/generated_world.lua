@@ -2,24 +2,8 @@ local World = require("src.platform.world")
 
 local GeneratedWorld = {}
 
-local SOLID_TILES = {
-    brick = true,
-    block = true,
-    smooth_brick = true,
-    solid = true,
-    push_block = true,
-}
-
--- These generated entities replace a solid tile in the original generator.
--- Treating them as terrain keeps the traversal map intact until their active
--- trap behavior is implemented in the integration screen.
-local SOLID_ENTITIES = {
-    arrow_trap_left = true,
-    arrow_trap_right = true,
-    altar_left = true,
-    altar_right = true,
-    sacrifice_altar = true,
-}
+local Tiles = require("src.platform.tiles.types")
+local Objects = require("src.platform.objects")
 
 function GeneratedWorld.fromLevel(level)
     assert(level and level.tiles, "A generated level is required")
@@ -33,7 +17,8 @@ function GeneratedWorld.fromLevel(level)
     for y = 0, level.height - 1 do
         for x = 0, level.width - 1 do
             local tile = level.tiles[y + 1][x + 1]
-            if tile.kind == "push_block" then
+            local definition = assert(Tiles[tile.kind], "Unknown tile: " .. tostring(tile.kind))
+            if definition.dynamic then
                 level._dynamicCells[#level._dynamicCells + 1] = { x = x, y = y, tile = tile }
                 world:addDynamicSolid({
                     x = x * world.tileSize,
@@ -44,29 +29,24 @@ function GeneratedWorld.fromLevel(level)
                     style = tile.style,
                     baseStyle = tile.baseStyle,
                     properties = tile.properties or {},
-                    moveable = tile.kind == "push_block",
+                    moveable = definition.moveable,
                     vx = 0,
                     vy = 0,
                 })
                 level.tiles[y + 1][x + 1] = { kind = "empty" }
-            elseif SOLID_TILES[tile.kind] then
-                world:set("solid", x, y)
-            elseif tile.kind == "ladder" then
-                world:set("ladder", x, y)
-            elseif tile.kind == "ladder_top" then
-                world:set("ladderTop", x, y)
+            elseif definition.worldLayer then
+                world:set(definition.worldLayer, x, y)
             end
         end
     end
 
     for _, entity in ipairs(level.entities or {}) do
-        if not entity.destroyed and SOLID_ENTITIES[entity.kind] then
-            world:set("solid", math.floor(entity.x), math.floor(entity.y), entity)
-            if entity.kind == "sacrifice_altar" then
-                world:set("solid", math.floor(entity.x) + 1, math.floor(entity.y), entity)
+        local definition = Objects[entity.kind]
+        if not entity.destroyed and definition and definition.worldLayer then
+            for offset = 0, (definition.cellsWide or 1) - 1 do
+                world:set(definition.worldLayer, math.floor(entity.x) + offset,
+                    math.floor(entity.y), entity)
             end
-        elseif not entity.destroyed and entity.kind == "web" then
-            world:set("web", math.floor(entity.x), math.floor(entity.y), entity)
         end
     end
 

@@ -1,6 +1,8 @@
 local Enemy = require("src.platform.enemy")
 local Effects = require("src.platform.effects")
 local Player = require("src.platform.player")
+local FullLevelPlaytest = require("src.screens.full_level_playtest")
+local RunState = require("src.game.run_state")
 local ToolSystem = require("src.platform.tool_system")
 local World = require("src.platform.world")
 
@@ -70,7 +72,7 @@ function Test.run(app)
     thrower.y = 72
     local airborneDrop = launches:throwBomb(thrower, { down = true })
     assert(normal.x == 72 and normal.y == 104 and normal.vx == -10 and normal.vy == -3
-        and normal.armed and normal.timer == 72,
+        and normal.armed and normal.timer == 120,
         "Classic's left throw must start at the player with facing speed, momentum, and an armed fuse")
     assert(upwardLaunch.vy == -9 and groundedDrop.vx == -1 and groundedDrop.vy == 3
         and airborneDrop.vx == -10 and airborneDrop.vy == 3,
@@ -78,6 +80,24 @@ function Test.run(app)
     thrower.whipping = true
     assert(not launches:throwBomb(thrower) and #launches.bombs == 4,
         "A whip must prevent launching or consuming another bomb")
+
+    local pickupGame = FullLevelPlaytest.new(app)
+    pickupGame.world = World.new(12, 9, 16)
+    pickupGame.player = Player.new(72, 72)
+    pickupGame.player.state = Player.STATES.ducking
+    pickupGame.tools = ToolSystem.new(pickupGame.world, Player.TICK_RATE)
+    pickupGame.run = RunState.new(19)
+    pickupGame.sounds = { play = function() end }
+    local lit = pickupGame.tools:spawnBomb(72, 76, { timer = 18 })
+    assert(pickupGame:pickupNearestItem() and pickupGame.heldItem == lit and lit.held,
+        "Down+action must be able to pick up a lit bomb like any other oItem")
+    pickupGame.player.x = 88
+    pickupGame.tools:update(pickupGame.player, {}, {})
+    assert(lit.timer == 17 and lit.x == pickupGame.player.x + pickupGame.player.facing * 4,
+        "A held lit bomb must follow the player without pausing its fuse")
+    pickupGame:useHeldItem({})
+    assert(not lit.held and lit.timer == 17 and pickupGame.heldItem == nil,
+        "ACTION must throw the same live bomb without resetting its fuse")
 
     local viewer = app.screens.enemy_ai
     viewer:setPage(8)
@@ -106,7 +126,7 @@ function Test.run(app)
 
     local sawStuck, sawFlash, sawBlast, sawFlames, sawRubble, sawBlood =
         false, false, false, false, false, false
-    for _ = 21, 90 do
+    for _ = 21, 140 do
         viewer:update(1 / Enemy.TICK_RATE)
         local stuckBomb = paste.tools.bombs[1]
         if stuckBomb and stuckBomb.alive and stuckBomb.stuck then sawStuck = true end
@@ -133,7 +153,9 @@ function Test.run(app)
     end
 
     assert(sawStuck and sawFlash and sawBlast and sawFlames and sawRubble and sawBlood,
-        "Bomb replays must show flames, rubble from broken blocks, and blood from a killed snake")
+        ("Bomb replay effects: stuck=%s flash=%s blast=%s flames=%s rubble=%s blood=%s")
+            :format(tostring(sawStuck), tostring(sawFlash), tostring(sawBlast),
+                tostring(sawFlames), tostring(sawRubble), tostring(sawBlood)))
     assert(rebound.world:has("solid", 8, 5) and rebound.player.health == 0,
         "An unpasted bomb must rebound from brick and threaten its thrower")
     assert(not paste.world:has("solid", 7, 5) and paste.player.health == 4,

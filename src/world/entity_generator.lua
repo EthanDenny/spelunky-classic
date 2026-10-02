@@ -1,12 +1,9 @@
 local EntityGenerator = {}
+local ShopStock = require("src.platform.shop_stock")
 
-local SOLID_ENTITIES = {
-    altar_left = true,
-    altar_right = true,
-    sacrifice_altar = true,
-    arrow_trap_left = true,
-    arrow_trap_right = true,
-}
+local Tiles = require("src.platform.tiles.types")
+local Objects = require("src.platform.objects")
+local ItemDefinitions = require("src.platform.item_definitions")
 
 local function getTile(level, x, y)
     if x < 0 or x >= level.width or y < 0 or y >= level.height then return nil end
@@ -16,13 +13,11 @@ end
 local function isSolid(level, x, y)
     local tile = getTile(level, x, y)
     if not tile then return false end
-    if tile.kind == "solid" or tile.kind == "brick" or tile.kind == "block"
-        or tile.kind == "smooth_brick" or tile.kind == "push_block" then
-        return true
-    end
+    if Tiles[tile.kind] and Tiles[tile.kind].solid then return true end
     for _, entity in ipairs(level.entities) do
-        if SOLID_ENTITIES[entity.kind] and entity.y == y
-            and (entity.x == x or (entity.kind == "sacrifice_altar" and entity.x + 1 == x)) then
+        local definition = Objects[entity.kind]
+        if definition and definition.worldLayer == "solid" and entity.y == y
+            and x >= entity.x and x < entity.x + (definition.cellsWide or 1) then
             return true
         end
     end
@@ -88,79 +83,20 @@ local function inShop(level, x, y)
     return value == 4 or value == 5
 end
 
-local function itemExists(level, kind)
-    for _, entity in ipairs(level.entities) do
-        if entity.kind == kind then return true end
-    end
-    return false
-end
-
-local function chooseShopItem(level, rng, shopType, highEnd)
-    if highEnd then
-        local items = {
-            "jetpack", "cape", "shotgun", "gloves", "teleporter", "mattock", "paste",
-            "spring_shoes", "spike_shoes", "compass", "pistol", "machete", "bomb_box",
-        }
-        return items[rng:integer(1, #items)]
-    end
-
-    if shopType == "Bomb" then
-        if rng:integer(1, 5) == 1 and not itemExists(level, "paste") then return "paste" end
-        if rng:integer(1, 4) == 1 then return "bomb_box" end
-        return "bomb_bag"
-    elseif shopType == "Weapon" then
-        local items = { "pistol", "machete", "bomb_bag", "bow", "web_cannon", "shotgun", "bomb_box" }
-        for _ = 1, 20 do
-            local item = items[rng:integer(1, #items)]
-            if item == "bomb_bag" or item == "bomb_box" or not itemExists(level, item) then return item end
-        end
-        return "bomb_bag"
-    elseif shopType == "Clothing" then
-        local items = { "spring_shoes", "spectacles", "gloves", "mitt", "cape", "spike_shoes", "rope_pile" }
-        for _ = 1, 20 do
-            local item = items[rng:integer(1, #items)]
-            if item == "rope_pile" or not itemExists(level, item) then return item end
-        end
-        return "rope_pile"
-    elseif shopType == "Rare" then
-        local items = {
-            "spring_shoes", "compass", "mattock", "spectacles", "jetpack", "gloves",
-            "mitt", "web_cannon", "cape", "teleporter", "spike_shoes", "bomb_box",
-        }
-        for _ = 1, 20 do
-            local item = items[rng:integer(1, #items)]
-            if item == "bomb_box" or not itemExists(level, item) then return item end
-        end
-        return "bomb_box"
-    end
-
-    if rng:integer(1, 20) == 1 and not itemExists(level, "mattock") then return "mattock" end
-    if rng:integer(1, 10) == 1 and not itemExists(level, "gloves") then return "gloves" end
-    if rng:integer(1, 10) == 1 and not itemExists(level, "compass") then return "compass" end
-    return ({ "bomb_bag", "rope_pile", "parachute" })[rng:integer(1, 3)]
-end
-
 -- scrShopItemsGen uses the center of each 'i' cell, with a vertical offset
 -- chosen for the item's sprite. The 'q' marker uses scrGenerateItem(+8,+8).
-local SHOP_ITEM_Y_OFFSET = {
-    bomb_bag = 10, bomb_box = 8, paste = 10, rope_pile = 11,
-    pistol = 12, machete = 12, bow = 12, web_cannon = 12, shotgun = 12,
-    spring_shoes = 10, spectacles = 10, gloves = 8, mitt = 8,
-    cape = 10, spike_shoes = 10, compass = 10, mattock = 10,
-    jetpack = 8, teleporter = 12, parachute = 10,
-}
-
 local function resolveEmbeddedEntities(level, rng)
     for _, entity in ipairs(level.entities) do
         if entity.kind == "shop_item" then
-            entity.kind = chooseShopItem(level, rng, entity.properties.shopType,
-                entity.properties.highEnd)
+            entity.kind = entity.properties.highEnd and ShopStock.prize(rng)
+                or ShopStock.choose(level, rng, entity.properties.shopType)
             local yOffset = entity.properties.highEnd and 8
                 or (entity.properties.shopType == "Weapon" and entity.kind == "bomb_box" and 10)
-                or assert(SHOP_ITEM_Y_OFFSET[entity.kind], "Missing shop item placement")
+                or assert(ItemDefinitions[entity.kind].shopOffsetY, "Missing shop item placement")
             entity.x = entity.x + 0.5
             entity.y = entity.y + yOffset / 16
             entity.properties.forSale = true
+            entity.properties.inDiceHouse = entity.properties.highEnd or false
         elseif entity.kind == "treasure" then
             if rng:integer(1, 120) == 1 then entity.kind = "ruby_big"
             elseif rng:integer(1, 80) == 1 then entity.kind = "sapphire_big"

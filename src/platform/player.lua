@@ -72,6 +72,8 @@ function Player.new(x, y)
         gravityIntensity = 1,
         jumpTime = 10,
         jumpReleased = false,
+        jumpRearmed = false,
+        cantJumpTimer = 0,
         xVelocityLimit = 16,
         yVelocityLimit = 10,
         climbKind = nil,
@@ -91,6 +93,8 @@ function Player.new(x, y)
         health = 4,
         invincibleTimer = 0,
         whipping = false,
+        attackKind = nil,
+        meleeJustStruck = false,
         whipCracked = false,
         whipJustCracked = false,
         whipHits = {},
@@ -102,9 +106,11 @@ function Player.new(x, y)
         status = "normal",
         stunTimer = 0,
         deadBounced = false,
+        wallHurt = 0,
         webTimer = 0,
         fallTimer = 0,
         parachuteOpen = false,
+        capeOpen = false,
         jetpackFuel = 0,
     }, Player)
 end
@@ -134,6 +140,8 @@ function Player:reset()
     self.gravityIntensity = 1
     self.jumpTime = 10
     self.jumpReleased = false
+    self.jumpRearmed = false
+    self.cantJumpTimer = 0
     self.xVelocityLimit = 16
     self.yVelocityLimit = 10
     self.climbKind = nil
@@ -149,6 +157,8 @@ function Player:reset()
     self.health = self.maxHealth
     self.invincibleTimer = 0
     self.whipping = false
+    self.attackKind = nil
+    self.meleeJustStruck = false
     self.whipCracked = false
     self.whipJustCracked = false
     self.whipHits = {}
@@ -156,9 +166,11 @@ function Player:reset()
     self.status = "normal"
     self.stunTimer = 0
     self.deadBounced = false
+    self.wallHurt = 0
     self.webTimer = 0
     self.fallTimer = 0
     self.parachuteOpen = false
+    self.capeOpen = false
     self.jetpackFuel = 0
 end
 
@@ -191,9 +203,9 @@ function Player:kill(cause, vx, vy)
     self.yRemainder = 0
     self.climbKind = nil
     self.transitionTarget = nil
-    self.whipping = false
     self.stunTimer = 0
     self.deadBounced = cause == "fall"
+    self.capeOpen = false
     self.wideCollision = false
     self.collisionTopOffset = -8
     self.status = "dead"
@@ -204,8 +216,8 @@ function Player:kill(cause, vx, vy)
     return true
 end
 
-function Player:hurt(sourceX, amount, cause, stunDuration, reaction)
-    if self.invincibleTimer > 0 or self:isDead() then
+function Player:hurt(sourceX, amount, cause, stunDuration, reaction, impactVx)
+    if (self.invincibleTimer > 0 and reaction ~= "bullet") or self:isDead() then
         if self.playtestLog then self.playtestLog:record("damage_blocked", {
             sourceX = sourceX, amount = amount or 1, cause = cause,
             invincibleTimer = self.invincibleTimer, health = self.health, tick = self.tick,
@@ -214,8 +226,8 @@ function Player:hurt(sourceX, amount, cause, stunDuration, reaction)
     end
     local previousHealth = self.health
     self.health = math.max(0, self.health - (amount or 1))
-    self.invincibleTimer = 30
-    self.vx = self.x < sourceX and -6 or 6
+    if reaction ~= "bullet" then self.invincibleTimer = 30 end
+    self.vx = reaction == "bullet" and impactVx or (self.x < sourceX and -6 or 6)
     if reaction ~= "enemy_contact" then
         self.vy = -4
         self.ax = 0
@@ -224,8 +236,8 @@ function Player:hurt(sourceX, amount, cause, stunDuration, reaction)
         self.yRemainder = 0
         self.climbKind = nil
         self.transitionTarget = nil
-        self.whipping = false
         self.stunTimer = self.health <= 0 and 0 or (stunDuration or 30)
+        self.deadBounced = false
     end
     if self.health <= 0 then
         self:kill(cause, self.vx, self.vy)
@@ -249,6 +261,7 @@ function Player:landHard()
     local previousHealth = self.health
     self.health = math.max(0, self.health - damage)
     self.vy = -3
+    self.deadBounced = true
     self.fallTimer = 0
     if self.health <= 0 then
         self:kill("fall", self.vx, self.vy)
@@ -297,12 +310,13 @@ function Player:loadAssets()
 end
 
 function Player:startWhip()
-    if self.whipping or self:isDead()
+    if self.whipping or self:isDead() or self:isStunned()
         or self.state == Player.STATES.ducking
         or self.state == Player.STATES.duckToHang then
         return false
     end
     self.whipping = true
+    self.attackKind = nil
     self.whipCracked = false
     self.whipJustCracked = false
     self.whipHits = {}
@@ -311,8 +325,19 @@ function Player:startWhip()
     return true
 end
 
+function Player:startMelee(kind, speed)
+    if not self:startWhip() then return false end
+    self.attackKind = kind
+    self.meleeSpeed = speed
+    return true
+end
+
+function Player:getMeleePhase()
+    return self.meleeVisualPhase
+end
+
 function Player:getWhipPhase()
-    if not self.whipping then return nil end
+    if not self.whipping or self.attackKind then return nil end
     if self.animationFrame > 0 and self.animationFrame < 2 then return "back" end
     if self.animationFrame > 4 then return "front" end
     return nil
@@ -354,13 +379,18 @@ end
 
 function Player:updateWhip(input)
     self.whipJustCracked = false
+    self.meleeJustStruck = false
     if self.attackPressedThisStep and not input.suppressWhip then self:startWhip() end
     if not self.whipping then return end
 
     if self.animationFrame > 4 and not self.whipCracked then
         self.whipCracked = true
-        self.whipJustCracked = true
-        if self.whipSound then self.whipSound:clone():play() end
+        if self.attackKind then
+            self.meleeJustStruck = true
+        else
+            self.whipJustCracked = true
+            if self.whipSound then self.whipSound:clone():play() end
+        end
     end
 
     if self.animationFrame >= Player.ATTACK_FRAMES then
@@ -388,8 +418,13 @@ function Player:isAirState()
 end
 
 function Player:setState(state)
-    if self.state ~= state then
-        self.state = state
+    self.state = state
+    if state == Player.STATES.stunned or state == Player.STATES.dead then
+        -- oPlayer1 destroys an active oWhip (including weapon slashes) when
+        -- stunned or dead, before selecting the body pose for this tick.
+        self.whipping, self.attackKind = false, nil
+        self.whipJustCracked, self.meleeJustStruck = false, false
+        self.meleeVisualPhase, self.meleeStrikeAge = nil, nil
     end
 end
 
@@ -405,6 +440,13 @@ function Player:released(input, name)
         return input[name .. "Released"]
     end
     return not input[name] and self.previousInput[name]
+end
+
+function Player:rememberInput(input)
+    self.previousInput = {}
+    for _, name in ipairs({ "left", "right", "up", "down", "jump", "sprint", "attack" }) do
+        self.previousInput[name] = not not input[name]
+    end
 end
 
 function Player:quantizedPixels(distance)
@@ -424,12 +466,35 @@ function Player:consumeVerticalPixels(distance)
     return self:quantizedPixels(distance)
 end
 
+function Player:collisionProbe(world, axis, direction, distance, kind, topInset)
+    distance = distance or 1
+    local halfWidth = self:getCollisionHalfWidth()
+    local topOffset, bottomOffset = self:getVerticalBounds()
+    if axis == "x" then
+        local sideX = direction < 0 and self.x - halfWidth - distance
+            or self.x + halfWidth + distance - 1
+        sideX = gameMakerRound(sideX)
+        return world:overlaps(kind or "solid", sideX,
+            gameMakerRound(self.y + topOffset + (topInset or 0)),
+            sideX + 1, gameMakerRound(self.y + bottomOffset - 1) + 1)
+    end
+    local sideY = direction < 0 and self.y + topOffset - distance
+        or self.y + bottomOffset + distance - 1
+    sideY = gameMakerRound(sideY)
+    return world:overlaps(kind or "solid", gameMakerRound(self.x - halfWidth), sideY,
+        gameMakerRound(self.x + halfWidth - 1) + 1, sideY + 1)
+end
+
 function Player:moveHorizontal(world, distance)
     local pixels = self:quantizedPixels(distance)
     local direction = sign(pixels)
     local hitWall = false
     for _ = 1, math.abs(pixels) do
-        local hit, hitX, hitY = world:collidesSolid(self, self.x + direction, self.y)
+        -- moveTo's side probe omits the top five pixels of the collider.
+        local hit, hitX, hitY = self:collisionProbe(world, "x", direction, 1, "solid", 5)
+        if hit and type(hitX) == "table" and world:tryPush(self, direction, hitX) then
+            hit = false
+        end
         if hit then
             if self.playtestLog then self.playtestLog:record("collision", {
                 axis = "horizontal", x = self.x + direction, y = self.y,
@@ -453,7 +518,7 @@ function Player:moveVertical(world, distance, ignorePlatforms)
     local hitCeiling = false
     for _ = 1, math.abs(pixels) do
         local nextY = self.y + direction
-        local hit, hitX, hitY = world:collidesSolid(self, self.x, nextY)
+        local hit, hitX, hitY = self:collisionProbe(world, "y", direction)
         if hit then
             if self.playtestLog then self.playtestLog:record("collision", {
                 axis = "vertical", x = self.x, y = nextY,
@@ -499,7 +564,7 @@ function Player:enterClimb(world, input)
         end
         -- A ladder body at a solid floor is a crouch, not a climb entry.
         -- Classic's grounded Down-climb exception checks for a ladder top.
-        if world:collidesSolid(self, self.x, self.y + 1)
+        if self:collisionProbe(world, "y", 1)
             and not world:cellAt("ladderTop", self.x, self.y + 9) then
             return false
         end
@@ -523,6 +588,9 @@ function Player:enterClimb(world, input)
         return false
     end
     self.x = centerX
+    if input.up and not world:climbableAtPoint(self.x, self.y) then
+        self.y = tileY * world.tileSize + 14
+    end
     self.vx = 0
     self.vy = 0
     self.ax = 0
@@ -539,6 +607,9 @@ end
 
 function Player:updateClimbing(world, input, jumpPressed)
     self.gravity = 1
+    self.capeOpen = false
+    self.jumpRearmed = false
+    self.ladderCooldown = 10
     self.wideCollision = false
     self.collisionTopOffset = -8
     local kind, tileX = world:climbableAtPoint(self.x, self.y)
@@ -557,16 +628,16 @@ function Player:updateClimbing(world, input, jumpPressed)
         else
             self:setState(Player.STATES.falling)
         end
-        if world:collidesSolid(self, self.x, self.y + 1) then
+        if self:collisionProbe(world, "y", 1) then
             self.vy = 0
             self.ay = 0
             self:setState(Player.STATES.standing)
         end
     end
 
-    if jumpPressed then
+    if jumpPressed and not self.whipping then
         self.vx = input.left and -4 or (input.right and 4 or 0)
-        self.ay = self.ay - (self.equipment.spring_shoes and 6 or 4)
+        self.ay = self.ay - 4
         self.climbKind = nil
         self.ladderCooldown = 5
         self.jumpTime = 0
@@ -635,9 +706,11 @@ function Player:beginHang(ledge)
 end
 
 function Player:updateHanging(world, input, jumpPressed)
+    self.capeOpen = false
+    self.jumpRearmed = false
     self.wideCollision = false
     self.collisionTopOffset = -8
-    if not self.hangTileX or not world:has("solid", self.hangTileX, self.hangTileY) then
+    if not self:collisionProbe(world, "x", self.facing, 2) then
         self.hangCooldown = 4
         self.gravity = 1
         self.ay = self.ay - self.gravity
@@ -647,7 +720,7 @@ function Player:updateHanging(world, input, jumpPressed)
     if self.state == Player.STATES.hanging then
         local away = (self.facing == 1 and input.left) or (self.facing == -1 and input.right)
         if jumpPressed and input.down then
-            self.hangCooldown = 5
+            self.hangCooldown = self.equipment.gloves and 10 or 5
             self.gravity = 1
             self.ay = self.ay - self.gravity
             self:setState(Player.STATES.falling)
@@ -665,13 +738,7 @@ function Player:updateHanging(world, input, jumpPressed)
             self:setState(Player.STATES.jumping)
         end
 
-        local halfWidth = self:getCollisionHalfWidth()
-        local topOffset, bottomOffset = self:getVerticalBounds()
-        -- isCollisionLeft(2) probes lb-2; isCollisionRight(2) probes rb+2-1.
-        local sideX = self.facing < 0 and self.x - halfWidth - 2
-            or self.x + halfWidth + 1
-        if not world:overlaps("solid", sideX, self.y + topOffset,
-            sideX + 1, self.y + bottomOffset) then
+        if not self:collisionProbe(world, "x", self.facing, 2) then
             self.gravity = 1
             self:setState(Player.STATES.falling)
             self.ay = self.ay - self.gravity
@@ -719,12 +786,22 @@ function Player:edgeTransition(world, direction)
     return true
 end
 
-function Player:updateDuckToHang()
+function Player:updateDuckToHang(world)
     self.transitionTicks = self.transitionTicks - 1
     if self.transitionTicks <= 0 and self.transitionTarget then
         local target = self.transitionTarget
         self.transitionTarget = nil
-        local y = math.floor((target.y + 16) / 8 + 0.5) * 8
+        local y = gameMakerRound((target.y + 16) / 8) * 8
+        local kind, tileX = world:climbableAtPoint(target.x + target.direction * 8, y)
+        if kind then
+            self.x = tileX * world.tileSize + world.tileSize / 2
+            self.y = y
+            self.climbKind = kind
+            self.climbTileX = tileX
+            self.ax, self.ay = 0, 0
+            self.state = Player.STATES.climbing
+            return
+        end
         if target.direction < 0 then
             local x = target.x - 5
             self:beginHang({
@@ -749,17 +826,18 @@ end
 
 function Player:updateNormal(world, input, jumpPressed, jumpReleased)
     self.gravity = 1
-    local colLeft = world:collidesSolid(self, self.x - 1, self.y)
-    local colRight = world:collidesSolid(self, self.x + 1, self.y)
-    local colMoveableLeft = world:overlapsPlayer("moveableSolid", self, self.x - 1, self.y)
-    local colMoveableRight = world:overlapsPlayer("moveableSolid", self, self.x + 1, self.y)
-    local colTop = world:collidesSolid(self, self.x, self.y - 1)
-    local colBottom = world:collidesSolid(self, self.x, self.y + 1)
+    local colLeft = self:collisionProbe(world, "x", -1)
+    local colRight = self:collisionProbe(world, "x", 1)
+    local colMoveableLeft = self:collisionProbe(world, "x", -1, 1, "moveableSolid")
+    local colMoveableRight = self:collisionProbe(world, "x", 1, 1, "moveableSolid")
+    local colTop = self:collisionProbe(world, "y", -1)
+    local colBottom = self:collisionProbe(world, "y", 1)
     local colPlatformBottom = self.dropThroughTimer == 0
         and world:platformLanding(self, self.y, self.y + 1) ~= nil
     local colPlatform = world:overlapsPlayer("platform", self, self.x, self.y)
+        or world:overlapsPlayer("ladderTop", self, self.x, self.y)
 
-    local runKey = not not input.sprint
+    local runKey = input.sprint or (input.attack and not self.whipping)
 
     local direction = 0
     if input.left ~= input.right then
@@ -791,7 +869,8 @@ function Player:updateNormal(world, input, jumpPressed, jumpReleased)
                 self.ax = self.ax + 1
                 self.pushTimer = self.pushTimer + 10
             end
-        elseif self.rightHeldSteps > 2 and (self.facing == 1 or approximatelyZero(self.vx)) then
+        elseif (self.rightHeldSteps > 2 or colMoveableLeft)
+            and (self.facing == 1 or approximatelyZero(self.vx)) then
             self.ax = self.ax + 3
         end
         self.facing = 1
@@ -815,6 +894,8 @@ function Player:updateNormal(world, input, jumpPressed, jumpReleased)
     if not colBottom and (not colPlatformBottom or colPlatform) and self:isGroundState() then
         self:setState(Player.STATES.falling)
         self.ay = self.ay + self.gravity
+        self.jumpRearmed = true
+        if self.equipment.gloves then self.hangCooldown = 5 end
     end
 
     if colTop and self.state == Player.STATES.jumping then
@@ -825,13 +906,34 @@ function Player:updateNormal(world, input, jumpPressed, jumpReleased)
     end
 
     if jumpReleased and self:isAirState() then
-        self.jumpReleased = true
+        self.jumpRearmed = true
     elseif self:isGroundState() then
-        self.jumpReleased = false
+        self.jumpRearmed = false
+        self.capeOpen = false
     end
 
-    if self:isGroundState() and jumpPressed then
+    if jumpPressed and world:webAtPoint(self.x, self.y) then
+        world:damageWebAtPoint(self.x, self.y)
         self.ay = self.ay - 4
+        self.vy = self.vy - 3
+        self.ax = self.ax + self.vx / 2
+        self.state = Player.STATES.jumping
+        self.jumpReleased = false
+        self.jumpTime = 0
+    elseif self.equipment.cape and jumpPressed and self.jumpRearmed and self:isAirState() then
+        self.capeOpen = not self.capeOpen
+    elseif self.equipment.jetpack and input.jump and self.jumpRearmed
+        and self:isAirState() and self.jetpackFuel > 0 then
+        self.ay = self.ay - 2
+        self.vy = -1
+        self.jetpackFuel = self.jetpackFuel - 1
+        self.state = Player.STATES.jumping
+        self.jumpReleased = false
+        self.jumpTime = 0
+        self.gravity = 0
+    elseif self:isGroundState() and jumpPressed and self.fallTimer == 0 then
+        self.ay = self.ay - 4
+        if self.equipment.spring_shoes then self.ay = self.ay * 1.5 end
         if math.abs(self.vx) > 3 then
             self.ax = self.ax + self.vx * 2
         else
@@ -840,6 +942,7 @@ function Player:updateNormal(world, input, jumpPressed, jumpReleased)
         self.state = Player.STATES.falling
         self.jumpReleased = false
         self.jumpTime = 0
+        self.pushTimer = 0
     end
 
     if self.jumpTime < 10 then
@@ -861,7 +964,7 @@ function Player:updateNormal(world, input, jumpPressed, jumpReleased)
         self.state = Player.STATES.standing
     end
 
-    if input.down and self:isGroundState() then
+    if input.down and self:isGroundState() and not self.whipping then
         if colBottom then
             self.state = Player.STATES.ducking
         elseif colPlatformBottom then
@@ -896,20 +999,11 @@ function Player:updateNormal(world, input, jumpPressed, jumpReleased)
 
     if not colTop and self.hangCooldown == 0 and self.y > 16 and self:isAirState()
         and direction ~= 0 and ((direction < 0 and colLeft) or (direction > 0 and colRight)) then
-        local ledge = world:ledgeFor(self, direction)
+        local ledge = world:ledgeFor(self, direction, self.equipment.gloves and self.vy > 0)
         if ledge then
             self:beginHang(ledge)
             self:updateHanging(world, input, jumpPressed)
             return
-        elseif self.equipment.gloves then
-            self.vy = math.min(0, self.vy)
-            self.ay = 0
-            if jumpPressed then
-                self.vx = -direction * 5
-                self.vy = -5
-                self.facing = -direction
-                self.hangCooldown = 5
-            end
         end
     end
 
@@ -951,6 +1045,13 @@ function Player:updateNormal(world, input, jumpPressed, jumpReleased)
         xFriction = 0.6
     end
 
+    -- Classic tests the player's origin, then damps the accelerated velocity.
+    if world:webAtPoint(self.x, self.y) then
+        xFriction, yFriction = 0.2, 0.2
+        self.fallTimer = 0
+    end
+    if self.parachuteOpen or self.capeOpen then yFriction = 0.5 end
+
     if self:isGroundState() and not input.jump and not input.down and not runKey then
         self.xVelocityLimit = 3
     end
@@ -971,9 +1072,6 @@ function Player:updateNormal(world, input, jumpPressed, jumpReleased)
     end
 
     self.pushTimer = math.min(self.pushTimer, 100)
-    if self:isGroundState() and self.pushTimer > 20 and direction ~= 0 then
-        world:tryPush(self, direction)
-    end
     self.ax = clamp(self.ax, -9, 9)
     self.ay = clamp(self.ay, -6, 6)
     self.vx = (self.vx + self.ax) * xFriction
@@ -995,7 +1093,8 @@ function Player:selectSprite(world)
     local speed = 0
     if self.whipping then
         sprite = "sAttackLeft"
-        speed = Player.ATTACK_SPEED * Player.TICK_RATE
+        speed = (self.attackKind and self.meleeSpeed or Player.ATTACK_SPEED)
+            * Player.TICK_RATE
     elseif self.state == Player.STATES.running then
         sprite = self.currentInput.up and "sLookRunL" or "sRunLeft"
         speed = math.min(30, (math.abs(self.vx) * 0.1 + 0.1) * 30)
@@ -1021,8 +1120,14 @@ function Player:selectSprite(world)
             sprite = self.spriteName
         end
     elseif self.state == Player.STATES.stunned then
-        sprite = self.vx == 0 and "sStunL" or (self.vx < 0 and "sDieLL" or "sDieLR")
-        if self.vx == 0 then speed = 0.4 * Player.TICK_RATE end
+        if self.vx == 0 then
+            sprite = "sStunL"
+            speed = 0.4 * Player.TICK_RATE
+        elseif self.deadBounced then
+            sprite = self.vy < 0 and "sDieLBounce" or "sDieLFall"
+        else
+            sprite = self.vx < 0 and "sDieLL" or "sDieLR"
+        end
     elseif self.state == Player.STATES.dead then
         if self.vx == 0 then
             sprite = "sDieL"
@@ -1073,46 +1178,56 @@ function Player:updateAnimation(world)
     end
 end
 
-function Player:updateDead(world)
+function Player:updateBody(world)
     -- oPlayer1 applies gravity and contact response before moveTo. Once the
     -- body has touched ground, bounced switches its gravity from 0.6 to 1.
     self.vy = self.vy + (self.deadBounced and 1 or 0.6)
-    if self.vy < 0 and world:collidesSolid(self, self.x, self.y - 1) then
+    if self.vy < 0 and self:collisionProbe(world, "y", -1) then
         self.vy = -self.vy * 0.8
     end
-    if world:collidesSolid(self, self.x - 1, self.y)
-        or world:collidesSolid(self, self.x + 1, self.y) then
+    if self:collisionProbe(world, "x", -1)
+        or self:collisionProbe(world, "x", 1) then
         self.vx = -self.vx * 0.5
     end
-    if world:collidesSolid(self, self.x, self.y + 1)
+    if self:collisionProbe(world, "y", 1)
         or world:platformLanding(self, self.y, self.y + 1) then
         self.vy = self.vy > 1 and -self.vy * 0.5 or 0
         self.vx = math.abs(self.vx) < 0.1 and 0 or self.vx * 0.3
         self.deadBounced = true
     end
     self.vx = clamp(self.vx, -10, 10)
+    self.xVelocityLimit = 10
     self.vy = clamp(self.vy, -self.yVelocityLimit, self.yVelocityLimit)
     self:moveHorizontal(world, self.vx)
     self:moveVertical(world, self.vy, false)
+    -- oPlayer1's thrown-body impact takes a heart directly, independently of
+    -- contact invulnerability, and consumes the keeper's single wallHurt charge.
+    if (self.wallHurt or 0) > 0 and (self:collisionProbe(world, "x", -1)
+        or self:collisionProbe(world, "x", 1) or self:collisionProbe(world, "y", 1)) then
+        self.wallHurt = self.wallHurt - 1
+        self.health = math.max(0, self.health - 1)
+        if self.health == 0 then self:kill("shopkeeper", self.vx, self.vy) end
+    end
 end
 
 function Player:step(world, input)
     input = input or {}
+    local rawInput = input
+    local jumpRestricted = self.cantJumpTimer > 0
+    if jumpRestricted then
+        self.cantJumpTimer = self.cantJumpTimer - 1
+        local restricted = {}
+        for key, value in pairs(input) do restricted[key] = value end
+        restricted.jump = false
+        input = restricted
+    end
     world.time = (world.time or 0) + 1
     self.tick = world.time
     self.currentInput = input
     local jumpPressed = self:pressed(input, "jump")
     local jumpReleased = self:released(input, "jump")
+    if jumpRestricted then jumpPressed, jumpReleased = false, false end
     self.attackPressedThisStep = self:pressed(input, "attack")
-
-    self.leftHeldSteps = input.left and self.leftHeldSteps + 1 or 0
-    self.rightHeldSteps = input.right and self.rightHeldSteps + 1 or 0
-    if input.sprint then
-        self.runHeld = 100
-    end
-    if not input.sprint or (not input.left and not input.right) then
-        self.runHeld = 0
-    end
 
     local wasHanging = self.state == Player.STATES.hanging
     local decrementHangCooldown = self.hangCooldown > 0
@@ -1127,52 +1242,68 @@ function Player:step(world, input)
     self:refreshStatus()
 
     if self:isDead() then
-        self.state = Player.STATES.dead
-        self:updateDead(world)
+        self:setState(Player.STATES.dead)
+        self:updateBody(world)
         self:updateAnimation(world)
+        self:rememberInput(rawInput)
         return
     end
 
+    -- Count down the previous frame's stationary stun pose before movement.
+    if self.stunTimer > 0 and self.spriteName == "sStunL" then
+        self.stunTimer = self.stunTimer - 1
+        if self.stunTimer == 0 then
+            self:setState(world:groundBelow(self) and Player.STATES.standing or Player.STATES.falling)
+            self:refreshStatus()
+        end
+    end
+
+    if self.equipment.jetpack and self:isGroundState() then self.jetpackFuel = 50 end
+    if self.parachuteOpen or self.capeOpen then self.fallTimer = 0 end
     if self.vy > 0 and self.state ~= Player.STATES.climbing then
         self.fallTimer = self.fallTimer + 1
+        if self.equipment.parachute and not self:isStunned() and self.fallTimer > 14
+            and not world:solidAtPoint(self.x, self.y + 32) then
+            self.parachuteOpen = true
+            self.equipment.parachute = false
+            self.fallTimer = 0
+        end
     elseif self:isGroundState() then
         if self.fallTimer > 16 and not self.parachuteOpen then self:landHard() end
         self.fallTimer = 0
     else
         self.fallTimer = 0
     end
+    if self.vy <= 0 or self.state == Player.STATES.climbing then
+        self.parachuteOpen = false
+    end
 
     -- A long drop can turn fatal during the fall-timer check above. It must
     -- enter the same body-physics path on this tick, not normal controls.
     if self:isDead() then
-        self.state = Player.STATES.dead
-        self:updateDead(world)
+        self:setState(Player.STATES.dead)
+        self:updateBody(world)
         self:updateAnimation(world)
+        self:rememberInput(rawInput)
         return
     end
 
     if self.stunTimer > 0 then
-        self.vy = math.min(self.yVelocityLimit, self.vy + 0.6)
-        if self.webTimer > 0 then
-            self.vx = self.vx * 0.5
-            self.vy = self.vy * 0.5
-        end
-        if self:moveHorizontal(world, self.vx) then self.vx = -self.vx * 0.25 end
-        local landed = self:moveVertical(world, self.vy, false)
-        if landed then
-            self.vy = 0
-            self.vx = self.vx * 0.75
-            if math.abs(self.vx) < 0.1 then self.vx = 0 end
-        end
-        -- oPlayer1 only counts down stun while the stationary stun sprite is showing.
-        if self.vx == 0 then self.stunTimer = self.stunTimer - 1 end
-        if self.stunTimer == 0 then
-            self:setState(landed and Player.STATES.standing or Player.STATES.falling)
-            self:refreshStatus()
-        end
+        self:updateBody(world)
         self:updateAnimation(world)
-        self:updateWhip({})
+        self:rememberInput(rawInput)
         return
+    end
+
+    if self.state ~= Player.STATES.duckToHang then
+        self.leftHeldSteps = input.left and self.leftHeldSteps + 1 or 0
+        self.rightHeldSteps = input.right and self.rightHeldSteps + 1 or 0
+        if input.sprint then self.runHeld = 100 end
+        if input.attack and not self.whipping then self.runHeld = self.runHeld + 1 end
+        if (not input.sprint and (not input.attack or self.whipping))
+            or (not input.left and not input.right) then
+            self.runHeld = 0
+        end
     end
 
     if self.state == Player.STATES.hanging then
@@ -1180,30 +1311,9 @@ function Player:step(world, input)
     elseif self.state == Player.STATES.climbing then
         self:updateClimbing(world, input, jumpPressed)
     elseif self.state == Player.STATES.duckToHang then
-        self:updateDuckToHang()
+        self:updateDuckToHang(world)
     else
         self:updateNormal(world, input, jumpPressed, jumpReleased)
-    end
-
-    if self.equipment.jetpack and input.jump and self:isAirState() and self.jumpTime >= 10 then
-        self.vy = math.max(-4, self.vy - 1.25)
-        self.jetpackFuel = self.jetpackFuel + 1
-    elseif self.vy > 0 and self:isAirState() then
-        if self.equipment.cape and input.jump then
-            self.vy = math.min(self.vy, 2)
-            self.fallTimer = 0
-        end
-        if self.equipment.parachute and self.vy >= 7 then
-            self.parachuteOpen = true
-            self.vy = math.min(self.vy, 2)
-            self.fallTimer = 0
-        end
-    end
-
-    if self:isGroundState() and self.parachuteOpen then
-        self.equipment.parachute = false
-        self.parachuteOpen = false
-        self.fallTimer = 0
     end
 
     if not wasHanging and decrementHangCooldown then
@@ -1216,15 +1326,7 @@ function Player:step(world, input)
     self.statePrev = self.state
     self.wideCollision = math.abs(self.vx) >= 4 and self:isGroundState()
     self.collisionTopOffset = -8
-    self.previousInput = {
-        left = not not input.left,
-        right = not not input.right,
-        up = not not input.up,
-        down = not not input.down,
-        jump = not not input.jump,
-        sprint = not not input.sprint,
-        attack = not not input.attack,
-    }
+    self:rememberInput(rawInput)
 end
 
 function Player:getAnimationFrame()
@@ -1254,6 +1356,11 @@ function Player:draw()
     if self:getWhipPhase() == "back" then self:drawWhip() end
     self:drawBody()
     if self:getWhipPhase() == "front" then self:drawWhip() end
+end
+
+function Player.drawDepth(state)
+    if state == "exiting" or state == "lava" then return 999 end
+    return 50
 end
 
 return Player

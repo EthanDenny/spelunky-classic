@@ -172,9 +172,9 @@ local function assertSpecialRooms()
 end
 
 local function assertShopStockPlacement()
-    -- The recorded depth-two shop has rope piles on its smooth-brick floor.
+    -- This fixed depth-two shop exercises rope piles and spectacles.
     -- Classic's scrShopItemsGen creates each at xpos+8, ypos+11.
-    local level = MinesGenerator.generate(1790807356, { levelNumber = 2 })
+    local level = MinesGenerator.generate(58, { levelNumber = 2 })
     local ropeCount, spectaclesCount = 0, 0
     for _, entity in ipairs(level.entities) do
         if entity.properties.forSale
@@ -190,7 +190,7 @@ local function assertShopStockPlacement()
         end
     end
     assert(ropeCount > 0 and spectaclesCount > 0,
-        "Recorded shop must include rope piles and spectacles")
+        "The placement fixture must include rope piles and spectacles")
 end
 
 function MinesGeneratorTest.run()

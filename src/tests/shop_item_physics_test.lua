@@ -9,14 +9,13 @@ function Test.run(app)
     screen.levelNumber = 2
     screen:generateLevel(1790808068)
     local shopBox
-    for _, collectible in ipairs(screen.collectibles) do
-        if collectible.entity.kind == "bomb_box"
-            and collectible.entity.properties.forSale then
-            shopBox = collectible
+    for _, item in ipairs(screen.items) do
+        if item.kind == "bomb_box" and item.properties.forSale then
+            shopBox = item
             break
         end
     end
-    assert(shopBox and shopBox.active, "Generated shop stock must enter item physics")
+    assert(shopBox, "Generated shop stock must enter item physics")
     local floorCellY = math.floor(shopBox.y / 16) + 1
     local floorTop = floorCellY * 16
     for _ = 1, 5 do screen:simulationStepBody({}) end

@@ -5,7 +5,6 @@ local GeneratedWorld = require("src.platform.generated_world")
 local TrapSystem = require("src.platform.trap_system")
 local ProjectileSystem = require("src.platform.projectile_system")
 local FakeBones = require("src.platform.fake_bones")
-local Treasure = require("src.platform.treasure")
 local Effects = require("src.platform.effects")
 local DepthQueue = require("src.render.depth_queue")
 
@@ -143,9 +142,11 @@ function Test.run(app)
             { kind = "ruby_big", cue = "gem" },
             { kind = "bomb_bag", cue = "pickup" },
         }) do
-            screen.collectibles = { Treasure.new({ kind = sample.kind,
-                x = screen.player.x / 16, y = screen.player.y / 16 }, false) }
+            screen.items, screen.collectibles = {}, {}
+            screen:spawnEntity(sample.kind, screen.player.x, screen.player.y)
+            if sample.kind ~= "bomb_bag" then screen.collectibles[1].pickupDelay = 0 end
             screen:checkCollectibles()
+            if sample.kind == "bomb_bag" then screen:pickupNearestItem() end
             assert(heard[#heard] == sample.cue,
                 "Mines treasure and supplies must play their Classic pickup sound")
         end

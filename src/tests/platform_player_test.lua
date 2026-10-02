@@ -28,6 +28,251 @@ local function close(actual, expected, message)
 end
 
 function Test.run()
+    -- Independent Classic 1.1 contracts, exercised through a simulation step.
+    -- Report every mismatch so a source audit can establish the pre-fix failures.
+    local sourceCases = {
+        { "spring shoes affect ground jumps only", function()
+            local world = flatWorld()
+            local player = groundedPlayer(world)
+            player.equipment.spring_shoes = true
+            player:step(world, { jump = true })
+            close(player.vy, -6, "Spring-shoe ground launch")
+            world:fill("ladder", 4, 3, 1, 7)
+            player.x, player.y = 72, 120
+            player.state, player.vy = Player.STATES.climbing, 0
+            player:step(world, {})
+            player:step(world, { jump = true })
+            close(player.vy, -3, "Spring shoes must not boost ladder departure")
+        end },
+        { "stunned bodies use the corpse bounce response", function()
+            local world = flatWorld()
+            local player = Player.new(64, 120)
+            player:hurt(54)
+            player.y, player.vx, player.vy = 152, 2, 4
+            player:step(world, {})
+            close(player.vx, 0.6, "Stun landing horizontal friction")
+            close(player.vy, -2.3, "Stun landing rebound")
+            assert(player.y == 150 and player.spriteName == "sDieLBounce",
+                "A stunned body must rebound before movement and show the bouncing pose")
+        end },
+        { "web friction follows acceleration", function()
+            local world = World.new(20, 20, 16)
+            world:set("web", 4, 4, { life = 12 })
+            local player = Player.new(72, 72)
+            player.vx, player.vy = 4, 5
+            player:step(world, {})
+            close(player.vx, 0.8, "Web horizontal friction")
+            close(player.vy, 1.2, "Web vertical friction")
+            assert(player.fallTimer == 0, "Webs must cancel fall damage accumulation")
+        end },
+        { "jumping frees the player from a web", function()
+            local world = World.new(20, 20, 16)
+            local web = { life = 12 }
+            world:set("web", 4, 4, web)
+            local player = Player.new(72, 72)
+            player:step(world, { jump = true })
+            close(player.vy, -1.2, "Web jump impulse after friction")
+            assert(web.life == 11 and player.y == 71,
+                "Each web jump must damage the web and move upward")
+            for hit = 2, 11 do
+                player.x, player.y, player.vx, player.vy = 72, 72, 0, 0
+                player.previousInput.jump = false
+                player:step(world, { jump = true })
+                if hit < 11 then
+                    assert(world:webAtPoint(72, 72),
+                        "A web must persist through the first ten jump presses")
+                end
+            end
+            assert(not world:webAtPoint(72, 72) and web.destroyed,
+                "Repeated web jumps must remove the web after its life reaches one")
+        end },
+        { "cape toggles on a new airborne jump press", function()
+            local world = World.new(20, 20, 16)
+            local player = Player.new(72, 72)
+            player.equipment.cape = true
+            player.vy = 6
+            player.previousInput.jump = true
+            player:step(world, {})
+            player:step(world, { jump = true })
+            close(player.vy, 4, "Cape opens before vertical friction")
+            player:step(world, {})
+            close(player.vy, 2.5, "Cape stays open after releasing jump")
+            player:step(world, { jump = true })
+            close(player.vy, 3.5, "Second press closes the cape")
+        end },
+        { "jetpack requires release, spends fuel, and refills on ground", function()
+            local world = flatWorld()
+            local player = groundedPlayer(world)
+            player.equipment.jetpack = true
+            player:step(world, {})
+            assert(player.jetpackFuel == 50, "Ground must refill fifty jetpack ticks")
+            repeatStep(player, world, { jump = true }, 12)
+            assert(player.jetpackFuel == 50, "Holding the initial jump must not engage the jetpack")
+            player:step(world, {})
+            player:step(world, { jump = true })
+            close(player.vy, -2, "First jetpack thrust includes prior gravity")
+            assert(player.jetpackFuel == 49, "Jetpack thrust must consume fuel")
+            player:step(world, { jump = true })
+            close(player.vy, -3, "Continuous jetpack thrust")
+            player.jetpackFuel = 0
+            player:step(world, { jump = true })
+            close(player.vy, -3, "Empty jetpack must stop thrusting")
+        end },
+        { "parachute waits for fifteen descending ticks and clearance", function()
+            local world = World.new(20, 40, 16)
+            local player = Player.new(72, 72)
+            player.equipment.parachute = true
+            repeatStep(player, world, {}, 10)
+            assert(not player.parachuteOpen and player.equipment.parachute,
+                "Reaching terminal speed alone must not deploy a parachute")
+            repeatStep(player, world, {}, 6)
+            assert(player.parachuteOpen and not player.equipment.parachute,
+                "Parachute must deploy and consume the pickup on the fifteenth descending tick")
+            close(player.vy, 5.5, "Parachute opening friction")
+            local blocked = Player.new(72, 72)
+            blocked.equipment.parachute = true
+            blocked.fallTimer, blocked.vy = 14, 10
+            world:set("solid", 4, 6)
+            blocked:step(world, {})
+            assert(not blocked.parachuteOpen and blocked.equipment.parachute,
+                "A solid thirty-two pixels below must prevent parachute deployment")
+        end },
+        { "climbing gloves hang on walls and use the normal hang jump", function()
+            local world = World.new(20, 20, 16)
+            world:fill("solid", 5, 3, 1, 10)
+            local player = Player.new(75, 104)
+            player.equipment.gloves = true
+            player.vy = 2
+            player:step(world, { right = true })
+            assert(player.state == Player.STATES.hanging and player.y == 104,
+                "Gloves must enter Hanging against a descending wall")
+            player:step(world, { down = true, jump = true })
+            assert(player.hangCooldown == 10,
+                "Dropping with gloves must block wall regrabs for ten ticks")
+        end },
+        { "whipping blocks crouch and ladder jumps", function()
+            local world = flatWorld()
+            local player = groundedPlayer(world)
+            player:startWhip()
+            player:step(world, { down = true })
+            assert(player.state ~= Player.STATES.ducking,
+                "An active attack must block entering crouch")
+            world:fill("ladder", 4, 3, 1, 7)
+            player.x, player.y, player.state = 72, 120, Player.STATES.climbing
+            player:step(world, { jump = true })
+            assert(player.state == Player.STATES.climbing,
+                "An active attack must block departing a ladder")
+        end },
+        { "holding ACTION builds sprint after the attack", function()
+            local world = flatWorld()
+            local player = groundedPlayer(world)
+            repeatStep(player, world, { right = true, attack = true }, 40)
+            assert(player.vx == 6, "Held ACTION must enable the source's delayed sprint")
+        end },
+        { "jump edges remain consumed during stun", function()
+            local world = flatWorld()
+            local player = groundedPlayer(world)
+            player:hurt(54)
+            for _ = 1, 100 do
+                player:step(world, { jump = true })
+                if not player:isStunned() then break end
+            end
+            player:step(world, { jump = true })
+            assert(player:isGroundState() and player.y == 152,
+                "A jump held through stun must require a new press after recovery")
+        end },
+        { "ACTION during stun cannot whip, pause recovery, or buffer an attack", function()
+            local world = flatWorld()
+            local player = groundedPlayer(world)
+            player:hurt(player.x - 10)
+            for _ = 1, 100 do
+                player:step(world, {})
+                if player.spriteName == "sStunL" then break end
+            end
+            assert(player:isStunned() and player.spriteName == "sStunL",
+                "The regression requires a real stationary stun")
+            local timer = player.stunTimer
+            repeatStep(player, world, { attack = true }, 5)
+            assert(not player.whipping and player:getWhipHitbox() == nil
+                and player.stunTimer == timer - 5,
+                "ACTION must leave stun recovery advancing without creating a whip")
+            repeatStep(player, world, { attack = true }, timer)
+            assert(not player:isStunned() and not player.whipping,
+                "ACTION held through recovery must not become a delayed attack")
+            player:step(world, {})
+            player:step(world, { attack = true })
+            assert(player.whipping, "A fresh ACTION press must work after recovery")
+        end },
+        { "fall stun immediately interrupts an active whip", function()
+            local world = flatWorld()
+            local player = Player.new(64, 128)
+            player:step(world, { attack = true })
+            repeatStep(player, world, {}, 8)
+            assert(player.whipping and player:getWhipHitbox(),
+                "The regression requires a live whip stroke before landing")
+            player.y, player.vy, player.state = 152, 0, Player.STATES.standing
+            player.fallTimer = 17
+            player:step(world, {})
+            assert(player:isStunned() and not player.whipping and player:getWhipHitbox() == nil
+                and player.spriteName ~= "sAttackLeft" and player.health == 3,
+                "A hard landing must cancel the stroke and render the stunned body on that tick")
+        end },
+        { "head-only climb entry snaps to the upper ladder segment", function()
+            local world = World.new(20, 20, 16)
+            world:set("ladder", 4, 4)
+            local player = Player.new(72, 87)
+            player:step(world, { up = true })
+            assert(player.state == Player.STATES.climbing and player.y == 78,
+                "A head-only ladder grab must snap to ladder.y + 14")
+        end },
+        { "movement uses directional collision lines", function()
+            local world = World.new(20, 20, 16)
+            world:addDynamicSolid({ x = 77, y = 64, width = 16, height = 4 })
+            local player = Player.new(72, 72)
+            player.vx, player.facing = 3, -1
+            player:step(world, {})
+            assert(player.x == 74 and player.y == 73,
+                "A shallow overhead lip must not stop the shortened horizontal probe or the clear floor probe")
+        end },
+        { "push blocks move with the player one pixel at a time", function()
+            local world = flatWorld()
+            local block = world:addDynamicSolid({ x = 80, y = 144, moveable = true,
+                kind = "push_block", width = 16, height = 16 })
+            local player = groundedPlayer(world, 75)
+            player:step(world, { right = true })
+            assert(block.x == 81 and player.x == 76,
+                "The first quantized pressure tick must push one pixel without a timer threshold")
+            player:step(world, {})
+            local stoppedX = block.x
+            for _ = 1, 20 do
+                require("src.platform.dynamic_terrain").update(world)
+                player:step(world, {})
+            end
+            assert(block.x == stoppedX, "Released push blocks must not continue toward a tile target")
+            world:set("solid", 6, 9)
+            player.x, block.x = 75, 80
+            player:step(world, { right = true })
+            assert(block.x == 80 and player.x == 75, "A blocked push must stop both bodies")
+        end },
+        { "crouch-to-hang can transfer directly onto a ladder", function()
+            local world = World.new(20, 20, 16)
+            world:fill("solid", 5, 8, 4, 1)
+            world:fill("ladder", 9, 8, 1, 4)
+            local player = Player.new(143, 120)
+            player.state = Player.STATES.standing
+            player:step(world, { right = true, down = true })
+            repeatStep(player, world, {}, 12)
+            assert(player.state == Player.STATES.climbing and player.x == 152 and player.y == 136,
+                "Completing a crouch-to-hang beside a ladder must attach to its center")
+        end },
+    }
+    local failures = {}
+    for _, case in ipairs(sourceCases) do
+        local ok, message = pcall(case[2])
+        if not ok then failures[#failures + 1] = case[1] .. ": " .. message end
+    end
+    assert(#failures == 0, table.concat(failures, "\n"))
+
     do
         local world = World.makeTestCourse()
         assert(world:has("solid", 12, 12) and world:has("solid", 20, 19),
@@ -434,8 +679,10 @@ function Test.run()
         assert(player:hurt(player.x - 10), "The stun regression requires an actual knockback")
         local duration = player.stunTimer
         player:step(world, {})
-        assert(player.spriteName == "sDieLR" and player.stunTimer == duration,
-            "Source stun must show the rightward knockback pose without advancing its timer")
+        close(player.vx, 1.8, "Grounded knockback friction")
+        assert(player.spriteName == "sDieLFall" and player.vy == 0
+            and player.stunTimer == duration,
+            "Grounded knockback must use the source's contact friction and bounced pose without advancing stun")
         local sawStunAnimation = false
         for _ = 1, 40 do
             player:step(world, {})
@@ -444,8 +691,11 @@ function Test.run()
                 break
             end
         end
-        assert(sawStunAnimation and player.vx == 0 and player.stunTimer < duration,
+        assert(sawStunAnimation and player.vx == 0 and player.stunTimer == duration,
             "Landing friction must settle knockback so the stun animation can actually play")
+        player:step(world, {})
+        assert(player.stunTimer == duration - 1,
+            "The timer must first advance on the step after the stationary stun pose appears")
     end
 
     do
@@ -470,9 +720,9 @@ function Test.run()
             if longFall:isGroundState() or longFall:isStunned() then break end
         end
         if longFall:isGroundState() then longFall:step(longWorld, {}) end
-        assert(longFall.health == 3 and longFall.vx == 0 and longFall.vy < 0
+        assert(longFall.health == 3 and longFall.vx == 0 and longFall.vy == 0
             and longFall:isStunned() and longFall.spriteName == "sStunL",
-            "A 17-32-step fall must show the original stun pose while bouncing vertically")
+            "A long fall must lose one heart and settle into stun after the grounded body response")
         longFall:step(longWorld, { right = true })
         assert(longFall.x == 64, "A long-fall stun must temporarily block movement input")
         repeatStep(longFall, longWorld, { right = true }, 65)

@@ -3,22 +3,16 @@ local EntitySpriteData = require("src.world.original_entity_sprites")
 local SegmentedSelector = require("src.ui.segmented_selector")
 local Depth = require("src.render.classic_depth")
 local DepthQueue = require("src.render.depth_queue")
+local MeleeMask = require("src.platform.melee_mask")
+local Tiles = require("src.platform.tiles.types")
+local ItemDefinitions = require("src.platform.item_definitions")
+local Objects = require("src.platform.objects")
 
 local WorldGeneration = {}
 WorldGeneration.__index = WorldGeneration
 
 local LEVEL_TYPES = {
     { label = "Mines", key = "mines", depthCount = 4, implemented = true },
-}
-
-local TILE_IMAGES = {
-    brick = "brick",
-    brick_alt = "brick_alt",
-    brick_gold = "brick_gold",
-    brick_gold_big = "brick_gold_big",
-    brick_down = "brick_down",
-    cave_up = "cave_up",
-    cave_up2 = "cave_up2",
 }
 
 function WorldGeneration.new(app)
@@ -78,13 +72,38 @@ function WorldGeneration:loadAssets()
         image:setFilter("nearest", "nearest")
         self.entitySprites[key] = { image = image, metadata = metadata }
     end
-    for key, sprite in pairs({ arrow = "sArrowRight", arrow_left = "sArrowLeft" }) do
-        local image = love.graphics.newImage(
-            "original-game-reference/source/extracted/spelunky/Sprites/Items/Weapons/"
-                .. sprite .. ".images/image 0.png")
-        image:setFilter("nearest", "nearest")
-        self.entitySprites[key] = { image = image,
-            metadata = { originX = 4, originY = 4, width = 8, height = 8 } }
+    self.itemAnimationSprites = {}
+    local Assets = require("src.platform.object_assets")
+    for kind, definition in pairs(ItemDefinitions) do
+        if definition.sprite then
+            local spec = definition.sprite
+            self.entitySprites[kind] = { image = Assets.image(spec.group, spec.name),
+                metadata = { originX = spec.size / 2, originY = spec.size / 2,
+                    width = spec.size, height = spec.size } }
+        end
+        if definition.leftSprite then
+            local spec = definition.leftSprite
+            local metadata = self.entitySprites[kind].metadata
+            self.entitySprites[kind .. "_left"] = { image = Assets.image(spec.group, spec.name),
+                metadata = { originX = metadata.originX, originY = spec.originY or metadata.originY,
+                    width = metadata.width, height = metadata.height } }
+        end
+    end
+    for _, definition in pairs(ItemDefinitions) do
+        if definition.loadRenderAssets then definition.loadRenderAssets(self) end
+    end
+    self.meleeSprites = {}
+    for _, sprite in ipairs({ "sMachetePreL", "sMachetePreR", "sMattockPreL",
+        "sMattockPreR", "sSlashLeft", "sSlashRight", "sMattockHitL", "sMattockHitR" }) do
+        local frames = {}
+        local count = sprite:find("Pre") and 1 or 3
+        for frame = 0, count - 1 do
+            local image = love.graphics.newImage("original-game-reference/source/extracted/spelunky/"
+                .. "Sprites/Items/Weapons/" .. sprite .. ".images/image " .. frame .. ".png")
+            image:setFilter("nearest", "nearest")
+            frames[#frames + 1] = image
+        end
+        self.meleeSprites[sprite] = frames
     end
 
     local backgroundDirectory = "original-game-reference/source/extracted/spelunky/Backgrounds/"
@@ -301,21 +320,12 @@ function WorldGeneration:drawButton(bounds, label, active)
 end
 
 function WorldGeneration:drawTile(tile, x, y)
-    love.graphics.setColor(1, 1, 1, 1)
-    if tile.kind == "brick" then
-        local imageName = TILE_IMAGES[tile.style] or "brick"
-        love.graphics.draw(self.images[imageName], x, y)
-    elseif tile.kind == "solid" then
-        local imageName = TILE_IMAGES[tile.style] or TILE_IMAGES[tile.baseStyle] or "block"
-        love.graphics.draw(self.images[imageName], x, y)
-    elseif tile.kind == "block" or tile.kind == "push_block" then
-        love.graphics.draw(self.images.block, x, y)
-    elseif tile.kind == "smooth_brick" then
-        love.graphics.draw(self.images.cave_smooth, x, y)
-    elseif tile.kind == "ladder" then
-        love.graphics.draw(self.images.ladder, x, y)
-    elseif tile.kind == "ladder_top" then
-        love.graphics.draw(self.images.ladder_top, x, y)
+    local definition = assert(Tiles[tile.kind], "Unknown tile: " .. tostring(tile.kind))
+    local image = definition.image
+    if type(image) == "function" then image = image(tile) end
+    if image then
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.draw(self.images[image], x, y)
     end
 end
 
@@ -323,24 +333,20 @@ function WorldGeneration:drawEntity(entity)
     love.graphics.setColor(1, 1, 1, 1)
     local fallbackX = entity.x * 16
     local fallbackY = entity.y * 16
-    local spriteKey = entity.kind
-    if entity.kind == "shop_sign" then
-        spriteKey = "shop_sign_" .. string.lower(entity.properties.shopType or "general")
-    end
+    local definition = Objects[entity.kind]
+    local spriteKey = definition and definition.spriteKey and definition.spriteKey(entity) or entity.kind
 
     local sprite = self.entitySprites[spriteKey]
     if sprite then
         local metadata = sprite.metadata
         local x = entity.x * 16 - metadata.originX
         local y = entity.y * 16 - metadata.originY
-        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.setColor(1, 1, 1,
+            definition and definition.alpha and definition.alpha(entity) or 1)
         love.graphics.draw(sprite.image, math.floor(x), math.floor(y))
-    elseif entity.kind == "sacrifice_altar" then
-        love.graphics.draw(self.entitySprites.sac_altar_left.image, entity.x * 16, entity.y * 16)
-        love.graphics.draw(self.entitySprites.sac_altar_right.image, (entity.x + 1) * 16, entity.y * 16)
-    elseif entity.kind == "kali_head" then
-        love.graphics.draw(self.backdropImages.kali_heads[entity.properties.variant],
-            entity.x * 16 - 16, entity.y * 16 - 16)
+        love.graphics.setColor(1, 1, 1, 1)
+    elseif definition and definition.draw then
+        definition.draw(self, entity)
     elseif entity.kind ~= "hidden_sapphire"
         and entity.kind ~= "hidden_emerald"
         and entity.kind ~= "hidden_ruby"
@@ -349,6 +355,42 @@ function WorldGeneration:drawEntity(entity)
         love.graphics.rectangle("fill", fallbackX + 5, fallbackY + 5, 6, 6)
         love.graphics.setColor(1, 1, 1, 1)
     end
+end
+
+function WorldGeneration:drawItem(item, facing)
+    if item.visible == false then return end
+    local kind = item.kind
+    local definition = item.definition or ItemDefinitions[kind]
+    if self.itemAnimationSprites and definition then
+        if definition.drawItem then
+            definition.drawItem(self, item, facing)
+            return
+        end
+        local image = definition.itemImage and definition.itemImage(self, item, facing)
+        if image then
+            local metadata = self.entitySprites[kind].metadata
+            love.graphics.setColor(1, 1, 1, 1)
+            love.graphics.draw(image, math.floor(item.x - metadata.originX),
+                math.floor(item.y - metadata.originY))
+            return
+        end
+    end
+    if (facing or item.facing or 1) < 0 and self.entitySprites[kind .. "_left"] then
+        kind = kind .. "_left"
+    end
+    self:drawEntity({ kind = kind, x = item.x / 16, y = item.y / 16,
+        properties = item.properties })
+end
+
+function WorldGeneration:drawMeleeSwing(player, item)
+    local phase = player:getMeleePhase()
+    if not phase or not item then return end
+    local name, frame, x, y = MeleeMask.pose(player, item.definition.melee,
+        phase, player.meleeStrikeAge)
+    if not name then return end
+    local image = self.meleeSprites[name][frame + 1]
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.draw(image, x, y)
 end
 
 function WorldGeneration:drawRoomPath()

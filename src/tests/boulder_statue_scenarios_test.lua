@@ -3,25 +3,34 @@ local Test = {}
 function Test.run(app)
     local viewer = app.screens.enemy_ai
     viewer:setPage(9)
-    assert(#viewer.scenarios == 2, "Boulder scenarios must be available in Scenario Tests")
+    assert(#viewer.scenarios == 7,
+        "One Boulder & Statue page must include boulder interactions and idol alarms")
     viewer:draw()
-    local fall, wall = unpack(viewer.scenarios)
-    assert(wall.world:has("solid", 5, 8), "The wall replay must begin intact")
-    local rolled, crushed = false, false
+    local fall, wall, block, snake, ruby, armed, untouched = unpack(viewer.scenarios)
+    assert(wall.world:has("solid", 5, 8) and block.block.alive
+        and snake.enemy.alive and ruby.treasure.alive,
+        "The rolling boulder must encounter intact brick, a block, an enemy, and treasure")
+    local rolled, crushed, crushedBlock, crushedSnake, metRuby, passedRuby =
+        false, false, false, false, false, false
     for _ = 1, 140 do
-        viewer:stepScenario(fall)
-        viewer:stepScenario(wall)
+        for _, scenario in ipairs({ fall, wall, block, snake, ruby }) do
+            viewer:stepScenario(scenario)
+        end
         local rock = fall.traps.boulders[1]
         if rock and rock.vx < 0 then rolled = true end
         if not wall.world:has("solid", 5, 8) then crushed = true end
+        if not block.block.alive then crushedBlock = true end
+        if not snake.enemy.alive then crushedSnake = true end
+        local rubyRock = ruby.traps.boulders[1]
+        if rubyRock and math.abs(rubyRock.x - ruby.treasure.x) < 18
+            and math.abs(rubyRock.y - ruby.treasure.y) < 20 then metRuby = true end
+        if metRuby and rubyRock and rubyRock.x < ruby.treasure.x then passedRuby = true end
     end
-    assert(rolled and crushed,
-        "The boulder replays must show a grounded roll and destroyed ordinary brick")
+    assert(rolled and crushed and crushedBlock and crushedSnake,
+        "Rolling boulders must destroy ordinary brick, movable blocks, and enemies")
+    assert(metRuby and passedRuby and ruby.treasure.alive,
+        "The boulder must encounter loose treasure without destroying it, as in Classic")
 
-    viewer:setPage(10)
-    assert(#viewer.scenarios == 2, "Statue scenarios must be available in Scenario Tests")
-    viewer:draw()
-    local armed, untouched = unpack(viewer.scenarios)
     for _ = 1, 103 do
         viewer:stepScenario(armed)
         viewer:stepScenario(untouched)

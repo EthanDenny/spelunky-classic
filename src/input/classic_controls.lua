@@ -124,6 +124,7 @@ function ClassicControls:playerInput()
         up = self:held("up"), down = self:held("down"),
         jump = self:held("jump"), sprint = self:held("run"),
         attack = self:held("attack"), item = self:held("item"),
+        pay = self:held("pay"),
         downToRun = self.settings.downToRun,
     }
 end

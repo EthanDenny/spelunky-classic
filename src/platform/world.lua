@@ -32,6 +32,7 @@ function World.new(width, height, tileSize)
         ladderTop = {},
         rope = {},
         web = {},
+        water = {},
         dynamicWebs = {},
         dynamicSolids = {},
         labels = {},
@@ -52,6 +53,14 @@ function World:remove(kind, x, y)
     local existed = value ~= nil
     self[kind][key(x, y)] = nil
     if kind == "solid" and existed and self.level then
+        local row = self.level.tiles and self.level.tiles[y + 1]
+        local tile = row and row[x + 1]
+        if tile and tile.shopWall then
+            self.destroyedShopWalls = self.destroyedShopWalls or {}
+            self.destroyedShopWalls[#self.destroyedShopWalls + 1] = {
+                x = (x + 0.5) * self.tileSize, y = (y + 0.5) * self.tileSize,
+            }
+        end
         -- Cave lips are generated one cell above their supporting brick.
         -- The original removes that depth-3 tile when the solid is destroyed.
         for index = #(self.level.decorations or {}), 1, -1 do
@@ -101,6 +110,44 @@ function World:webAtPoint(x, y)
         end
     end
     return self:cellAt("web", x, y)
+end
+
+function World:damageWebAtPoint(x, y, damage)
+    damage = damage or 1
+    for index, web in ipairs(self.dynamicWebs) do
+        if x >= web.x and x < web.x + 16 and y >= web.y and y < web.y + 16 then
+            web.life = (web.life or 12) - damage
+            if web.life <= 1 then
+                web.destroyed = true
+                table.remove(self.dynamicWebs, index)
+            end
+            return true
+        end
+    end
+    local tileX, tileY = math.floor(x / self.tileSize), math.floor(y / self.tileSize)
+    local web = self.web[key(tileX, tileY)]
+    if web then
+        if type(web) ~= "table" then
+            web = { life = 12 }
+            self.web[key(tileX, tileY)] = web
+        end
+        web.life = (web.life or 12) - damage
+        if web.life <= 1 then
+            web.destroyed = true
+            self:remove("web", tileX, tileY)
+        end
+        return true
+    end
+    return false
+end
+
+function World:webRect(left, top, right, bottom)
+    if self:overlaps("web", left, top, right, bottom) then return true end
+    for _, web in ipairs(self.dynamicWebs) do
+        if right > web.x and left < web.x + 16
+            and bottom > web.y and top < web.y + 16 then return true end
+    end
+    return false
 end
 
 function World:each(kind, callback)
@@ -203,27 +250,26 @@ function World:solidRect(left, top, right, bottom, ignored)
     return self:dynamicSolidAt(left, top, right, bottom, false, ignored) ~= nil
 end
 
-function World:tryPush(player, direction)
+function World:tryPush(player, direction, block)
     if direction == 0 then return false end
     local halfWidth = player:getCollisionHalfWidth()
     local topOffset, bottomOffset = player:getVerticalBounds()
-    local block = self:dynamicSolidAt(
+    block = block or self:dynamicSolidAt(
         player.x + direction - halfWidth,
         player.y + topOffset,
         player.x + direction + halfWidth,
         player.y + bottomOffset,
         true)
-    if not block or block.targetX or math.abs(block.vy or 0) > 0.01 then return false end
+    if not block or not block.moveable then return false end
 
-    local destinationX = block.x + direction * self.tileSize
+    local destinationX = block.x + direction
     if self:staticSolidRect(destinationX, block.y,
         destinationX + block.width, block.y + block.height)
         or self:dynamicSolidAt(destinationX, block.y,
             destinationX + block.width, block.y + block.height, false, block) then
         return false
     end
-    block.targetX = destinationX
-    block.vx = direction
+    block.x = destinationX
     return true
 end
 
@@ -329,28 +375,26 @@ function World:groundBelow(player)
     end
 end
 
-function World:ledgeFor(player, direction)
-    if self:solidAtPoint(player.x, player.y + 9) then
+function World:ledgeFor(player, direction, wallGrip)
+    if not wallGrip and self:solidAtPoint(player.x, player.y + 9) then
         return nil
     end
-    local halfWidth = player:getCollisionHalfWidth()
-    local sideX = player.x + direction * (halfWidth + 1)
+    local sideX = player.x + direction * 9
     local gripY = player.y - 5
     if not self:solidAtPoint(sideX, gripY) then
         gripY = player.y - 6
     end
     local aboveY = player.y - 9
-    if not self:solidAtPoint(sideX, gripY) or self:solidAtPoint(sideX, aboveY) then
+    if not self:solidAtPoint(sideX, gripY)
+        or (not wallGrip and self:solidAtPoint(sideX, aboveY)) then
         return nil
     end
 
     local tileX = math.floor(sideX / self.tileSize)
     local tileY = math.floor(gripY / self.tileSize)
-    local tileLeft = tileX * self.tileSize
-    local tileTop = tileY * self.tileSize
     return {
-        x = direction > 0 and tileLeft - halfWidth or tileLeft + self.tileSize + halfWidth,
-        y = tileTop + 8,
+        x = player.x,
+        y = math.floor(player.y / 8 + 0.5) * 8,
         direction = direction,
         tileX = tileX,
         tileY = tileY,

@@ -3,13 +3,47 @@ local Enemy = require("src.platform.enemy")
 local Creature = require("src.platform.creature")
 local FakeBones = require("src.platform.fake_bones")
 local Item = require("src.platform.item")
+local ItemActions = require("src.platform.item_actions")
+local FullLevelPlaytest = require("src.screens.full_level_playtest")
 local Player = require("src.platform.player")
 local Treasure = require("src.platform.treasure")
 local World = require("src.platform.world")
+local ToolSystem = require("src.platform.tool_system")
+local RunState = require("src.game.run_state")
 
 local Test = {}
 
+local function jarSeedFor(kind, run)
+    for seed = 1, 10000 do
+        local probe = Item.new({ kind = "jar", x = 0, y = 0 })
+        local rewards = probe:open(run, love.math.newRandomGenerator(seed))
+        if rewards[1] and rewards[1].kind == kind then return seed end
+    end
+    error("No jar roll found for " .. kind)
+end
+
 function Test.run(app)
+    local trappedSeed
+    for seed = 1, 100 do
+        if love.math.newRandomGenerator(seed):random(1, 12) == 1 then
+            trappedSeed = seed
+            break
+        end
+    end
+    assert(trappedSeed, "A trapped-chest seed must exist in the test range")
+    local chestGame = FullLevelPlaytest.new(app)
+    chestGame.world = World.new(12, 12, 16)
+    chestGame.tools = ToolSystem.new(chestGame.world, Player.TICK_RATE)
+    chestGame.effects = Effects.new(trappedSeed)
+    chestGame.run = RunState.new(trappedSeed)
+    chestGame.sounds = { play = function() end }
+    local chest = Item.new({ kind = "chest", x = 5, y = 5 })
+    local chestX, chestY = chest.x, chest.y
+    assert(chestGame:openContainer(chest) and chest.opened
+        and chest.x == chestX and chest.y == chestY
+        and #chestGame.tools.bombs == 1 and chestGame.tools.bombs[1].timer == 40,
+        "A trapped chest must stay open in place and arm its bomb for 40 Classic ticks")
+
     local world = World.new(20, 16, 16)
     world:fill("solid", 0, 12, 20, 4)
     local gem = Treasure.new({ kind = "emerald_big", x = 5, y = 5 }, true)
@@ -67,17 +101,95 @@ function Test.run(app)
 
     local screen = app.screens.full_level_playtest
     local jar = Item.new({ kind = "jar", x = 5, y = 5 }, { width = 16, height = 16 })
-    jar.x = 81 -- the current jar reward table yields an emerald at this location
+    jar.x = 81
     local oldCount = #screen.collectibles
     local oldParticles = #screen.effects.particles
     screen:openContainer(jar)
-    assert(jar.opened and #screen.collectibles == oldCount + 1,
-        "Breaking a jar must create an actual collectible in the playtest")
+    assert(jar.opened, "Breaking a jar must consume it in the playtest")
     assert(#screen.effects.particles == oldParticles + 4,
         "The playtest's jar-break path must produce its visible fragments")
+    -- Classic jars can be empty or contain a creature, so exercise actual
+    -- break rolls until a treasure reward appears instead of assuming one.
+    for _ = 1, 100 do
+        if #screen.collectibles > oldCount then break end
+        local nextJar = Item.new({ kind = "jar", x = 5, y = 5 })
+        screen:openContainer(nextJar)
+    end
+    assert(#screen.collectibles > oldCount,
+        "Jar break rolls must sometimes release a real collectible")
     local reward = screen.collectibles[#screen.collectibles]
     assert(reward.active and reward.pickupDelay == 20,
         "The jar reward must enter loose-treasure physics before collection")
+
+    local webGame = FullLevelPlaytest.new(app)
+    webGame.world = World.new(12, 12, 16)
+    webGame.player = Player.new(64, 88)
+    webGame.player.facing = 1
+    webGame.player.whipping = true
+    webGame.player.animationFrame = 5
+    local web = { kind = "web", x = 5, y = 5, life = 12 }
+    webGame.level = { entities = { web } }
+    webGame.world:set("web", 5, 5, web)
+    assert(webGame.player:whipOverlapsRectangle(80, 80, 96, 96),
+        "The web regression needs an actual whip collision")
+    webGame:checkWhip()
+    assert(webGame.world:webAtPoint(88, 88) and not web.destroyed,
+        "A single ordinary whip must not instantly remove a 12-life web")
+    webGame.player.x, webGame.player.y = 88, 104
+    webGame.player.attackKind = "machete"
+    webGame.player.meleeFacing = 1
+    webGame.items = {}
+    webGame.enemies = {}
+    webGame.sounds = { play = function() end }
+    webGame.meleeItem = Item.new({ kind = "machete", x = 4.5, y = 5.5 })
+    webGame.meleeItem.held = true
+    webGame.meleeHits = { back = {}, front = {} }
+    ItemActions.updateMelee(webGame)
+    assert(web.destroyed and not webGame.world:webAtPoint(88, 88),
+        "Classic's machete slash must cut a web on contact")
+
+    local collisionGame = FullLevelPlaytest.new(app)
+    collisionGame.world = World.new(16, 12, 16)
+    collisionGame.level = { entities = {} }
+    collisionGame.renderer = app.screens.world_generation
+    collisionGame.seed = 29
+    collisionGame.items = {}
+    collisionGame.collectibles = {}
+    collisionGame.effects = Effects.new(29)
+    collisionGame.run = RunState.new(29)
+    collisionGame.sounds = { play = function() end }
+    collisionGame.enemies = { Enemy.new("snake", 96, 80, { seed = 29 }) }
+    local flyingJar = Item.new({ kind = "jar", x = 5.5, y = 5 })
+    flyingJar.vx = 7
+    flyingJar.x = 96
+    collisionGame:resolveItemEnemyContact(flyingJar)
+    assert(flyingJar.opened and #collisionGame.effects.particles >= 4,
+        "A jar hitting an enemy must smash and emit its break particles")
+
+    collisionGame.enemies = {}
+    collisionGame.player = Player.new(96, 80)
+    local fallingRock = Item.new({ kind = "rock", x = 6, y = 5 })
+    fallingRock.vy = 5
+    fallingRock.safeTimer = 2
+    local health = collisionGame.player.health
+    collisionGame:resolveItemPlayerContact(fallingRock)
+    assert(collisionGame.player.health == health,
+        "A just-thrown object must remain harmless during its safe period")
+    fallingRock.safeTimer = 0
+    collisionGame:resolveItemPlayerContact(fallingRock)
+    assert(collisionGame.player.health < health,
+        "A fast falling rock overlapping the player must hurt them")
+    collisionGame.player = Player.new(96, 80)
+    local slowRock = Item.new({ kind = "rock", x = 6, y = 5 })
+    slowRock.vy = 3
+    collisionGame:resolveItemPlayerContact(slowRock)
+    assert(collisionGame.player.health == health,
+        "A gently falling object must not damage the player")
+    local movingArrow = Item.new({ kind = "arrow", x = 6, y = 5 })
+    movingArrow.vx = 5
+    collisionGame:resolveItemPlayerContact(movingArrow)
+    assert(movingArrow.opened and collisionGame.player.health == health - 2,
+        "A fast arrow must hurt the player and be consumed on impact")
 
     local defeated = Enemy.new("snake", screen.player.x + 32, screen.player.y)
     defeated.alive = false
@@ -254,9 +366,14 @@ function Test.run(app)
         pot.vx, pot.vy = case.vx, case.vy
         screen.items = { pot }
         screen:simulationStepBody({})
-        assert(pot.opened and #screen.enemies == 1
-            and screen.enemies[1].kind == "snake",
-            "A " .. case.name .. "-broken pot must release its snake")
+        assert(pot.opened, "A " .. case.name .. " impact must break the pot")
+        screen.enemies = {}
+        screen.effects.random = love.math.newRandomGenerator(jarSeedFor("snake", screen.run))
+        local rewardPot = Item.new({ kind = "jar", x = pot.x / 16, y = pot.y / 16 })
+        rewardPot.impactSide = case.name == "wall" and "right" or case.name
+        screen:openContainer(rewardPot)
+        assert(#screen.enemies == 1 and screen.enemies[1].kind == "snake",
+            "A " .. case.name .. "-broken pot must be able to release its snake")
         local snake = screen.enemies[1]
         assert(not potWorld:collidesSolid(snake, snake.x, snake.y),
             "A " .. case.name .. "-broken pot must not create a snake inside terrain")
@@ -272,8 +389,13 @@ function Test.run(app)
     gemPot.vx, gemPot.vy = -8.53, -6
     screen.items = { gemPot }
     screen:simulationStepBody({})
-    assert(gemPot.opened and #screen.collectibles == 1,
-        "A ceiling-broken pot must release its gem")
+    assert(gemPot.opened, "A ceiling impact must break the pot")
+    screen.collectibles = {}
+    screen.effects.random = love.math.newRandomGenerator(jarSeedFor("emerald_big", screen.run))
+    local rewardPot = Item.new({ kind = "jar", x = gemPot.x / 16, y = gemPot.y / 16 })
+    rewardPot.impactSide = "ceiling"
+    screen:openContainer(rewardPot)
+    assert(#screen.collectibles == 1, "A ceiling-broken pot must be able to release its gem")
     local releasedGem = screen.collectibles[1]
     assert(not gemWorld:collidesSolid(releasedGem, releasedGem.x, releasedGem.y),
         "A pot gem must spawn clear of the ceiling that broke its pot")

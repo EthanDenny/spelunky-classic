@@ -57,12 +57,36 @@ function OriginalHUD:loadAssets()
     self.images.bowDisplay = loadImage(
         "original-game-reference/source/extracted/spelunky/Sprites/Items/Saleable/"
             .. "sBowDisp.images/image 0.png")
+    local compassRoot = "original-game-reference/source/extracted/spelunky/Sprites/Items/Saleable/"
+    for _, direction in ipairs({ "LL", "LR", "Down", "Left", "Right" }) do
+        self.images["compass" .. direction] = loadImage(compassRoot
+            .. "sCompass" .. direction .. ".images/image 0.png")
+    end
 
     self.glyphs = {}
     local fontRoot = "original-game-reference/source/extracted/config/Sprites/sFont.images/"
     for frame = 0, 58 do
         self.glyphs[frame] = loadImage(fontRoot .. "image " .. frame .. ".png")
     end
+end
+
+function OriginalHUD:drawCompass(compass)
+    if not compass then return end
+    local exitX = compass.exitX - compass.cameraX
+    local exitY = compass.exitY - compass.cameraY
+    local width, height = compass.width, compass.height
+    local image, x, y
+    if exitY > height then
+        y = height - 16
+        if exitX < 0 then image, x = self.images.compassLL, 0
+        elseif exitX > width - 16 then image, x = self.images.compassLR, width - 16
+        else image, x = self.images.compassDown, exitX end
+    elseif exitX < 0 then
+        image, x, y = self.images.compassLeft, 0, exitY
+    elseif exitX > width - 16 then
+        image, x, y = self.images.compassRight, width - 16, exitY
+    end
+    if image then love.graphics.draw(image, math.floor(x), math.floor(y)) end
 end
 
 function OriginalHUD:drawText(value, x, y)
@@ -132,7 +156,7 @@ function OriginalHUD:draw(state)
 
     self:drawHeldItem(state.heldItem)
     self:drawEquipment(state.equipment)
-    if state.compassDirection then self:drawText(state.compassDirection, 352, layout.top) end
+    self:drawCompass(state.compass)
     love.graphics.setColor(1, 1, 1, 1)
 end
 

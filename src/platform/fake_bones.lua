@@ -2,6 +2,7 @@
 -- an oSkeleton. Ordinary oBones never activate.
 local FakeBones = {}
 FakeBones.__index = FakeBones
+FakeBones.depth = 900
 
 local frames
 

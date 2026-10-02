@@ -1,37 +1,10 @@
+-- Shared body, held-NPC, and player-contact rules for generated-level actors.
+-- Kind-specific capabilities live beside the smaller enemies in enemies/.
+local Types = require("src.platform.enemies.types")
+local Holdable = require("src.platform.holdable")
+
 local Creature = {}
 Creature.__index = Creature
-local GiantSpider = require("src.platform.giant_spider")
-
-local skeletonSprites
-
-local function loadSkeletonSprites()
-    if skeletonSprites then return skeletonSprites end
-    skeletonSprites = { walk = {} }
-    local idle = love.graphics.newImage(
-        "original-game-reference/source/extracted/spelunky/Sprites/Enemies/Skeleton/sSkeletonLeft.images/image 0.png")
-    idle:setFilter("nearest", "nearest")
-    skeletonSprites.idle = idle
-    for index = 0, 4 do
-        local image = love.graphics.newImage(string.format(
-            "assets/original/animations/sSkeletonWalkLeft/%03d.png", index))
-        image:setFilter("nearest", "nearest")
-        skeletonSprites.walk[#skeletonSprites.walk + 1] = image
-    end
-    return skeletonSprites
-end
-
-local CONFIG = {
-    caveman = { ai = "ground", hp = 3, speed = 1.1 },
-    skeleton = { ai = "ground", hp = 1, speed = 1.0 },
-    ghost = { ai = "flyer", hp = 999, speed = 0.75, aggressive = true, lethal = true },
-    giant_spider = { hp = 10, width = 32 },
-    damsel = { ai = "damsel", hp = 4, speed = 1.2, npc = true },
-    shopkeeper = { ai = "shopkeeper", hp = 20, speed = 2.8, aggressive = true, npc = true },
-}
-
-function Creature.supports(kind)
-    return CONFIG[kind] ~= nil
-end
 
 local function sign(value)
     if value < 0 then return -1 end
@@ -39,31 +12,30 @@ local function sign(value)
     return 0
 end
 
-local function distanceSquared(a, b)
-    local dx, dy = a.x - b.x, a.y - b.y
-    return dx * dx + dy * dy
+function Creature.supports(kind)
+    return Types[kind] and Types[kind].creatureConfig ~= nil or false
 end
 
 function Creature.new(entity, metadata, options)
     options = options or {}
-    local config = assert(CONFIG[entity.kind], "Unsupported creature: " .. tostring(entity.kind))
+    local spec = Types[entity.kind]
+    assert(spec and spec.creatureConfig, "Unsupported creature: " .. tostring(entity.kind))
+    local config = spec.creatureConfig
     metadata = metadata or {}
     local width = config.width or metadata.width or 16
     local height = config.height or metadata.height or 16
     local originX = metadata.originX or 0
     local originY = metadata.originY or 0
     local anchorX, anchorY = entity.x * 16, entity.y * 16
-    -- oGhost's 24px sprite has a smaller mask at (4, 0)-(12, 16).
-    local insetX = entity.kind == "ghost" and 4 or 0
-    local insetY = entity.kind == "ghost" and 8 or 0
-    local x = anchorX - originX + width / 2 - insetX
-    local y = anchorY - originY + height - insetY
+    local insetX = spec.creatureInsetX or 0
+    local insetY = spec.creatureInsetY or 0
     local creature = setmetatable({
         entity = entity,
         kind = entity.kind,
+        spec = spec,
         config = config,
-        x = x,
-        y = y,
+        x = anchorX - originX + width / 2 - insetX,
+        y = anchorY - originY + height - insetY,
         vx = 0,
         vy = 0,
         width = width,
@@ -73,7 +45,7 @@ function Creature.new(entity, metadata, options)
         hp = config.hp,
         alive = true,
         facing = options.facing or -1,
-        timer = entity.kind == "skeleton" and 20 or 15 + ((options.seed or 1) % 30),
+        timer = spec.creatureInitialTimer or 15 + ((options.seed or 1) % 30),
         animation = 0,
         cooldown = 0,
         stunned = 0,
@@ -86,22 +58,20 @@ function Creature.new(entity, metadata, options)
         state = "idle",
         dropThroughTimer = 0,
     }, Creature)
-    if creature.kind == "giant_spider" then GiantSpider.initialize(creature, options.seed) end
+    if spec.initializeCreature then spec.initializeCreature(creature, options.seed) end
     return creature
 end
 
 function Creature:getCollisionHalfWidth()
-    if self.kind == "giant_spider" and self.state == "hang" then return 16 end
-    if self.kind == "damsel" or self.kind == "ghost" then return 4 end
-    return math.max(3, self.width / 2 - 2)
+    local width = self.spec.creatureHalfWidth
+    if type(width) == "function" then return width(self) end
+    return width or math.max(3, self.width / 2 - 2)
 end
 
 function Creature:getVerticalBounds()
-    -- oGiantSpiderHang masks its whole 16px sprite; oGiantSpider masks only
-    -- the lower 16px of its 32px animation (setCollisionBounds(2,16,30,32)).
-    if self.kind == "giant_spider" then return -16, 0 end
-    if self.kind == "damsel" then return -12, 0 end
-    if self.kind == "ghost" then return -16, 0 end
+    local bounds = self.spec.creatureVerticalBounds
+    if type(bounds) == "function" then return bounds(self) end
+    if bounds then return bounds[1], bounds[2] end
     return -self.height, 0
 end
 
@@ -136,7 +106,9 @@ function Creature:moveVertical(world, amount)
     local direction = sign(amount)
     for _ = 1, math.floor(math.abs(amount) + 0.5) do
         local nextY = self.y + direction
-        if world:collidesSolid(self, self.x, nextY) then return direction > 0 and "floor" or "ceiling" end
+        if world:collidesSolid(self, self.x, nextY) then
+            return direction > 0 and "floor" or "ceiling"
+        end
         if direction > 0 then
             local landing = world:platformLanding(self, self.y, nextY)
             if landing then self.y = landing return "floor" end
@@ -159,14 +131,10 @@ function Creature:web(duration)
     self.webbed = math.max(self.webbed, duration or 60)
 end
 
-function Creature:damage(amount, sourceX)
-    if not self.alive then return false end
-    if self.kind == "ghost" then return false end
+function Creature:damage(amount, sourceX, hit)
+    if not self.alive or self.spec.canDamage and not self.spec.canDamage(self) then return false end
+    if self.spec.damage then return self.spec.damage(self, amount, sourceX, hit) end
     self.hp = self.hp - (amount or 1)
-    if self.kind == "giant_spider" then
-        if self.hp <= 0 then self.alive, self.state = false, "dead" end
-        return true
-    end
     self.stunned = self.hp > 0 and 20 or 0
     if sourceX then self.vx = self.x < sourceX and -3 or 3 end
     self.vy = -3
@@ -174,11 +142,14 @@ function Creature:damage(amount, sourceX)
         self.alive = false
         self.state = "dead"
     end
+    if self.alive and hit then
+        self.vx, self.vy = hit.vx or self.vx, hit.vy or self.vy
+    end
     return true
 end
 
 function Creature:pickup(player)
-    if not self.alive or self.kind ~= "damsel" or self.held then return false end
+    if not self.alive or not self.spec.canBeHeld or self.held then return false end
     self.held = true
     self.state = "held"
     self.vx, self.vy = 0, 0
@@ -187,97 +158,46 @@ function Creature:pickup(player)
 end
 
 function Creature:updateHeldPosition(player)
-    self.x = player.x + player.facing * 3
-    self.y = player.y + 3
+    Holdable.position(self, player)
 end
 
-function Creature:throw(player, input)
-    self.held = false
-    self.state = "stunned"
-    self.stunned = 90
-    self.vx = player.facing * 5 + player.vx
-    self.vy = input and input.up and -7 or -3
+function Creature:throw(player, input, world)
+    self.y = self.y - 4
+    Holdable.throw(self, player, input, world)
+    if self.spec.onThrown then self.spec.onThrown(self) end
 end
 
 function Creature:updateAI(world, player, context)
-    local ai = self.config.ai
-    local dist2 = player and distanceSquared(self, player) or math.huge
-    if ai == "ground" and self.kind == "skeleton" then
-        if self.timer > 0 then
-            self.timer = self.timer - 1
-            self.vx = 0
-        else
-            self.vx = self.facing * self.config.speed
-        end
-        local before = self.vx
-        self:groundPhysics(world)
-        if before ~= 0 and self.vx ~= before then self.facing = -self.facing end
-        return
-    elseif ai == "flyer" then
-        if player and dist2 < 180 * 180 then
-            self.facing = player.x < self.x and -1 or 1
-            self.vx = self.vx * 0.8 + sign(player.x - self.x) * self.config.speed * 0.2
-            self.vy = self.vy * 0.8 + sign(player.y - self.y) * self.config.speed * 0.15
-            self:moveHorizontal(world, self.vx)
-            self:moveVertical(world, self.vy)
-        end
-        return
-    elseif ai == "shopkeeper" then
-        self.angry = self.angry or (context and context.run and context.run.shopkeeperAnger > 0)
-        if not self.angry then
-            self.facing = player and player.x < self.x and -1 or 1
-            self.vx = 0
-        elseif player then
-            self.facing = player.x < self.x and -1 or 1
-            self.vx = self.facing * self.config.speed
-            if self.cooldown == 0 and dist2 < 120 * 120 and context and context.projectiles then
-                for spread = -1, 1 do
-                    context.projectiles:spawn("pellet", self.x, self.y - 7,
-                        self.facing * 10, spread * 0.45, self, { damage = 1, life = 24 })
-                end
-                self.cooldown = 30
-            end
-        end
-    elseif ai == "damsel" then
-        self.timer = self.timer - 1
-        if self.timer <= 0 then
-            self.facing = -self.facing
-            self.timer = 90
-        end
-        self.vx = self.facing * 0.35
-    else
-        if player and (self.config.aggressive or dist2 < 80 * 80) then
-            self.facing = player.x < self.x and -1 or 1
-        elseif self.timer <= 0 then
-            self.facing = -self.facing
-            self.timer = 45
-        end
-        self.timer = self.timer - 1
-        self.vx = self.facing * self.config.speed
-    end
-    self:groundPhysics(world)
+    self.spec.creatureStep(self, world, player, context)
 end
 
 function Creature:step(world, player, context)
     if not self.alive then return end
-    if self.kind == "giant_spider" then
-        GiantSpider.step(self, world, player, context)
+    if self.spec.stepCreature then
+        self.spec.stepCreature(self, world, player, context)
         return
     end
-    if self.kind == "skeleton" then self.animation = self.animation + 1 end
+    self.animation = self.animation + (self.spec.creatureAnimationPerTick or 0)
     if self.cooldown > 0 then self.cooldown = self.cooldown - 1 end
     if self.webbed > 0 then self.webbed = self.webbed - 1 return end
     if self.held then self:updateHeldPosition(player) return end
     if self.stunned > 0 then
-        self.stunned = self.stunned - 1
-        self:groundPhysics(world)
+        if self.spec.stunnedStep then
+            self.spec.stunnedStep(self, world)
+        else
+            self.stunned = self.stunned - 1
+            self:groundPhysics(world)
+        end
         return
     end
     self:updateAI(world, player, context)
 end
 
 function Creature:resolvePlayerContact(player, previousY)
-    if not self.alive or self.held or self.kind == "damsel" or not self:overlapsPlayer(player) then return end
+    if not self.alive or self.held or self.spec.canContact == false
+        or not self:overlapsPlayer(player) then return end
+    if self.spec.canReachPlayer and not self.spec.canReachPlayer(self, player) then return end
+    if self.spec.resolvePlayerContact then return self.spec.resolvePlayerContact(self, player, previousY) end
     local _, playerBottom = player:getVerticalBounds()
     local _, enemyTop = self:getBounds()
     if player.vy > 0 and previousY + playerBottom <= enemyTop + 3 then
@@ -287,29 +207,13 @@ function Creature:resolvePlayerContact(player, previousY)
         player:setState("jumping")
         return "stomp"
     end
-    if self.config.lethal then
-        player.invincibleTimer = 0
-        return player:hurt(self.x, player.health, "ghost") and "hurt" or "invincible"
-    end
-    local amount = self.kind == "giant_spider" and 2 or 1
-    return player:hurt(self.x, amount, self.kind) and "hurt" or "invincible"
+    if self.spec.contactPlayer then return self.spec.contactPlayer(self, player) end
+    return player:hurt(self.x, 1, self.kind) and "hurt" or "invincible"
 end
 
 function Creature:draw(renderer)
     if not self.alive then return end
-    if self.kind == "giant_spider" then
-        GiantSpider.draw(self)
-        return
-    end
-    if self.kind == "skeleton" then
-        local sprites = loadSkeletonSprites()
-        local image = self.vx == 0 and sprites.idle
-            or sprites.walk[(math.floor(self.animation * 0.5) % #sprites.walk) + 1]
-        love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.draw(image, math.floor(self.x), math.floor(self.y - self.height),
-            0, self.facing < 0 and 1 or -1, 1, 8, 0)
-        return
-    end
+    if self.spec.drawCreature then return self.spec.drawCreature(self, renderer) end
     renderer:drawEntity({
         kind = self.kind,
         x = (self.x - self.width / 2 + self.drawOriginX) / 16,

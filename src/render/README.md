@@ -1,8 +1,9 @@
 # Mines rendering order
 
 Classic GameMaker draws larger `depth` values first (behind smaller values).
-`classic_depth.lua` is the single curated mapping for visible Mines kinds and
-state changes; `depth_queue.lua` sorts draw submissions back-to-front and keeps
+Each object or tile module declares its Classic depth and any state changes.
+`classic_depth.lua` resolves those definitions; `depth_queue.lua` sorts draw
+submissions back-to-front and keeps
 submission order for equal depths. The source does not establish an equal-depth
 tie rule we can rely on, so equal-depth overlap is explicitly our choice. Loose
 rocks are submitted before brick tiles at depth 100 so foreground brick pixels
@@ -32,7 +33,8 @@ original exit/lava animation phases. Do not fake them with a permanent depth.
 Thrown ropes are at 100; deployed rope tops and segments are at 200.
 
 When adding a visible kind or state, find the original object and its Step/End
-Step depth changes, add the mapping (unknown kinds fail loudly), submit the
+Step depth changes, declare the depth in its object module (unknown kinds fail
+loudly), submit the
 object from its owner into the queue, and add a rendered-order regression in
 `src/tests/render_depth_test.lua` for at least one relevant occlusion boundary.
 Keep the queue inside the world camera transform; never put HUD or darkness

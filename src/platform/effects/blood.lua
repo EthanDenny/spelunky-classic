@@ -1,0 +1,10 @@
+return { prefix = "assets/original/animations/sBlood/", count = 3, origin = 4,
+    life = 60,
+    motion = "detritus",
+    randomGravity = true,
+    trail = true,
+    floorLife = 20,
+    maxFallSpeed = 6,
+    frameSpeed = 0.3,
+    loop = true,
+}

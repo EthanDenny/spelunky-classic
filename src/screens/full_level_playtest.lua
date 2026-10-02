@@ -5,6 +5,7 @@ local GeneratedWorld = require("src.platform.generated_world")
 local Player = require("src.platform.player")
 local Enemy = require("src.platform.enemy")
 local Item = require("src.platform.item")
+local ItemActions = require("src.platform.item_actions")
 local Treasure = require("src.platform.treasure")
 local Effects = require("src.platform.effects")
 local FakeBones = require("src.platform.fake_bones")
@@ -18,6 +19,11 @@ local RunState = require("src.game.run_state")
 local Depth = require("src.render.classic_depth")
 local DepthQueue = require("src.render.depth_queue")
 local ClassicSounds = require("src.audio.classic_sounds")
+local PhysicalBody = require("src.platform.physical_body")
+local Shop = require("src.platform.shop")
+local Shopkeeper = require("src.platform.enemies.shopkeeper")
+local Spikes = require("src.platform.traps.spikes")
+local Exit = require("src.platform.structures.exit")
 
 local FullLevelPlaytest = {}
 FullLevelPlaytest.__index = FullLevelPlaytest
@@ -76,6 +82,8 @@ function FullLevelPlaytest.new(app)
         throwSound = nil,
         sounds = ClassicSounds.new(),
         actionHeld = false,
+        payHeld = false,
+        payQueued = false,
         climbSoundTick = 0,
         climbSoundToggle = false,
         tools = nil,
@@ -101,30 +109,51 @@ function FullLevelPlaytest:loadAssets()
         or love.audio.newSource("original-game-reference/sound/hit.wav", "static")
     self.throwSound = self.throwSound
         or love.audio.newSource("original-game-reference/sound/throw.wav", "static")
-    if not self.spikeBloodImage then
-        self.spikeBloodImage = love.graphics.newImage(
-            "original-game-reference/source/extracted/spelunky/Sprites/Traps/sSpikesBlood.images/image 0.png")
-        self.spikeBloodImage:setFilter("nearest", "nearest")
-    end
+    self.spikeBloodImage = Spikes.bloodImage()
     self.hud = self.hud or OriginalHUD.new(self.renderer)
     self.hud:loadAssets()
 end
 
 function FullLevelPlaytest:captureHeldItem()
     if not self.heldItem then return end
-    if self.heldItem.kind == "gold_idol" then
-        Item.collect(self.heldItem.kind, self.run, self.player)
+    if self.heldItem.kind == "bomb" then return end
+    if self.heldItem.definition.pickup then
+        Item.collect(self.heldItem.kind, self.run, self.player, self)
     else
         self.run.heldItem = {
             kind = self.heldItem.kind,
             properties = self.heldItem.properties,
-            durability = self.heldItem.durability,
+            new = self.heldItem.new,
         }
     end
 end
 
 function FullLevelPlaytest:captureHeldNpc()
     if self.heldNpc and self.heldNpc.kind == "damsel" then self.run.heldDamsel = true end
+end
+
+function FullLevelPlaytest:configureProjectiles()
+    self.projectiles.onImpact = function(kind, projectile, enemy)
+        if kind == "solid" then
+            self.effects:add("smoke", projectile.x, projectile.y)
+        elseif kind == "player" then
+            self.effects:blood(enemy.x, enemy.y, 1)
+            return
+        elseif enemy and enemy.kind ~= "skeleton" then
+            self.effects:blood(enemy.x, enemy.y - 8, 1)
+        end
+        self.sounds:play("hit")
+    end
+    self.projectiles.onHitItem = function(item)
+        if item.kind == "jar" then
+            self:openContainer(item)
+        else
+            self.effects:skullBreak(item.x, item.y)
+            self.sounds:play("break_item")
+            item.opened = true
+            item.x, item.y = -1000, -1000
+        end
+    end
 end
 
 function FullLevelPlaytest:generateLevel(seed)
@@ -189,14 +218,16 @@ function FullLevelPlaytest:buildSimulation()
     self.hiddenEntities = {}
     self.heldItem = nil
     self.heldNpc = nil
+    self.meleeItem = nil
     self.projectiles = ProjectileSystem.new(self.world)
+    self:configureProjectiles()
     self.dynamicEntities = {}
     self.spikeEntities = {}
     self.fakeBones = {}
-    if self.run.shopkeeperAnger > 0 and self.level.exit then
+    if (self.run.shopkeeperAnger > 0 or self.run.murderer) and self.level.exit then
         self.level.entities[#self.level.entities + 1] = {
             kind = "shopkeeper",
-            x = self.level.exit.x + 1,
+            x = self.level.exit.x,
             y = self.level.exit.y,
             properties = { exitGuard = true },
         }
@@ -244,8 +275,8 @@ function FullLevelPlaytest:buildSimulation()
         self.run.heldItem = nil
         local item = self:spawnEntity(carried.kind, self.player.x, self.player.y, carried.properties)
         if item then
-            item.durability = carried.durability or item.durability
-            item:pickup(self.player)
+            item.new = carried.new == nil and true or carried.new
+            item:pickup(self.player, self.run)
             self.heldItem = item
         end
     end
@@ -261,6 +292,7 @@ function FullLevelPlaytest:buildSimulation()
     self.deathTimer = 0
     self.exitReady = false
     self.actionHeld = false
+    self.payHeld, self.payQueued = false, false
     self.weaponCooldown = 0
     self.levelTime = 0
     self.ghostSpawned = false
@@ -282,12 +314,7 @@ function FullLevelPlaytest:getInput()
     return self.app.controls:playerInput()
 end
 
-function FullLevelPlaytest:isNearExit()
-    if not self.level.exit or not self.player then return false end
-    local exitX = self.level.exit.x * 16 + 8
-    local exitY = self.level.exit.y * 16 + 8
-    return math.abs(self.player.x - exitX) <= 11 and math.abs(self.player.y - exitY) <= 15
-end
+FullLevelPlaytest.isNearExit = Exit.isNear
 
 function FullLevelPlaytest:advanceLevel()
     if self.levelNumber >= MINES_DEPTHS then
@@ -308,22 +335,7 @@ function FullLevelPlaytest:advanceLevel()
     self:generateLevel(self.seed)
 end
 
-function FullLevelPlaytest:checkSpikes()
-    if self.player:isDead() or self.player.vy <= 0
-        or (self.player.fallTimer <= 4 and not self.player:isStunned()) then return end
-    local x, y = self.player.x, self.player.y
-    for _, spike in ipairs(self.spikeEntities) do
-        local left = spike.x * 16
-        local top = spike.y * 16
-        if not spike.destroyed and x + 4 > left and x - 4 < left + 16
-            and y + 8 > top and y - 4 < top + 16 then
-            spike.bloody = true
-            self.effects:blood(x, y, 3)
-            self.player:kill("spikes", 0, 0)
-            return
-        end
-    end
-end
+FullLevelPlaytest.checkSpikes = Spikes.check
 
 function FullLevelPlaytest:checkWhip()
     local left = self.player:getWhipHitbox()
@@ -332,20 +344,20 @@ function FullLevelPlaytest:checkWhip()
         if enemy.alive and self.player:whipCanHit(enemy)
             and self.player:whipOverlapsRectangle(enemy:getBounds()) then
             self.player:markWhipHit(enemy)
-            enemy:damage(1)
+            if enemy.kind == "shopkeeper" then enemy:damage(0, self.player.x, { kind = "whip" })
+            elseif enemy.kind == "damsel" and enemy.forSale then
+                enemy.vy = -2
+                Shop.anger(self, enemy.x, enemy.y, "YOU'LL PAY FOR YOUR CRIMES!")
+            else enemy:damage(1) end
             if enemy.kind == "snake" then
                 self.effects:blood(enemy.x, enemy.y - 8, 1)
-            end
-            if enemy.kind == "shopkeeper" then
-                enemy.angry = true
-                self.run:angerShopkeepers("VANDAL! THIEF!")
             end
             if self.hitSound then self.hitSound:clone():play() end
         end
     end
     for _, item in ipairs(self.items) do
-        if not item.held and not item.opened
-            and (item.kind == "jar" or item.kind == "crate" or item.kind == "chest") then
+        if not item.held and not item.opened and item.definition.container
+            and item.definition.container.effect == "jar" then
             local half = item:getCollisionHalfWidth()
             local itemTop, itemBottom = item:getVerticalBounds()
             if self.player:whipOverlapsRectangle(item.x - half, item.y + itemTop,
@@ -354,35 +366,37 @@ function FullLevelPlaytest:checkWhip()
             end
         end
     end
-    for _, entity in ipairs(self.level.entities) do
-        if entity.kind == "web" and not self.dynamicEntities[entity] then
-            local entityLeft, entityTop = entity.x * 16, entity.y * 16
-            if self.player:whipOverlapsRectangle(entityLeft, entityTop,
-                entityLeft + 16, entityTop + 16) then
-                self.dynamicEntities[entity] = true
-                self.world:remove("web", math.floor(entity.x), math.floor(entity.y))
-            end
-        end
-    end
 end
 
 function FullLevelPlaytest:openContainer(item)
     local x, y = item.x, item.y
-    local reward, message = item:open(self.run)
-    if item.kind == "jar" then
-        self.effects:jarBreak(x, y)
+    local rewards, message = item:open(self.run, self.effects.random)
+    if not rewards then
+        if message then self.run:addMessage(message, 60) end
+        return false
+    end
+    local effect = item.definition.container.effect
+    if effect == "jar" then
+        self.effects:jarBreak(x, y, item.impactSide)
         self.sounds:play("break_item")
-    elseif item.kind == "chest" or item.kind == "locked_chest" then
+    elseif effect == "smoke" then
+        self.effects:add("poof", x, y)
+    elseif effect == "unlock" then
+        self.effects:add("poof", x, y, -0.4)
+        self.effects:add("poof", x, y, 0.4)
+        self.sounds:play("chest_open")
+    elseif not (rewards[1] and rewards[1].trapped) then
         self.sounds:play("chest_open")
     end
-    if reward == "snake" and item.kind == "jar" then
+    for _, reward in ipairs(rewards) do
+    if reward.kind == "snake" and effect == "jar" then
         -- oJar's Destroy event creates an oSnake at x/y-8 after a left hit,
         -- x-16/y-8 after a right hit, and x-8/y-8 otherwise. Our enemy
         -- coordinates are bottom-center rather than GameMaker's top-left.
         local snakeX = x + (item.impactSide == "left" and 8
             or item.impactSide == "right" and -8 or 0)
         local snakeY = y + 8
-        local snake = self:spawnEntity(reward, snakeX, snakeY)
+        local snake = self:spawnEntity(reward.kind, snakeX, snakeY)
         if self.world:collidesSolid(snake, snake.x, snake.y) then
             local normal = item.impactSide == "left" and { 1, 0 }
                 or item.impactSide == "right" and { -1, 0 }
@@ -407,13 +421,21 @@ function FullLevelPlaytest:openContainer(item)
                 if placed then break end
             end
         end
-    elseif reward then
-        -- oJar creates treasure at its own origin; the old y-4 offset could
-        -- insert a four-pixel gem into the ceiling that broke the pot.
-        self:spawnEntity(reward, x, item.kind == "jar" and y or y - 4)
+    elseif reward.kind == "bomb" then
+        self.tools:spawnBomb(x, y, { vx = reward.vx, vy = reward.vy,
+            timer = 40 })
+        self.sounds:play("trap")
+    else
+        local spawned = self:spawnEntity(reward.kind, x, y)
+        if spawned then
+            spawned.vx = reward.vx or spawned.vx
+            spawned.vy = reward.vy or spawned.vy
+        end
+    end
     end
     if message then self.run:addMessage(message, 60) end
-    item.x, item.y = -1000, -1000
+    if item.kind ~= "chest" then item.x, item.y = -1000, -1000 end
+    return true
 end
 
 function FullLevelPlaytest:checkCollectibles()
@@ -427,19 +449,14 @@ function FullLevelPlaytest:checkCollectibles()
                 and y + 8 > self.player.y + top and y - 8 < self.player.y + bottom then
                 if entity.properties and entity.properties.forSale then
                     local price = Item.price(entity.kind, self.level.absoluteLevel)
-                    self.run:addMessage("$" .. price .. " - DOWN+ATTACK TO BUY", 45)
-                else
-                    local message = Item.collect(entity.kind, self.run, self.player)
-                    collectible.alive = false
-                    if entity.kind == "gold_bar" or entity.kind == "gold_bars" then
-                        self.sounds:play("coin")
-                    elseif entity.kind == "emerald_big" or entity.kind == "sapphire_big"
-                        or entity.kind == "ruby_big" then
-                        self.sounds:play("gem")
-                    else
-                        self.sounds:play("pickup")
+                    if not self.run:currentMessage() then
+                        self.run:addMessage("$" .. price .. " - PICK UP, THEN "
+                            .. self.app.controls:label("pay") .. " TO BUY", 45)
                     end
-                    if entity.kind == "key" then self.run.hasKey = true end
+                else
+                    local message = Item.collect(entity.kind, self.run, self.player, self)
+                    collectible.alive = false
+                    self.sounds:play(Item.pickupSound(entity.kind))
                     if message then self.run:addMessage(message, 75) end
                 end
             end
@@ -461,119 +478,13 @@ function FullLevelPlaytest:revealHiddenContents()
     end
 end
 
-function FullLevelPlaytest:buyNearbyCollectible()
-    for _, collectible in ipairs(self.collectibles) do
-        local entity = collectible.entity
-        if collectible.alive and entity.properties and entity.properties.forSale
-            and math.abs(self.player.x - entity.x * 16) < 14
-            and math.abs(self.player.y - entity.y * 16) < 18 then
-            local price = Item.price(entity.kind, self.level.absoluteLevel)
-            if self.run.money < price then
-                self.run:addMessage("YOU CAN'T AFFORD IT!", 90)
-                return true
-            end
-            self.run.money = self.run.money - price
-            local message = Item.collect(entity.kind, self.run, self.player)
-            collectible.alive = false
-            self.sounds:play("pickup")
-            self.run:addMessage(message or "PURCHASED", 75)
-            return true
-        end
-    end
-    return false
-end
-
-function FullLevelPlaytest:stealNearbyItem()
-    for _, collectible in ipairs(self.collectibles) do
-        local entity = collectible.entity
-        if collectible.alive and entity.properties and entity.properties.forSale
-            and math.abs(self.player.x - entity.x * 16) < 14
-            and math.abs(self.player.y - entity.y * 16) < 18 then
-            entity.properties.forSale = false
-            collectible.alive = false
-            Item.collect(entity.kind, self.run, self.player)
-            self.run:angerShopkeepers("STOP, THIEF!")
-            for _, enemy in ipairs(self.enemies) do
-                if enemy.kind == "shopkeeper" then enemy.angry = true end
-            end
-            return true
-        end
-    end
-    for _, item in ipairs(self.items) do
-        if not item.held and item.properties.forSale
-            and math.abs(self.player.x - item.x) < 14 and math.abs(self.player.y - item.y) < 18 then
-            item.properties.forSale = false
-            item:pickup(self.player)
-            self.heldItem = item
-            self.run:angerShopkeepers("STOP, THIEF!")
-            for _, enemy in ipairs(self.enemies) do
-                if enemy.kind == "shopkeeper" then enemy.angry = true end
-            end
-            return true
-        end
-    end
-    return false
-end
-
-function FullLevelPlaytest:pickupNearestNpc(steal)
+function FullLevelPlaytest:pickupNearestNpc()
     for _, creature in ipairs(self.enemies) do
         if creature.kind == "damsel" and creature.alive and not creature.held
             and math.abs(creature.x - self.player.x) < 12
-            and math.abs(creature.y - self.player.y) < 14 then
-            if creature.forSale then
-                local price = 8000 + math.max(0, (self.level.absoluteLevel or 1) - 1) * 500
-                if steal then
-                    creature.forSale = false
-                    creature.entity.properties.forSale = false
-                    self.run:angerShopkeepers("KIDNAPPER!")
-                    for _, enemy in ipairs(self.enemies) do
-                        if enemy.kind == "shopkeeper" then enemy.angry = true end
-                    end
-                elseif self.run.money >= price then
-                    self.run.money = self.run.money - price
-                    creature.forSale = false
-                    creature.entity.properties.forSale = false
-                    self.run:addMessage("A KISS COSTS $" .. price, 75)
-                else
-                    self.run:addMessage("A KISS COSTS $" .. price, 90)
-                    return true
-                end
-            end
-            if creature:pickup(self.player) then
+            and math.abs(creature.y - self.player.y) < 14 and creature:pickup(self.player) then
             self.heldNpc = creature
             return true
-            end
-        end
-    end
-    return false
-end
-
-function FullLevelPlaytest:interactShopkeeper()
-    for _, creature in ipairs(self.enemies) do
-        if creature.kind == "shopkeeper" and creature.alive and not creature.angry
-            and math.abs(creature.x - self.player.x) < 24
-            and math.abs(creature.y - self.player.y) < 20 then
-            if creature.shopType == "Craps" then
-                local bet = 1000 + (self.level.absoluteLevel or 1) * 500
-                if self.run.money < bet then
-                    self.run:addMessage("YOU NEED $" .. bet .. " TO PLAY", 90)
-                    return true
-                end
-                self.run.money = self.run.money - bet
-                local roll1 = (math.floor(self.run.time * 30 + self.seed) % 6) + 1
-                local roll2 = (math.floor(self.run.time * 47 + self.seed * 3) % 6) + 1
-                if roll1 + roll2 == 7 then
-                    local rewards = { "bomb_box", "shotgun", "jetpack", "cape" }
-                    self:spawnEntity(rewards[(roll1 % #rewards) + 1], creature.x + 20, creature.y - 4)
-                    self.run:addMessage("YOU ROLLED A SEVEN! YOU WIN!", 120)
-                else
-                    self.run:addMessage("YOU ROLLED " .. (roll1 + roll2), 90)
-                end
-                return true
-            elseif creature.shopType == "Kissing" then
-                self.run:addMessage("A KISS IS GOOD FOR ONE HEART", 90)
-                return true
-            end
         end
     end
     return false
@@ -583,8 +494,13 @@ function FullLevelPlaytest:pickupNearestItem()
     local left, top = self.player.x - 8, self.player.y
     local right, bottom = self.player.x + 8, self.player.y + 8
     local nearest, nearestDistance
-    for _, item in ipairs(self.items) do
-        if not item.held and item:overlapsRectangle(left, top, right, bottom)
+    local candidates = {}
+    for _, item in ipairs(self.items) do candidates[#candidates + 1] = item end
+    for _, bomb in ipairs(self.tools.bombs) do
+        if bomb.alive then candidates[#candidates + 1] = bomb end
+    end
+    for _, item in ipairs(candidates) do
+        if not item.held and not item.opened and item:overlapsRectangle(left, top, right, bottom)
             and not self.world:solidAtPoint(item.x, item.y) then
             local dx, dy = item.x - self.player.x, item.y - self.player.y
             local distance = dx * dx + dy * dy
@@ -593,20 +509,13 @@ function FullLevelPlaytest:pickupNearestItem()
             end
         end
     end
-    if nearest and nearest.properties.forSale then
-        local price = Item.price(nearest.kind, self.level.absoluteLevel)
-        if self.run.money < price then
-            self.run:addMessage("YOU CAN'T AFFORD IT!", 90)
-            return true
-        end
-        self.run.money = self.run.money - price
-        nearest.properties.forSale = false
-        self.run:addMessage("PURCHASED FOR $" .. price, 75)
-    end
-    if nearest and nearest:pickup(self.player) then
+    if nearest and nearest:pickup(self.player, self.run) then
         self.heldItem = nearest
-        self.sounds:play("pickup")
-        if nearest.kind == "gold_idol" and not nearest.idolTriggered then
+        if nearest.definition.consumeOnPickup
+            and not Shop.forSale(nearest) then
+            Shop.claim(self, nearest)
+        else self.sounds:play("pickup") end
+        if nearest.definition.trapOnPickup == "idol" and not nearest.idolTriggered then
             nearest.idolTriggered = true
             self.traps:triggerIdol(self.player)
         end
@@ -648,32 +557,24 @@ end
 
 function FullLevelPlaytest:openNearbyContainer()
     for _, item in ipairs(self.items) do
-        if not item.held and not item.opened and math.abs(item.x - self.player.x) < 15
-            and math.abs(item.y - self.player.y) < 15
-            and (item.kind == "chest" or item.kind == "locked_chest") then
-            if item.kind == "locked_chest" and self.heldItem and self.heldItem.kind == "key" then
-                self.heldItem.held = false
-                self.heldItem.opened = true
-                self.heldItem.x, self.heldItem.y = -1000, -1000
-                self.heldItem = nil
-                self.run.hasKey = true
-            end
-            local reward, message = item:open(self.run)
-            if reward then self.sounds:play("chest_open") end
-            if message then self.run:addMessage(message, 90) end
-            if reward then
-                item.x, item.y = -1000, -1000
-                self:spawnEntity(reward, self.player.x, self.player.y - 6)
-            end
-            return reward ~= nil or message ~= nil
+        if item.definition.unlockWith and self.heldItem
+            and self.heldItem.definition.unlocks == item.kind
+            and not item.held and not item.opened and math.abs(item.x - self.player.x) < 15
+            and math.abs(item.y - self.player.y) < 15 then
+            self.heldItem.held = false
+            self.heldItem.opened = true
+            self.heldItem.x, self.heldItem.y = -1000, -1000
+            self.heldItem = nil
+            self.run.hasKey = true
+            return self:openContainer(item)
         end
     end
     return false
 end
 
-function FullLevelPlaytest:crateAtPlayer()
+function FullLevelPlaytest:containerAtPlayer()
     for _, item in ipairs(self.items) do
-        if item.kind == "crate" and not item.opened
+        if item.definition.action == "open" and not item.opened
             and item:overlapsRectangle(self.player.x, self.player.y,
                 self.player.x, self.player.y) then
             return item
@@ -681,74 +582,83 @@ function FullLevelPlaytest:crateAtPlayer()
     end
 end
 
-function FullLevelPlaytest:meleeHeldWeapon(item)
-    local reach = item.kind == "mattock" and 18 or 14
-    local left = self.player.facing < 0 and self.player.x - reach or self.player.x
-    local right = self.player.facing > 0 and self.player.x + reach or self.player.x
-    if left > right then left, right = right, left end
-    for _, enemy in ipairs(self.enemies) do
-        if enemy.alive and enemy:overlapsRectangle(left, self.player.y - 12, right, self.player.y + 5) then
-            enemy:damage(item.kind == "machete" and 2 or 1, self.player.x)
-            if enemy.kind == "shopkeeper" then
-                enemy.angry = true
-                self.run:angerShopkeepers("YOU'LL PAY FOR THAT!")
-            end
-        end
-    end
-    if item.kind == "mattock" then
-        local x = self.player.x + self.player.facing * 14
-        self.world:destroyTerrain(x, self.player.y - 4, 10)
-        item.durability = item.durability - 1
-        if item.durability <= 0 then
-            item.held = false
-            item.x, item.y = -1000, -1000
-            self.heldItem = nil
-            self.run:addMessage("THE MATTOCK BROKE", 75)
-        end
-    end
-    item.cooldown = 10
-    return true
-end
-
 function FullLevelPlaytest:useHeldItem(input)
     local item = self.heldItem
     if not item then return false end
-    if item.weapon and not input.down then
-        if item.cooldown > 0 then return true end
-        if item.kind == "machete" or item.kind == "mattock" then
-            return self:meleeHeldWeapon(item)
-        elseif item.kind == "teleporter" then
-            local destination = self.player.x + self.player.facing * 64
-            while self.world:solidAtPoint(destination, self.player.y) and destination ~= self.player.x do
-                destination = destination - self.player.facing
-            end
-            self.player.x = destination
-            item.cooldown = 45
-            return true
-        else
-            local cooldown = self.projectiles:fireWeapon(item.kind, self.player, self.player)
-            if cooldown then
-                if item.kind == "bow" then self.sounds:play("bowpull") end
-                item.cooldown = cooldown
-                return true
-            end
-        end
-    end
-    if item.weapon then item:dropWeapon(self.player)
-    else item:throw(self.player, input) end
-    self.heldItem = nil
-    if self.throwSound then self.throwSound:clone():play() end
-    return true
+    return ItemActions.use(self, item, input)
 end
 
 function FullLevelPlaytest:dropHeldItemFromHurt()
     if self.heldItem then
+        -- oPlayer1 calls scrFireBow before releasing an armed bow on stun/death.
+        ItemActions.updateBow(self, {})
+        self.heldItem.visible = true
         self.heldItem:dropFromHurt(self.player)
         self.heldItem = nil
     end
+    self.meleeItem = nil
     if self.heldNpc then
-        self.heldNpc:throw(self.player, {})
+        self.heldNpc:throw(self.player, {}, self.world)
         self.heldNpc = nil
+    end
+end
+
+function FullLevelPlaytest:processItemImpact(item)
+    local impact = item.definition.breakOnImpact
+    if not item.justHit or item.opened or not impact then return end
+    if item.definition.container then return self:openContainer(item) end
+    if impact.effect == "skull" then
+        self.effects:skullBreak(item.x, item.y, item.impactSide)
+    end
+    self.sounds:play("break_item")
+    item.opened = true
+    item.x, item.y = -1000, -1000
+end
+
+function FullLevelPlaytest:resolveItemEnemyContact(item)
+    local speed = item.definition.hitSpeed or 2
+    if item.held or item.opened or item.skipEnemyHitOnce
+        or (math.abs(item.vx) <= speed and math.abs(item.vy) <= speed) then return end
+    local reach = item.definition.flight == "fragile" and 3 or 2
+    for _, enemy in ipairs(self.enemies) do
+        if enemy.alive and (not enemy.stunned or enemy.stunned == 0)
+            and enemy:overlapsRectangle(item.x - reach, item.y - reach,
+                item.x + reach, item.y + reach) and PhysicalBody.strikeEnemy(item, enemy) then
+            if item.definition.breakOnImpact then
+                item.justHit = true
+                self:processItemImpact(item)
+                break
+            elseif item.definition.consumeOnEnemyHit then
+                item.opened = true
+                item.x, item.y = -1000, -1000
+                break
+            end
+        end
+    end
+end
+
+function FullLevelPlaytest:resolveItemPlayerContact(item)
+    local player = self.player
+    if item.held or item.opened or item.safeTimer > 0 or player:isDead()
+        or player:isStunned() then return end
+    local halfWidth = player:getCollisionHalfWidth()
+    local top, bottom = player:getVerticalBounds()
+    if not item:overlapsRectangle(player.x - halfWidth, player.y + top,
+        player.x + halfWidth, player.y + bottom) then return end
+    -- Classic's player Step names fast arrows and rocks. Falling ordinary
+    -- carryables are an additional requested hazard; respect throw immunity.
+    local arrowHit = item.kind == "arrow" and math.abs(item.vx) > 3
+    local rockHit = item.kind == "rock" and math.abs(item.vx) > 4
+    local fallHit = item.kind ~= "arrow" and item.vy > 4
+    if not (arrowHit or rockHit or fallHit) then return end
+    local damage = (arrowHit or rockHit or item.kind == "rock") and 2 or 1
+    if not player:hurt(item.x, damage, item.kind, 20) then return end
+    self.effects:blood(player.x, player.y, 3)
+    self.sounds:play("hurt")
+    self:dropHeldItemFromHurt()
+    if arrowHit then
+        item.opened = true
+        item.x, item.y = -1000, -1000
     end
 end
 
@@ -756,12 +666,26 @@ function FullLevelPlaytest:applyEnvironment(input)
     local player = self.player
     if self.world:webAtPoint(player.x, player.y) then
         player:web(12)
-        player.vx = player.vx * 0.15
-        player.vy = player.vy * 0.15
+    end
+end
+
+function FullLevelPlaytest:handleActionPressed(input, containerToOpen)
+    if self.player:isDead() or self.player:isStunned() then return end
+    if containerToOpen then
+        ItemActions.use(self, containerToOpen, input)
+    elseif self.heldNpc then
+        self.heldNpc:throw(self.player, input, self.world)
+        self.heldNpc = nil
+    elseif self.heldItem then
+        self:useHeldItem(input)
+    elseif input.down and self.player.state == Player.STATES.ducking then
+        if not self:pickupNearestNpc() then self:pickupNearestItem() end
     end
 end
 
 function FullLevelPlaytest:simulationStepBody(input)
+    local payPressed = self.payQueued or (input.pay and not self.payHeld)
+    self.payQueued, self.payHeld = false, input.pay or false
     if self.player:isDead() then
         self.player:step(self.world, {})
         self.deathTimer = self.deathTimer - 1
@@ -775,12 +699,16 @@ function FullLevelPlaytest:simulationStepBody(input)
 
     local actionPressed = input.attack and not self.actionHeld
     self.actionHeld = input.attack
-    local crateToOpen = actionPressed and input.up and self:crateAtPlayer()
-    if self.heldItem or self.heldNpc or crateToOpen then input.suppressWhip = true end
+    local containerToOpen = actionPressed and input.up and self:containerAtPlayer()
+    if self.heldItem or self.heldNpc or containerToOpen then input.suppressWhip = true end
     local previousY = self.player.y
     local previousHealth = self.player.health
     local previousState = self.player.state
     self.player:step(self.world, input)
+    if self.heldItem then self.heldItem:updateHeldPosition(self.player) end
+    if self.heldNpc then self.heldNpc:updateHeldPosition(self.player) end
+    Shop.update(self)
+    if payPressed then Shop.pay(self) end
     if self.player.state == Player.STATES.jumping
         and previousState ~= Player.STATES.jumping
         and (previousState == Player.STATES.standing or previousState == Player.STATES.running
@@ -799,30 +727,13 @@ function FullLevelPlaytest:simulationStepBody(input)
         self.climbSoundTick = 0
     end
     self:applyEnvironment(input)
-    if actionPressed then
-        if crateToOpen then
-            if self.heldItem == crateToOpen then
-                self.heldItem = nil
-                crateToOpen.held = false
-            end
-            self:openContainer(crateToOpen)
-            self.sounds:play("pickup")
-        elseif self.heldNpc then
-            self.heldNpc:throw(self.player, input)
-            self.heldNpc = nil
-        elseif self.heldItem then
-            if not (input.down and self.heldItem.kind == "key" and self:openNearbyContainer()) then
-                self:useHeldItem(input)
-            end
-        elseif input.down and self.player.state == Player.STATES.ducking then
-            if not (input.sprint and self:stealNearbyItem())
-                and not self:interactShopkeeper()
-                and not self:buyNearbyCollectible() and not self:openNearbyContainer()
-                and not self:pickupNearestNpc(input.sprint) then
-                self:pickupNearestItem()
-            end
-        end
+    if self.heldItem and self.heldItem.definition.unlocks then
+        self.heldItem:updateHeldPosition(self.player)
+        self:openNearbyContainer()
     end
+    if actionPressed then self:handleActionPressed(input, containerToOpen) end
+    ItemActions.updateBow(self, input)
+    ItemActions.updateMelee(self)
     self:checkWhip()
     self:checkSpikes()
     self:revealHiddenContents()
@@ -834,8 +745,16 @@ function FullLevelPlaytest:simulationStepBody(input)
         end
     end
     DynamicTerrain.update(self.world)
-    self.traps:update(self.player, self.enemies, self.items)
+    local trapTargets = {}
+    for _, group in ipairs({ self.collectibles, self.tools.bombs, self.tools.ropes,
+        self.projectiles.projectiles }) do
+        for _, target in ipairs(group) do trapTargets[#trapTargets + 1] = target end
+    end
+    self.traps:update(self.player, self.enemies, self.items, trapTargets)
     self.tools:update(self.player, self.enemies, self.items)
+    if self.heldItem and self.heldItem.kind == "bomb" and not self.heldItem.alive then
+        self.heldItem = nil
+    end
     -- oPlayer1 checks its center point against oSolid and dies on overlap,
     -- regardless of temporary invincibility.
     if not self.player:isDead() and self.world:solidAtPoint(self.player.x, self.player.y) then
@@ -845,10 +764,7 @@ function FullLevelPlaytest:simulationStepBody(input)
     for _, enemy in ipairs(self.enemies) do
         if enemy.alive then
             local oldState, oldVy = enemy.state, enemy.vy
-            enemy:step(self.world, self.player, {
-                run = self.run,
-                projectiles = self.projectiles,
-            })
+            enemy:step(self.world, self.player, self)
             if enemy.kind == "bat" and oldState == "HANG" and enemy.state ~= oldState then
                 self.sounds:play("bat")
             elseif enemy.kind == "giant_spider" and oldState == "hang"
@@ -858,7 +774,8 @@ function FullLevelPlaytest:simulationStepBody(input)
                 and enemy.state == "bounce" then
                 self.sounds:play("spider_jump")
             end
-            enemy:resolvePlayerContact(self.player, previousY)
+            local contact = enemy:resolvePlayerContact(self.player, previousY)
+            if contact == "throw" then self:dropHeldItemFromHurt() end
             if enemy.kind == "damsel" and self:isNearExit()
                 and math.abs(enemy.x - self.player.x) < 24 then
                 enemy.alive = false
@@ -887,9 +804,7 @@ function FullLevelPlaytest:simulationStepBody(input)
                 end
             end
             if enemy.kind == "shopkeeper" then
-                self.run.murderer = true
-                self.run:angerShopkeepers("MURDERER!")
-                self:spawnEntity("shotgun", enemy.x, enemy.y - 4)
+                Shopkeeper.die(enemy, self)
             end
         end
     end
@@ -902,38 +817,13 @@ function FullLevelPlaytest:simulationStepBody(input)
     end
     for _, item in ipairs(self.items) do
         item:update(self.world, self.player)
-        if item.justHit and not item.opened and item.kind == "skull" then
-            self.effects:skullBreak(item.x, item.y)
-            self.sounds:play("break_item")
-            item.opened = true
-            item.x, item.y = -1000, -1000
-        end
-        if item.justHit and not item.opened and (item.kind == "jar" or item.kind == "crate") then
-            self:openContainer(item)
-        end
+        self:processItemImpact(item)
         -- oItem's enemy collision has no safe-period gate.
-        if not item.held and not item.opened and math.abs(item.vx) + math.abs(item.vy) > 2 then
-            for _, enemy in ipairs(self.enemies) do
-                if enemy.alive and (not enemy.stunned or enemy.stunned == 0)
-                    and item:overlapsRectangle(enemy:getBounds()) then
-                    enemy:damage(item.heavy and 2 or 1, item.x)
-                    if item.kind == "skull" then
-                        self.effects:skullBreak(item.x, item.y)
-                        self.sounds:play("break_item")
-                        item.opened = true
-                        item.x, item.y = -1000, -1000
-                        break
-                    elseif item.kind == "arrow" then
-                        item.opened = true
-                        item.x, item.y = -1000, -1000
-                        break
-                    end
-                    item.vx = -item.vx * 0.35
-                    item.vy = -2
-                end
-            end
-        end
+        self:resolveItemEnemyContact(item)
+        self:resolveItemPlayerContact(item)
+        item.skipEnemyHitOnce = false
     end
+    ItemActions.recoverArrows(self)
     for _, collectible in ipairs(self.collectibles) do collectible:update(self.world) end
     self.effects:update(self.world)
     self:checkCollectibles()
@@ -992,7 +882,9 @@ end
 function FullLevelPlaytest:keypressed(key, _, isRepeat)
     if isRepeat then return end
     local controls = self.app.controls
-    if controls:matches("rope", key) then
+    if controls:matches("pay", key) then
+        self.payQueued = true
+    elseif controls:matches("rope", key) then
         if self.run.ropes > 0 and self.player and not self.player:isDead()
             and self.tools:throwRope(self.player, self:getInput()) then
             self.run.ropes = self.run.ropes - 1
@@ -1083,8 +975,7 @@ function FullLevelPlaytest:drawWorld(viewport)
         end,
         drawEntity = function(entity)
             if entity.kind == "spikes" and entity.bloody then
-                love.graphics.setColor(1, 1, 1, 1)
-                love.graphics.draw(self.spikeBloodImage, entity.x * 16, entity.y * 16)
+                Spikes.drawBloody(entity)
             else
                 self.renderer:drawEntity(entity)
             end
@@ -1095,15 +986,11 @@ function FullLevelPlaytest:drawWorld(viewport)
         queue:add(Depth.entity("fake_bones"), function() current:draw(self.renderer) end)
     end
     for _, item in ipairs(self.items) do
-        if not item.held and not item.opened then
+        if not item.held and (not item.opened or item.kind == "chest")
+            and item.visible ~= false then
             local current = item
             queue:add(Depth.entity(current.kind), function()
-                self.renderer:drawEntity({
-                    kind = current.kind == "arrow" and current.facing < 0
-                        and "arrow_left" or current.kind,
-                    x = current.x / 16, y = current.y / 16,
-                    properties = current.properties,
-                })
+                self.renderer:drawItem(current)
             end)
         end
     end
@@ -1126,7 +1013,7 @@ function FullLevelPlaytest:drawWorld(viewport)
     end
     if self.projectiles then self.projectiles:submit(queue) end
     if self.traps then self.traps:submit(queue) end
-    if self.tools then self.tools:submit(queue) end
+    if self.tools then self.tools:submit(queue, self.player) end
 
     if not (self.player.invincibleTimer > 0 and math.floor(self.player.invincibleTimer / 2) % 2 == 0) then
         queue:add(Depth.entity("player"),
@@ -1135,15 +1022,14 @@ function FullLevelPlaytest:drawWorld(viewport)
             queue:add(Depth.EFFECT, function() self.player:drawWhip() end)
         end
     end
-    if self.heldItem then
+    if self.heldItem and self.heldItem.kind ~= "bomb" then
         queue:add(Depth.heldItem(self.player), function()
-            self.renderer:drawEntity({
-                kind = self.heldItem.kind == "arrow" and self.player.facing < 0
-                    and "arrow_left" or self.heldItem.kind,
-                x = self.heldItem.x / 16,
-                y = self.heldItem.y / 16,
-                properties = self.heldItem.properties,
-            })
+            self.renderer:drawItem(self.heldItem, self.player.facing)
+        end)
+    end
+    if self.meleeItem then
+        queue:add(Depth.EFFECT, function()
+            self.renderer:drawMeleeSwing(self.player, self.meleeItem)
         end)
     end
     if self.effects then queue:add(Depth.EFFECT, function() self.effects:draw() end) end
@@ -1191,8 +1077,14 @@ function FullLevelPlaytest:drawPlayerHUD(viewport)
         heldItem = self.heldItem or self.heldNpc,
         equipment = self.run.equipment,
         stickyBombs = self.run.equipment.paste,
-        compassDirection = self.run.equipment.compass and self.level.exit
-            and ((self.level.exit.x * 16 < self.player.x) and "<" or ">") or nil,
+        compass = self.run.equipment.compass and self.level.exit and {
+            exitX = self.level.exit.x * 16,
+            exitY = self.level.exit.y * 16,
+            cameraX = self.cameraX,
+            cameraY = self.cameraY,
+            width = viewport.logicalWidth,
+            height = viewport.logicalHeight,
+        } or nil,
     })
     love.graphics.pop()
     love.graphics.setScissor()
@@ -1248,11 +1140,11 @@ function FullLevelPlaytest:draw()
     love.graphics.setColor(COLORS.muted)
     local controls = self.app.controls
     love.graphics.printf(
-        string.format("%s/%s MOVE   %s RUN   %s JUMP   %s ACTION/PICK UP   %s BOMB   %s ROPE   %s/%s CLIMB\n"
+        string.format("%s/%s MOVE   %s RUN   %s JUMP   %s ACTION/PICK UP   %s BOMB   %s ROPE   %s PAY   %s/%s CLIMB\n"
             .. "R RESET   N NEXT SEED   -/= DEPTH   [/] TYPE   B COLLIDERS   ESC BACK",
             controls:label("left"), controls:label("right"), controls:label("run"),
             controls:label("jump"), controls:label("attack"), controls:label("bomb"),
-            controls:label("rope"), controls:label("up"), controls:label("down")),
+            controls:label("rope"), controls:label("pay"), controls:label("up"), controls:label("down")),
         12, height - 37, width - 24, "center")
     love.graphics.setColor(1, 1, 1, 1)
 end
