@@ -252,7 +252,7 @@ function Test.run(app)
             assert(#alreadyDark.enemies == 7 and alreadyDark.run.kaliPunish == 4,
                 "An already haunted dark level must get six spiders instead of a second ghost")
         end },
-        { "favor, gifts, chains and carried corpses survive real level transitions", function()
+        { "exits retain Kali progress and chains while dropping corpses", function()
             local game = FullLevel.new(app)
             game.renderer = app.screens.world_generation
             game:generateLevel(17)
@@ -263,12 +263,11 @@ function Test.run(app)
             game.heldNpc = body
             game:advanceLevel()
             assert(game.run.favor == 16 and game.run.kaliGift == 2 and game.run.kaliPunish == 2
-                and game.heldNpc and game.heldNpc.corpse and game.heldNpc.hp <= 0
+                and not game.heldNpc and body.corpse and not body.held
                 and game.run.damsels == 0 and game.player.ball and #game.chains == 4,
                 "An exit must preserve Kali progress and the punishment without rescuing or reviving a corpse")
             local ball = game.player.ball
             assert(ball:pickup(game.player), "The iron ball remains a heavy carryable item")
-            game.heldNpc.held, game.heldNpc = false, nil
             game.heldItem = ball
             game:generateLevel(18)
             local balls = 0

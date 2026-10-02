@@ -38,7 +38,10 @@ function Rope.throwFromPlayer(self, player, input)
         local gridY = snap(player.y, 1)
         -- oPlayer1 first checks the side of the player, then tries the edge
         -- nearest the player and finally the far edge of the snapped cell.
-        if self.world:solidAtPoint(player.x + direction * 8, player.y) then return nil end
+        if self.world:solidAtPoint(player.x + direction * 8, player.y) then
+            self.ropes[#self.ropes+1] = rope
+            return rope
+        end
         local nearX = gridX - direction * 8
         local farX = gridX + direction * 8
         if ropeSideClear(self.world, gridX, nearX, gridY) then
@@ -46,7 +49,8 @@ function Rope.throwFromPlayer(self, player, input)
         elseif ropeSideClear(self.world, gridX, farX, gridY) then
             rope.x = farX
         else
-            return nil
+            self.ropes[#self.ropes+1] = rope
+            return rope
         end
         rope.y = gridY
         rope.vy = 0

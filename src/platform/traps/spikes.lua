@@ -17,6 +17,24 @@ function Spikes.check(self)
     end
 end
 
+function Spikes.checkActor(game, body)
+    if not body.alive or body.kind == "ghost" or body.held or body.vy <= 2 then return end
+    for _, spike in ipairs(game.spikeEntities) do
+        local x, y = spike.x*16, spike.y*16
+        if not spike.destroyed and body.x >= x and body.x < x+16
+            and body.y >= y and body.y < y+16 then
+            body.hp, body.alive, body.vx, body.vy = 0, false, 0, 0.2
+            body.corpse = body.spec and body.spec.sacrifice ~= nil
+            body.impaled, body.countsAsKill, body.state = true, false, "dead"
+            if not body.spec.bloodless then
+                spike.bloody = true
+                game.effects:blood(body.x, body.y, 3)
+            end
+            return
+        end
+    end
+end
+
 function Spikes.bloodImage()
     if not Spikes.image then
         Spikes.image = require("src.platform.object_assets").image("Traps", "sSpikesBlood")

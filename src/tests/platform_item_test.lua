@@ -217,6 +217,7 @@ function Test.run()
         end },
         { "enemy impacts use component speeds and retain the object's trajectory", function()
             local game = FullLevelPlaytest.new()
+            game.effects = Effects.new(17)
             local enemy = Creature.new({ kind = "caveman", x = 6, y = 5 })
             game.enemies = { enemy }
             local rock = object("rock", enemy.x, enemy.y - 8)

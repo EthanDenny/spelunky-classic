@@ -26,8 +26,9 @@ function Test.run(app)
     run:capturePlayer(player)
     assert(run.health == 2 and run.bombs == 7, "Run resources must survive player capture")
 
-    assert(Item.collect("ruby_big", run, player) and run.money == 2600,
-        "Treasure must add its original cash value")
+    Item.collect("ruby_big", run, player)
+    run:flushMoney()
+    assert(run.money == 2600, "Treasure must add its original cash value")
     assert(Item.price("shotgun", 1) == 15000 and Item.price("shotgun", 3) == 16500
         and Item.price("bow", 2) == 1000,
         "Shop prices must use the Classic Create cost and post-level-two markup")
@@ -160,14 +161,10 @@ function Test.run(app)
     assert(#webShots.webs == 1 and webShots.webs[1].life == 12
         and webWorld:webAtPoint(80, 80) and not webWorld:webAtPoint(70, 80),
         "An expired web ball must finish its creation animation before leaving a web")
-    for _ = 1, 600 do webShots:update() end
-    assert(#webShots.webs == 1 and webShots.webs[1].life == 12
-        and webWorld:webAtPoint(80, 80),
-        "An intact web must persist until damaged or marked dying")
-    webShots.webs[1].dying = true
+    assert(webShots.webs[1].dying, "Web-ball animation end starts the source fading lifecycle")
     webShots:update()
-    assert(webShots.webs[1].life < 12,
-        "A dying web must lose life as in Classic's oWeb Step event")
+    assert(webShots.webs[1].life < 12, "Created webs lose life on subsequent ticks")
+
     local itemWebWorld = World.new(12, 12, 16)
     local itemWebShots = ProjectileSystem.new(itemWebWorld)
     local rock = Item.new({ kind = "rock", x = 5, y = 5 })

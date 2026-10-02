@@ -16,6 +16,7 @@ function Bomb:overlapsRectangle(left, top, right, bottom)
 end
 
 function Bomb:pickup(player)
+    self.attached, self.stuck = nil, false
     return self.alive and Holdable.pickup(self, player) or false
 end
 
@@ -87,7 +88,7 @@ function Bomb.update(self, bomb, enemies, player)
     end
 
     if bomb.attached then
-        if bomb.attached.alive then
+        if bomb.attached.alive or bomb.attached.corpse then
             bomb.x = bomb.attached.x - bomb.attachX
             bomb.y = bomb.attached.y - bomb.attachY
             return

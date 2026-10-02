@@ -32,6 +32,7 @@ function TrapSystem.new(world, level, renderer)
                 cooldown = 0,
                 state = "idle",
             }
+            if trap.definition.direction then ArrowTrap.initializeBeam(world, trap, trap.definition.direction) end
             self.traps[#self.traps + 1] = trap
         end
     end
@@ -60,7 +61,9 @@ TrapSystem.triggerIdol = Head.triggerIdol
 
 function TrapSystem:update(player, enemies, items, movingTargets)
     for _, trap in ipairs(self.traps) do
-        if trap.alive and not trap.entity.destroyed then
+        if trap.alive and trap.entity.destroyed then
+            self:destroyTrap(trap)
+        elseif trap.alive then
             trap.definition.update(self, trap, player, enemies, items, movingTargets)
         end
     end
@@ -72,11 +75,19 @@ function TrapSystem:update(player, enemies, items, movingTargets)
     end
 end
 
+function TrapSystem:destroyTrap(trap)
+    if not trap.alive then return end
+    trap.alive = false
+    if trap.definition.direction and not trap.fired and self.game then
+        self.game:spawnEntity("arrow", trap.x+8, trap.y+8)
+    end
+end
+
 function TrapSystem:explode(x, y, radius)
     for _, trap in ipairs(self.traps) do
         local dx, dy = trap.x + 8 - x, trap.y + 8 - y
-        if trap.alive and dx * dx + dy * dy <= (radius + 8) ^ 2 then
-            trap.alive = false
+        if trap.alive and trap.definition.direction and dx * dx + dy * dy <= (radius + 8) ^ 2 then
+            self:destroyTrap(trap)
             self.world:remove("solid", math.floor(trap.entity.x), math.floor(trap.entity.y))
         end
     end
@@ -84,6 +95,16 @@ function TrapSystem:explode(x, y, radius)
         local dx, dy = boulder.x - x, boulder.y - y
         if boulder.alive and dx * dx + dy * dy <= (radius + 16) ^ 2 then
             boulder.alive = false
+            if self.game then
+                local effects = self.game.effects
+                for index = 1, 9 do
+                    effects:add(index <= 3 and "rubbleLarge" or "rubble", boulder.x+effects.random:random(-15,15),
+                        boulder.y+effects.random:random(-15,15)).variant = "tan"
+                    if index <= 3 and effects.random:random(1,3) == 1 then
+                        self.game:spawnEntity("rock", boulder.x, boulder.y)
+                    end
+                end
+            end
             if boulder.solid then self.world:removeDynamicSolid(boulder.solid) end
         end
     end

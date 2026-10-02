@@ -8,4 +8,10 @@ Definition.depth = 100
 Definition.shopOffsetY = 8
 Definition.replaces = "cape"
 
+function Definition.update(item, _, player)
+    if player and player.visible == false then
+        item.alive, item.visible, item.opened = false, false, true
+    end
+end
+
 return Definition

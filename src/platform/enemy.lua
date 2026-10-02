@@ -1,6 +1,7 @@
 -- Shared 30 Hz body and contact rules. Kind-specific AI, masks, damage
 -- reactions, and animations live in src/platform/enemies/<kind>.lua.
 local Types = require("src.platform.enemies.types")
+local PhysicalBody = require("src.platform.physical_body")
 
 local Enemy = {}
 Enemy.__index = Enemy
@@ -108,22 +109,8 @@ function Enemy:setState(state, timer)
     if timer ~= nil then self.timer = timer end
 end
 
-function Enemy:consumeHorizontalPixels(distanceToMove)
-    self.xRemainder = self.xRemainder + distanceToMove
-    local pixels = math.floor(math.abs(self.xRemainder)) * sign(self.xRemainder)
-    self.xRemainder = self.xRemainder - pixels
-    return pixels
-end
-
-function Enemy:consumeVerticalPixels(distanceToMove)
-    self.yRemainder = self.yRemainder + distanceToMove
-    local pixels = math.floor(math.abs(self.yRemainder)) * sign(self.yRemainder)
-    self.yRemainder = self.yRemainder - pixels
-    return pixels
-end
-
 function Enemy:moveHorizontal(world, amount)
-    local pixels = self:consumeHorizontalPixels(amount)
+    local pixels = PhysicalBody.pixels(amount, world.time)
     local direction = sign(pixels)
     for _ = 1, math.abs(pixels) do
         if world:collidesSolid(self, self.x + direction, self.y) then
@@ -136,7 +123,7 @@ function Enemy:moveHorizontal(world, amount)
 end
 
 function Enemy:moveVertical(world, amount, usePlatforms)
-    local pixels = self:consumeVerticalPixels(amount)
+    local pixels = PhysicalBody.pixels(amount, world.time)
     local direction = sign(pixels)
     for _ = 1, math.abs(pixels) do
         local nextY = self.y + direction
@@ -161,12 +148,12 @@ function Enemy:hasCeiling(world)
 end
 
 function Enemy:updateGroundPhysics(world)
-    self.vy = math.min(self.terminalVelocity, self.vy + self.gravity)
     local hitWall = self:moveHorizontal(world, self.vx)
-    local verticalHit = self:moveVertical(world, self.vy, true)
+    local verticalHit = self:moveVertical(world, self.vy, false)
     if hitWall then self.vx = 0 end
     if verticalHit == "floor" then self.vy = 0 end
     if verticalHit == "ceiling" then self.vy = math.max(1, math.abs(self.vy)) end
+    if verticalHit ~= "floor" then self.vy = math.min(self.terminalVelocity, self.vy+self.gravity) end
     return hitWall, verticalHit
 end
 
@@ -186,8 +173,12 @@ end
 
 function Enemy:step(world, player)
     if not self.alive then return end
+    if not require("src.platform.activity").contains(world, self) then return end
     self.justAlerted = false
     self.spec.step(self, world, player)
+    if world:solidAtPoint(self.x, self.y-8) then
+        self.hp, self.alive, self.state = 0, false, Enemy.STATES.dead
+    end
     self:updateAnimation()
 end
 
@@ -205,7 +196,7 @@ end
 
 function Enemy:damage(amount, sourceX, hit)
     if not self.alive or self.spec.canEnemyDamage
-        and not self.spec.canEnemyDamage(self) then return false end
+        and not self.spec.canEnemyDamage(self) and (not hit or (hit.kind ~= "bullet" and hit.kind ~= "explosion" and hit.weapon ~= "machete")) then return false end
     self.hp = self.hp - (amount or 1)
     if self.hp <= 0 then
         self.alive = false
@@ -228,7 +219,8 @@ function Enemy:resolvePlayerContact(player, previousPlayerY)
     local _, enemyTop = self:getBounds()
     local previousBottom = previousPlayerY + playerBottom
     if player.vy > 0 and player.y < self.y and previousBottom <= enemyTop + 3 then
-        self:damage(1, player.x)
+        self:damage((math.floor((player.fallTimer or 0)/16)+1)
+            * (player.equipment.spike_shoes and 3 or 1), player.x)
         player.vy = -6 - 0.2 * player.vy
         player.jumpTime = 10
         player.jumpReleased = true

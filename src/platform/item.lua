@@ -33,7 +33,7 @@ function Item.collect(kind, run, player, game)
     local pickup = Definitions[kind] and Definitions[kind].pickup
     if not pickup then return nil end
     if pickup.money then
-        run.money = run.money + pickup.money
+        run:queueMoney(pickup.money)
         return "COLLECTED $" .. pickup.money
     end
     if pickup.equipment then
@@ -142,9 +142,11 @@ end
 
 function Item:update(world, player)
     if not self.alive then return end
+    if not require("src.platform.activity").contains(world, self) then return end
     self.justHit = false
     self.impactSide = nil
     if self.cooldown > 0 then self.cooldown = self.cooldown - 1 end
+    if self.definition.update then self.definition.update(self, world, player) end
     if self.held then
         self:updateHeldPosition(player)
         return

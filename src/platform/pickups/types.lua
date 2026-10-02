@@ -1,4 +1,5 @@
 return {
+    diamond = require("src.platform.pickups.diamond"),
     gold_chunk = require("src.platform.pickups.gold_chunk"),
     gold_nugget = require("src.platform.pickups.gold_nugget"),
     gold_bar = require("src.platform.pickups.gold_bar"),

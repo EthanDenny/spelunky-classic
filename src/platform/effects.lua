@@ -1,5 +1,4 @@
--- Visual oBlood, oBone, oSkull, oSmokePuff and oRubbleSmall counterparts. These particles
--- never participate in player, enemy or treasure collision.
+-- Source particle movement, animation and collectible Kapala blood droplets.
 local Effects = {}
 Effects.__index = Effects
 
@@ -54,7 +53,7 @@ local function moveFlame(particle, world)
                 particle.vy = -particle.vy * 0.8
             else
                 particle.vy = particle.vy > 1 and -particle.vy * 0.5 or 0
-                particle.life = math.min(particle.life, particle.age + 12)
+                particle.life = math.min(particle.life, particle.age + 20)
             end
             break
         end
@@ -102,7 +101,7 @@ function Effects:add(kind, x, y, vx, vy)
     if definition.randomGravity then
         particle.gravity = self.random:random(1, 6) * 0.1
     elseif definition.gravity then particle.gravity = definition.gravity end
-    if definition.initialVy then particle.vy = definition.initialVy end
+    if definition.initialVy and vy == nil then particle.vy = definition.initialVy end
     self.particles[#self.particles + 1] = particle
     return particle
 end
@@ -116,8 +115,10 @@ function Effects:explosion(x, y)
 end
 
 function Effects:terrainBreak(x, y, tileSize, entity, material)
-    local definition = entity and require("src.platform.objects")[entity.kind]
+    local definition = entity and (require("src.platform.objects")[entity.kind]
+        or require("src.platform.tiles.types")[entity.kind])
     if definition and definition.handlesDestructionEffects then return end
+    material = material or definition and definition.rubbleMaterial
     local half = (tileSize or 16) / 2
     self:add("rubbleLarge", x + self.random:random(-half, half),
         y + self.random:random(-half, half)).variant = material
@@ -165,15 +166,51 @@ function Effects:skullBreak(x, y, side)
     end
 end
 
-function Effects:skeletonBreak(x, y)
+function Effects:skeletonBreak(x, y, items)
     for _ = 1, 3 do
         self:add("bone", x, y,
             self.random:random() * 4 - self.random:random() * 4,
             -1 - self.random:random() * 2)
     end
-    self:add("skull", x, y,
-        self.random:random(0, 3) - self.random:random(0, 3),
-        -self.random:random(1, 3))
+    local vx = self.random:random(0,3)-self.random:random(0,3)
+    local vy = -self.random:random(1,3)
+    if items then
+        local skull = require("src.platform.item").new({ kind = "skull", x = x/16, y = (y-2)/16 })
+        skull.vx, skull.vy = vx, vy
+        items[#items+1] = skull
+    else
+        self:add("skull", x, y, vx, vy)
+    end
+end
+
+function Effects:burning(body)
+    if not body.burning or body.burning <= 0 then return end
+    body.burning = body.burning-1
+    if self.random:random(1,5) == 1 then
+        self:add("burn", body.x+self.random:random(-4,4), body.y+self.random:random(-8,0))
+    end
+end
+
+function Effects:collectBlood(player, run)
+    if player:isDead() or not player.equipment.kapala then return end
+    local half = player:getCollisionHalfWidth()
+    local top, bottom = player:getVerticalBounds()
+    for index = #self.particles, 1, -1 do
+        local blood = self.particles[index]
+        if blood.kind == "blood" and blood.age >= 5
+            and blood.x+4 > player.x-half and blood.x-4 < player.x+half
+            and blood.y+4 > player.y+top and blood.y-4 < player.y+bottom then
+            table.remove(self.particles, index)
+            run.blood = run.blood + 1
+            if run.blood > 8 then
+                run.blood = 0
+                player.health = player.health + 1
+                self:add("heart", player.x, player.y-8)
+                if self.sounds then self.sounds:play("kiss") end
+                player.maxHealth = math.max(player.maxHealth, player.health)
+            end
+        end
+    end
 end
 
 function Effects:update(world)
@@ -261,6 +298,7 @@ function Effects:update(world)
             if spec.resetVertical then particle.vy = 0
             elseif spec.motion ~= "flame" then particle.vy = particle.vy + (spec.gravity or 0) end
             if particle.age >= particle.life
+                or spec.stopAtTerrain and not require("src.platform.activity").contains(world, particle)
                 or particle.x < -16 or particle.y < -16
                 or particle.x > world.width * 16 + 16
                 or particle.y > world.height * 16 + 16
@@ -274,7 +312,7 @@ function Effects:update(world)
     end
 end
 
-function Effects:draw()
+function Effects:draw(depth)
     local sprites = Effects.loadAssets()
     for _, trail in ipairs(self.trails) do
         local frame = math.floor(trail.age * 0.8) + 1
@@ -283,17 +321,31 @@ function Effects:draw()
             math.floor(trail.x), math.floor(trail.y), 0, 1, 1, Types.bloodTrail.origin, Types.bloodTrail.origin)
     end
     for _, particle in ipairs(self.particles) do
-        local spec = Types[particle.kind]
-        local frame = 1
-        if spec.frameSpeed then
-            local ageFrame = math.floor(particle.age * spec.frameSpeed)
-            frame = spec.loop and ageFrame % spec.count + 1 or math.min(spec.count, ageFrame + 1)
-        end
-        love.graphics.setColor(1, 1, 1, 1)
-        local image = particle.variant and sprites[particle.kind].variants[particle.variant]
-            or sprites[particle.kind][frame]
-        love.graphics.draw(image,
-            math.floor(particle.x), math.floor(particle.y), 0, 1, 1, spec.origin, spec.origin)
+        if not depth or (Types[particle.kind].depth or 1) == depth then self:drawParticle(particle, sprites) end
+    end
+end
+
+function Effects:drawParticle(particle, sprites)
+    sprites = sprites or Effects.loadAssets()
+    local spec = Types[particle.kind]
+    local frame = 1
+    if spec.frameSpeed then
+        local ageFrame = math.floor(particle.age * spec.frameSpeed)
+        frame = spec.loop and ageFrame % spec.count + 1 or math.min(spec.count, ageFrame + 1)
+    end
+    love.graphics.setColor(1, 1, 1, 1)
+    local image = particle.variant and sprites[particle.kind].variants[particle.variant]
+        or sprites[particle.kind][frame]
+    love.graphics.draw(image,
+        math.floor(particle.x), math.floor(particle.y), 0, 1, 1, spec.origin, spec.origin)
+end
+
+function Effects:submit(queue)
+    queue:add(1, function() self:draw(1) end)
+    for _, particle in ipairs(self.particles) do
+        local current = particle
+        local depth = Types[current.kind].depth or 1
+        if depth ~= 1 then queue:add(depth, function() self:drawParticle(current) end) end
     end
 end
 

@@ -81,17 +81,7 @@ function Skeleton.canContact(self)
     return self.state ~= self.STATES.bones and self.state ~= self.STATES.rise
 end
 
-function Skeleton.creatureStep(self, world)
-    if self.timer > 0 then
-        self.timer = self.timer - 1
-        self.vx = 0
-    else
-        self.vx = self.facing * self.config.speed
-    end
-    local before = self.vx
-    self:groundPhysics(world)
-    if before ~= 0 and self.vx ~= before then self.facing = -self.facing end
-end
+Skeleton.creatureStep = Skeleton.step
 
 function Skeleton.drawCreature(self)
     local sprites = Skeleton.creatureSprites
@@ -117,5 +107,13 @@ function Skeleton.drawCreature(self)
 end
 
 Skeleton.depth = 60
+Skeleton.deathBlood = 0
+Skeleton.bloodless = true
+function Skeleton.onDeath(body, game)
+    if not body.deathDebrisEmitted then
+        game.effects:skeletonBreak(body.x, body.y-8, game.items)
+        body.deathDebrisEmitted = true
+    end
+end
 
 return Skeleton

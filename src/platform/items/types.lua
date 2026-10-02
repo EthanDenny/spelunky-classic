@@ -1,4 +1,6 @@
 return {
+    lamp_item = require("src.platform.items.lamp_item"),
+    flare = require("src.platform.items.flare"),
     arrow = require("src.platform.items.arrow"),
     rock = require("src.platform.items.rock"),
     ball = require("src.platform.items.ball"),

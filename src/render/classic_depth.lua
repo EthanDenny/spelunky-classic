@@ -20,6 +20,16 @@ function Depth.entity(kind, state)
     return depth
 end
 
+function Depth.item(item, player)
+    if item.definition.flight == "fragile" then return Depth.entity(item.kind) end
+    return player.equipment.spectacles and 51 or 101
+end
+
+function Depth.treasure(body, player)
+    if body.kind == "scarab" then return 40 end
+    return (player.equipment.spectacles or player.equipment.udjat_eye) and 0 or 101
+end
+
 function Depth.heldItem(player)
     if player.state == "climbing" and (player.equipment.jetpack or player.equipment.cape) then
         return 51

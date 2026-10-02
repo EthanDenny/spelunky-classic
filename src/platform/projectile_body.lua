@@ -13,7 +13,7 @@ function Body.step(self, projectile, spec, enemies, player, items)
     if not spec.persistent then
         projectile.life = projectile.life - 1
     end
-    projectile.vy = projectile.vy + projectile.gravity
+    if not spec.materialize then projectile.vy = projectile.vy + projectile.gravity end
     local steps = math.max(1,
         math.ceil(math.max(math.abs(projectile.vx), math.abs(projectile.vy))))
     for _ = 1, steps do
@@ -57,12 +57,17 @@ function Body.step(self, projectile, spec, enemies, player, items)
         for _, enemy in ipairs(enemies or {}) do
             if projectile.alive and (not projectile.safe or enemy.kind == "damsel")
                 and enemy ~= projectile.owner and enemy.alive
+                and not (spec.persistent and enemy.kind == "ghost")
+                and not (spec.impact and enemy.kind == "damsel" and enemy.invincible == 1)
                 and Body.overlaps(projectile, enemy) then
                 if projectile.damage > 0 then
                     local impulse = spec.impact ~= nil and {
-                        kind = "bullet", vx = projectile.vx, vy = -4,
+                        kind = "bullet", vx = projectile.vx, vy = enemy.kind == "damsel" and -6 or -4,
                     } or nil
-                    local hit = enemy:damage(projectile.damage, projectile.x, impulse)
+                    local hit
+                    if spec.materialize then
+                        hit = require("src.platform.physical_body").strikeEnemy(projectile, enemy)
+                    else hit = enemy:damage(projectile.damage, projectile.x, impulse) end
                     if hit and spec.impact ~= nil then
                         if self.onImpact then self.onImpact("enemy", projectile, enemy) end
                     end
@@ -74,7 +79,7 @@ function Body.step(self, projectile, spec, enemies, player, items)
             end
         end
         if projectile.alive and player and projectile.owner ~= player
-            and not player:isDead() and Body.overlaps(projectile, player) then
+            and not player:isDead() and player.state ~= "exiting" and Body.overlaps(projectile, player) then
             if projectile.damage > 0 then
                 if spec.impact ~= nil then
                     if player:hurt(projectile.x, projectile.damage,
@@ -89,6 +94,7 @@ function Body.step(self, projectile, spec, enemies, player, items)
             projectile.alive = false
         end
     end
+    if spec.materialize then projectile.vy = math.min(8, projectile.vy+projectile.gravity) end
     if spec.nextGravity then projectile.gravity = spec.nextGravity end
     if spec.persistent then
         local margin = 32

@@ -1,3 +1,3 @@
-local Definition = { depth = 110, worldLayer = "solid" }
+local Definition = { rubbleMaterial = "tan", depth = 110, worldLayer = "solid" }
 
 return Definition

@@ -118,8 +118,9 @@ function Test.run(app)
     assert(#screen.collectibles > oldCount,
         "Jar break rolls must sometimes release a real collectible")
     local reward = screen.collectibles[#screen.collectibles]
-    assert(reward.active and reward.pickupDelay == 20,
-        "The jar reward must enter loose-treasure physics before collection")
+    local delay = reward.kind:match("^gold_") and 0 or 20
+    assert(reward.active and reward.pickupDelay == delay,
+        "Jar treasure must use its own source collectible alarm")
 
     local webGame = FullLevelPlaytest.new(app)
     webGame.world = World.new(12, 12, 16)

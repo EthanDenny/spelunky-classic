@@ -25,6 +25,8 @@ local Shopkeeper = require("src.platform.enemies.shopkeeper")
 local Spikes = require("src.platform.traps.spikes")
 local Exit = require("src.platform.structures.exit")
 local Kali = require("src.platform.kali")
+local TerrainDestruction = require("src.platform.terrain_destruction")
+local ItemContents = require("src.platform.item_contents")
 
 local FullLevelPlaytest = {}
 FullLevelPlaytest.__index = FullLevelPlaytest
@@ -144,6 +146,10 @@ function FullLevelPlaytest:configureProjectiles()
             self.effects:blood(enemy.x, enemy.y, 1)
             return
         elseif enemy and enemy.kind ~= "skeleton" then
+            if enemy.kind == "damsel" and enemy.held then
+                enemy.held = false
+                if self.heldNpc == enemy then self.heldNpc = nil end
+            end
             self.effects:blood(enemy.x, enemy.y - 8, 1)
         end
         self.sounds:play("hit")
@@ -206,6 +212,7 @@ function FullLevelPlaytest:buildSimulation()
     self.tools:loadAssets()
     self.traps = TrapSystem.new(self.world, self.level, self.renderer)
     self.traps:loadAssets()
+    self.world.game, self.tools.game, self.traps.game = self, self, self
     self.tools.onExplosion = function(_, x, y, radius)
         self.traps:explode(x, y, radius)
     end
@@ -214,6 +221,8 @@ function FullLevelPlaytest:buildSimulation()
     self.items = {}
     self.collectibles = {}
     self.effects = Effects.new(self.seed)
+    self.effects.sounds = self.sounds
+    self.tools.effects.sounds = self.sounds
     self.tools.onRopeHit = function(_, enemy)
         if enemy.kind ~= "skeleton" then self.effects:blood(enemy.x, enemy.y - 8, 1) end
         if self.hitSound then self.hitSound:clone():play() end
@@ -239,6 +248,12 @@ function FullLevelPlaytest:buildSimulation()
     for index, entity in ipairs(self.level.entities) do
         if entity.kind == "hidden_sapphire" or entity.kind == "hidden_emerald"
             or entity.kind == "hidden_ruby" or entity.kind == "hidden_item" then
+            entity.contentKind = entity.kind == "hidden_sapphire" and "sapphire_big"
+                or entity.kind == "hidden_emerald" and "emerald_big"
+                or entity.kind == "hidden_ruby" and "ruby_big"
+            if not entity.contentKind then
+                entity.contentKind, entity.contentX, entity.contentY = ItemContents.underground(self.effects.random)
+            end
             self.hiddenEntities[#self.hiddenEntities + 1] = entity
             self.dynamicEntities[entity] = true
         elseif TrapSystem.isTrap(entity.kind) then
@@ -304,6 +319,7 @@ function FullLevelPlaytest:buildSimulation()
     self.cameraY = clamp(spawnY - 120, 0, self.world.height * 16)
     self.deathTimer = 0
     self.exitReady = false
+    self.exiting, self.completed, self.rescues = nil, false, 0
     self.actionHeld = false
     self.payHeld, self.payQueued = false, false
     self.weaponCooldown = 0
@@ -330,16 +346,16 @@ end
 FullLevelPlaytest.isNearExit = Exit.isNear
 
 function FullLevelPlaytest:advanceLevel()
+    Exit.prepare(self)
+    self.exiting = nil
+    self.player.health = self.player.health + (self.rescues or 0)
+    self.player.maxHealth = math.max(self.player.maxHealth, self.player.health)
+    self.rescues = 0
+    self.run:capturePlayer(self.player)
     if self.levelNumber >= MINES_DEPTHS then
-        self.run:addMessage("MINES COMPLETE", 120)
+        self.completed = true
+        self.run:addMessage("MINES COMPLETE — PRESS R FOR A NEW RUN", 999999)
         return
-    end
-    if self.heldNpc and self.heldNpc.kind == "damsel" and self.heldNpc.alive then
-        self.run.damsels = self.run.damsels + 1
-        self.player.health = math.min(self.player.maxHealth, self.player.health + 1)
-        self.heldNpc.rescued = true
-        self.heldNpc.alive = false
-        self.heldNpc = nil
     end
     self.run:capturePlayer(self.player)
     self.run:finishLevel()
@@ -357,14 +373,11 @@ function FullLevelPlaytest:checkWhip()
         if enemy.alive and self.player:whipCanHit(enemy)
             and self.player:whipOverlapsRectangle(enemy:getBounds()) then
             self.player:markWhipHit(enemy)
-            if enemy.kind == "shopkeeper" then enemy:damage(0, self.player.x, { kind = "whip" })
-            elseif enemy.kind == "damsel" and enemy.forSale then
-                enemy.vy = -2
-                Shop.anger(self, enemy.x, enemy.y, "YOU'LL PAY FOR YOUR CRIMES!")
-            else enemy:damage(1) end
-            if enemy.kind == "snake" then
-                self.effects:blood(enemy.x, enemy.y - 8, 1)
-            end
+            local hit
+            if enemy.kind == "shopkeeper" then hit = enemy:damage(0, self.player.x, { kind = "whip" })
+            elseif enemy.spec and enemy.spec.melee then hit = enemy.spec.melee(enemy, self, 0)
+            else hit = enemy:damage(1, self.player.x, { kind = "whip" }) end
+            if hit and enemy.kind ~= "damsel" then self.effects:blood(enemy.x, enemy.y-8, 1) end
             if self.hitSound then self.hitSound:clone():play() end
         end
     end
@@ -452,14 +465,23 @@ function FullLevelPlaytest:openContainer(item)
 end
 
 function FullLevelPlaytest:checkCollectibles()
-    local half = self.player:getCollisionHalfWidth()
-    local top, bottom = self.player:getVerticalBounds()
+    if self.player:isDead() or self.player:isStunned() then return end
+    for _, item in ipairs(self.items) do
+        local pickup = item.definition.pickup
+        if item.alive and not item.held and pickup and pickup.resource
+            and not Shop.forSale(item) and not self.world:solidAtPoint(item.x, item.y)
+            and item:overlapsRectangle(self.player.x-8, self.player.y-8, self.player.x+8, self.player.y+8) then
+            Item.collect(item.kind, self.run, self.player, self)
+            item.alive, item.visible, item.opened = false, false, true
+            self.sounds:play("pickup")
+        end
+    end
     for _, collectible in ipairs(self.collectibles) do
         if collectible.alive and collectible.pickupDelay == 0 then
             local entity = collectible.entity
             local x, y = entity.x * 16, entity.y * 16
-            if x + 8 > self.player.x - half and x - 8 < self.player.x + half
-                and y + 8 > self.player.y + top and y - 8 < self.player.y + bottom then
+            if collectible:overlapsRectangle(self.player.x-8, self.player.y-8,
+                self.player.x+8, self.player.y+8) then
                 if entity.properties and entity.properties.forSale then
                     local price = Item.price(entity.kind, self.level.absoluteLevel)
                     if not self.run:currentMessage() then
@@ -481,12 +503,13 @@ function FullLevelPlaytest:revealHiddenContents()
     for _, entity in ipairs(self.hiddenEntities) do
         if not entity.revealed and not self.world:solidAtPoint(entity.x * 16, entity.y * 16) then
             entity.revealed = true
-            local kind = entity.kind == "hidden_sapphire" and "sapphire_big"
+            local kind = entity.contentKind or entity.kind == "hidden_sapphire" and "sapphire_big"
                 or entity.kind == "hidden_emerald" and "emerald_big"
                 or entity.kind == "hidden_ruby" and "ruby_big"
-                or ({ "bomb_bag", "rope_pile", "compass", "gloves" })[
-                    (math.floor(entity.x * 17 + entity.y * 31 + self.seed) % 4) + 1]
-            self:spawnEntity(kind, entity.x * 16, entity.y * 16)
+            local dx, dy = entity.contentX or 0, entity.contentY or 0
+            if not kind then kind, dx, dy = ItemContents.underground(self.effects.random) end
+            self:spawnEntity(kind, entity.x*16+8+dx, entity.y*16+8+dy)
+
         end
     end
 end
@@ -563,6 +586,8 @@ function FullLevelPlaytest:spawnEntity(kind, x, y, properties)
         return creature
     elseif Item.isCollectible(kind) then
         local collectible = Treasure.new(entity, true)
+        collectible.x, collectible.y = x, y
+        collectible:syncEntity()
         self.collectibles[#self.collectibles + 1] = collectible
         return collectible
     end
@@ -637,6 +662,7 @@ function FullLevelPlaytest:resolveItemEnemyContact(item)
         if enemy.alive and (not enemy.stunned or enemy.stunned == 0)
             and enemy:overlapsRectangle(item.x - reach, item.y - reach,
                 item.x + reach, item.y + reach) and PhysicalBody.strikeEnemy(item, enemy) then
+            self.effects:blood(enemy.x, enemy.y-8, 1)
             if item.definition.breakOnImpact then
                 item.justHit = true
                 self:processItemImpact(item)
@@ -697,9 +723,33 @@ function FullLevelPlaytest:handleActionPressed(input, containerToOpen)
 end
 
 function FullLevelPlaytest:simulationStepBody(input)
+    local viewport = self:getViewport()
+    self:updateCamera(viewport)
+    self.world.activeView = { x = self.cameraX, y = self.cameraY,
+        width = viewport.logicalWidth, height = viewport.logicalHeight }
     local payPressed = self.payQueued or (input.pay and not self.payHeld)
     self.payQueued, self.payHeld = false, input.pay or false
+    if self.completed then return end
+    if self.exiting then
+        self.exiting = self.exiting+1
+        self.world.time = self.world.time+1
+        for _, enemy in ipairs(self.enemies) do enemy:step(self.world, self.player, self) end
+        for _, item in ipairs(self.items) do item:update(self.world, self.player) end
+        for _, treasure in ipairs(self.collectibles) do treasure:update(self.world, self.player) end
+        self.traps:update(self.player, self.enemies, self.items, self.collectibles)
+        self.projectiles:update(self.enemies, self.player, self.items)
+        self.tools:update(self.player, self.enemies, self.items)
+        TerrainDestruction.update(self)
+        self.effects:update(self.world)
+        if self.exiting >= 32 then self:advanceLevel() end
+        return
+    end
     if self.player:isDead() then
+        for _, enemy in ipairs(self.enemies) do enemy:step(self.world, self.player, self) end
+        for _, item in ipairs(self.items) do item:update(self.world, self.player) end
+        self.effects:burning(self.player)
+        self.effects:update(self.world)
+        self.tools:update(self.player, self.enemies, self.items)
         self.player:step(self.world, {})
         self.deathTimer = self.deathTimer - 1
         if self.deathTimer <= 0 then
@@ -710,6 +760,7 @@ function FullLevelPlaytest:simulationStepBody(input)
         return
     end
 
+    self.run:update()
     local actionPressed = input.attack and not self.actionHeld
     self.actionHeld = input.attack
     local containerToOpen = actionPressed and input.up and self:containerAtPlayer()
@@ -757,6 +808,11 @@ function FullLevelPlaytest:simulationStepBody(input)
             })
         end
     end
+    for _, entity in ipairs(self.level.entities) do
+        if entity.kind == "bones" and not entity.destroyed then
+            require("src.platform.structures.bones").update(entity, self.world)
+        end
+    end
     DynamicTerrain.update(self.world)
     local trapTargets = {}
     for _, group in ipairs({ self.collectibles, self.tools.bombs, self.tools.ropes,
@@ -765,6 +821,7 @@ function FullLevelPlaytest:simulationStepBody(input)
     end
     self.traps:update(self.player, self.enemies, self.items, trapTargets)
     self.tools:update(self.player, self.enemies, self.items)
+    TerrainDestruction.update(self)
     Kali.update(self)
     if self.heldItem and self.heldItem.kind == "bomb" and not self.heldItem.alive then
         self.heldItem = nil
@@ -778,7 +835,14 @@ function FullLevelPlaytest:simulationStepBody(input)
     for _, enemy in ipairs(self.enemies) do
         if enemy.alive or enemy.corpse then
             local oldState, oldVy = enemy.state, enemy.vy
+            Spikes.checkActor(self, enemy)
             enemy:step(self.world, self.player, self)
+            if enemy.kind ~= "spider" and enemy.kind ~= "giant_spider" and enemy.kind ~= "ghost"
+                and not enemy.held and enemy.alive
+                and self.world:webRect(enemy:getBounds()) then
+                enemy.vx, enemy.vy = 0, 0
+                if enemy.kind == "shopkeeper" then Shopkeeper.provoke(enemy) end
+            end
             if enemy.kind == "bat" and oldState == "HANG" and enemy.state ~= oldState then
                 self.sounds:play("bat")
             elseif enemy.kind == "giant_spider" and oldState == "hang"
@@ -788,36 +852,17 @@ function FullLevelPlaytest:simulationStepBody(input)
                 and enemy.state == "bounce" then
                 self.sounds:play("spider_jump")
             end
-            local contact = enemy:resolvePlayerContact(self.player, previousY)
+            local contact = enemy:resolvePlayerContact(self.player, previousY, self)
             if contact == "throw" then self:dropHeldItemFromHurt() end
-            if enemy.kind == "damsel" and enemy.alive and self:isNearExit()
-                and math.abs(enemy.x - self.player.x) < 24 then
-                enemy.alive = false
-                enemy.rescued = true
-                self.run.damsels = self.run.damsels + 1
-                self.player.health = math.min(self.player.maxHealth, self.player.health + 1)
-                self.sounds:play("kiss")
-                self.run:addMessage("A KISS FOR YOUR TROUBLE", 90)
-            end
+            if enemy.kind == "damsel" then require("src.platform.enemies.damsel").checkExit(enemy, self) end
         end
         if not enemy.alive and not enemy.deathCounted and not enemy.rescued then
             enemy.deathCounted = true
             if enemy.kind == "caveman" then self.sounds:play("caveman_die") end
-            self.run.kills = self.run.kills + 1
-            if enemy.kind ~= "skeleton" and not enemy.blastParticlesEmitted then
-                self.effects:blood(enemy.x, enemy.y - 8,
-                    enemy.kind == "snake" and 3 or 1)
-            end
-            if enemy.kind == "giant_spider" then self:spawnEntity("paste", enemy.x, enemy.y - 4) end
-            if self.run.equipment.kapala then
-                self.run.blood = self.run.blood + 1
-                if self.run.blood >= 8 then
-                    self.run.blood = self.run.blood - 8
-                    self.player.health = math.min(99, self.player.health + 1)
-                    self.player.maxHealth = math.max(self.player.maxHealth, self.player.health)
-                    self.run:addMessage("THE KAPALA FILLS WITH BLOOD", 90)
-                end
-            end
+            if enemy.countsAsKill ~= false then self.run.kills = self.run.kills + 1 end
+            local blood = enemy.spec.deathBlood or 0
+            if blood > 0 and not enemy.blastParticlesEmitted then self.effects:blood(enemy.x, enemy.y-8, blood) end
+            if enemy.spec.onDeath then enemy.spec.onDeath(enemy, self) end
             if enemy.kind == "shopkeeper" and not enemy.sacrificed then
                 Shopkeeper.die(enemy, self)
             end
@@ -840,26 +885,43 @@ function FullLevelPlaytest:simulationStepBody(input)
     end
     Kali.updateChains(self)
     ItemActions.recoverArrows(self)
-    for _, collectible in ipairs(self.collectibles) do collectible:update(self.world) end
+    for _, collectible in ipairs(self.collectibles) do
+        collectible:update(self.world, self.player)
+        if collectible.alive and collectible.definition.ghostConvertible then
+            for _, ghost in ipairs(self.enemies) do
+                if ghost.kind == "ghost" and ghost.alive
+                    and ghost:overlapsRectangle(collectible.x-4, collectible.y-4, collectible.x+4, collectible.y+4) then
+                    collectible.alive = false
+                    self:spawnEntity("diamond", collectible.x, collectible.y)
+                    break
+                end
+            end
+        end
+    end
+    self.effects:burning(self.player)
+    for _, enemy in ipairs(self.enemies) do self.effects:burning(enemy) end
     self.effects:update(self.world)
     self:checkCollectibles()
+    self.effects:collectBlood(self.player, self.run)
+    self.tools.effects:collectBlood(self.player, self.run)
     self.run:capturePlayer(self.player)
     self.run.time = self.run.time + 1 / Player.TICK_RATE
     self.levelTime = self.levelTime + 1 / Player.TICK_RATE
-    if self.levelTime >= 150 and not self.ghostSpawned then
+    if self.levelNumber > 1 and self.levelTime > 150 and not self.ghostSpawned then
         self.ghostSpawned = true
-        local side = self.player.x < self.world.width * 8 and self.player.x + 180 or self.player.x - 180
-        self:spawnEntity("ghost", side, self.player.y)
+        local x = self.cameraX + (self.player.x > self.world.width*8 and viewport.logicalWidth+8 or -32)
+        self:spawnEntity("ghost", x+8, self.cameraY+math.floor(viewport.logicalHeight/2)+16)
+        self.sounds:play("ghost")
         self.run:addMessage("A TERRIBLE CHILL RUNS UP YOUR SPINE", 120)
     end
-    self.run:update()
-
     if self.player:isDead() then self.deathTimer = 75 end
     if self.player.y > self.world.height * self.world.tileSize + 32 then
         self:generateSelectedLevel(self.seed, self.subtypeIndex ~= 1)
         return
     end
+    Exit.contact(self)
     self.exitReady = self:isNearExit()
+    if input.up then Exit.begin(self) end
 end
 
 function FullLevelPlaytest:simulationStep()
@@ -898,6 +960,7 @@ end
 function FullLevelPlaytest:keypressed(key, _, isRepeat)
     if isRepeat then return end
     local controls = self.app.controls
+    if (self.exiting or self.completed) and key ~= "r" and key ~= "n" then return end
     if controls:matches("pay", key) then
         self.payQueued = true
     elseif controls:matches("rope", key) then
@@ -913,8 +976,9 @@ function FullLevelPlaytest:keypressed(key, _, isRepeat)
             if self.throwSound then self.throwSound:clone():play() end
         end
     elseif controls:matches("up", key) then
-        if self:isNearExit() then self:advanceLevel() end
+        Exit.begin(self)
     elseif key == "r" then
+        if self.completed then self.levelNumber, self.subtypeIndex = 1, 1 end
         self:generateSelectedLevel(self.seed, true)
     elseif key == "n" then
         self:generateSelectedLevel(MinesLevelSelection.nextSeed(self.seed), self.subtypeIndex ~= 1)
@@ -1001,6 +1065,18 @@ function FullLevelPlaytest:drawWorld(viewport)
             end
         end,
     })
+    for _, entity in ipairs(self.hiddenEntities) do
+        local current = entity
+        local isItem = Item.isCarryable(current.contentKind)
+        if not current.revealed and (self.player.equipment.spectacles
+            or not isItem and self.player.equipment.udjat_eye) then
+            queue:add(isItem and 51 or 0, function()
+                self.renderer:drawEntity({ kind = current.contentKind,
+                    x = current.x+0.5+(current.contentX or 0)/16,
+                    y = current.y+0.5+(current.contentY or 0)/16, properties = {} })
+            end)
+        end
+    end
     for _, bones in ipairs(self.fakeBones) do
         local current = bones
         queue:add(Depth.entity("fake_bones"), function() current:draw(self.renderer) end)
@@ -1009,7 +1085,7 @@ function FullLevelPlaytest:drawWorld(viewport)
         if not item.held and (not item.opened or item.kind == "chest")
             and item.visible ~= false then
             local current = item
-            queue:add(Depth.entity(current.kind), function()
+            queue:add(Depth.item(current, self.player), function()
                 self.renderer:drawItem(current)
             end)
         end
@@ -1017,7 +1093,7 @@ function FullLevelPlaytest:drawWorld(viewport)
     for _, collectible in ipairs(self.collectibles) do
         if collectible.alive then
             local current = collectible
-            queue:add(Depth.entity(current.entity.kind), function()
+            queue:add(Depth.treasure(current, self.player), function()
                 self.renderer:drawEntity(current.entity)
             end)
         end
@@ -1026,7 +1102,7 @@ function FullLevelPlaytest:drawWorld(viewport)
     for _, enemy in ipairs(self.enemies) do
         if enemy.alive or enemy.corpse then
             local current = enemy
-            queue:add(current.held and Depth.heldItem(self.player) or Depth.entity(current.kind), function()
+            queue:add(current.held and Depth.heldItem(self.player) or Depth.entity(current.kind, current.state), function()
                 current:draw(self.renderer)
             end)
         end
@@ -1036,9 +1112,11 @@ function FullLevelPlaytest:drawWorld(viewport)
     if self.tools then self.tools:submit(queue, self.player) end
     Kali.submit(self, queue)
 
-    if not (self.player.invincibleTimer > 0 and math.floor(self.player.invincibleTimer / 2) % 2 == 0) then
-        queue:add(Depth.entity("player"),
-            function() self.player:drawBody() end)
+    if self.player.visible ~= false and not (self.player.invincibleTimer > 0 and math.floor(self.player.invincibleTimer / 2) % 2 == 0) then
+        queue:add(Depth.entity("player", self.player.state),
+            function()
+                if self.exiting then Exit.drawPlayer(self) else self.player:drawBody() end
+            end)
         if self.player:getWhipPhase() then
             queue:add(Depth.EFFECT, function() self.player:drawWhip() end)
         end
@@ -1053,15 +1131,10 @@ function FullLevelPlaytest:drawWorld(viewport)
             self.renderer:drawMeleeSwing(self.player, self.meleeItem)
         end)
     end
-    if self.effects then queue:add(Depth.EFFECT, function() self.effects:draw() end) end
+    if self.effects then self.effects:submit(queue) end
     queue:draw()
     if self.level.dark then
-        love.graphics.stencil(function()
-            love.graphics.circle("fill", math.floor(self.player.x), math.floor(self.player.y - 4),
-                self.player.equipment.spectacles and 72 or 48)
-        end, "replace", 1)
-        love.graphics.setStencilTest("equal", 0)
-        love.graphics.setColor(0, 0, 0, 0.92)
+        love.graphics.setColor(0, 0, 0, require("src.platform.lighting").darkness(self))
         love.graphics.rectangle("fill", self.cameraX, self.cameraY,
             viewport.logicalWidth, viewport.logicalHeight)
         love.graphics.setStencilTest()
@@ -1086,6 +1159,7 @@ function FullLevelPlaytest:drawWorld(viewport)
 end
 
 function FullLevelPlaytest:drawPlayerHUD(viewport)
+    if self.player.visible == false then return end
     love.graphics.setScissor(viewport.x, viewport.y, viewport.width, viewport.height)
     love.graphics.push()
     love.graphics.translate(viewport.x, viewport.y)

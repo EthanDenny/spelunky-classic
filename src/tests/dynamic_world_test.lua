@@ -82,8 +82,9 @@ function Test.run()
         local player = Player.new(40, 43)
         player.facing = 1
         world:set("solid", 3, 2)
-        assert(not tools:throwRope(player, { down = true }) and #tools.ropes == 0,
-            "A blocked side placement must not deploy or spend a rope")
+        local fallback = tools:throwRope(player, { down = true })
+        assert(fallback and not fallback.deployed and fallback.vy == -12 and #tools.ropes == 1,
+            "A blocked side placement must launch the source upward fallback")
 
         world:remove("solid", 3, 2)
         world:set("solid", 3, 3)

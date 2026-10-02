@@ -89,6 +89,7 @@ local function advanceAnimation(spider, context)
 end
 
 function GiantSpider.step(spider, world, player, context)
+    spider.whipped = math.max(0, (spider.whipped or 0)-1)
     if spider.state == "hang" then
         local top = spider.y - spider.height
         local left = spider.x - spider.width / 2
@@ -184,6 +185,10 @@ function Spider.canReachPlayer(self, player)
 end
 
 function Spider.damage(self, amount, sourceX, hit)
+    if hit and hit.kind == "whip" and self.state ~= "hang" then
+        if (self.whipped or 0) > 0 then return false end
+        self.whipped, amount = 10, 1
+    end
     self.hp = self.hp - (amount or 1)
     if self.hp <= 0 then self.alive, self.state = false, "dead" end
     if self.alive and hit then self.vx, self.vy = hit.vx or self.vx, hit.vy or self.vy end
@@ -201,5 +206,15 @@ function Spider.contactPlayer(self, player)
 end
 
 Spider.depth = 40
+Spider.deathBlood = 4
+function Spider.onDeath(body, game)
+    game:spawnEntity("paste", body.x, body.y-4)
+    local random = game.effects.random
+    for _ = 1, random:random(1,3) do
+        local gem = game:spawnEntity(({ "emerald_big", "sapphire_big", "ruby_big" })[
+            random:random(1,3)], body.x, body.y-8)
+        gem.vx, gem.vy = random:random(0,3)-random:random(0,3), -2
+    end
+end
 
 return Spider

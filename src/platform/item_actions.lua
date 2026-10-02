@@ -88,7 +88,12 @@ function ItemActions.updateMelee(context)
                 hits[enemy] = true
                 if enemy.kind == "shopkeeper" then
                     enemy:damage(spec.keeperWhipDamage or 0, player.x, { kind = "whip" })
-                else enemy:damage(spec.damage, player.x) end
+                elseif enemy.spec and enemy.spec.melee then enemy.spec.melee(enemy, context, spec.damage)
+                else
+                    if enemy:damage(spec.damage, player.x, { kind = "whip", weapon = item.kind }) then
+                        context.effects:blood(enemy.x, enemy.y-8, 1)
+                    end
+                end
             end
         end
         if phase == "front" then
@@ -126,9 +131,11 @@ function ItemActions.updateMelee(context)
         local y = player.y
         if not context.world:solidAtPoint(x, y) then y = y + 9 end
         local destroyed = context.world:destroyTerrain(x, y, 0)
-        for _, cell in ipairs(destroyed) do
-            context.effects:terrainBreak(cell.pixelX or (cell.x + 0.5) * context.world.tileSize,
-                cell.pixelY or (cell.y + 0.5) * context.world.tileSize, context.world.tileSize, cell.entity)
+        if not context.world.game then
+            for _, cell in ipairs(destroyed) do
+                context.effects:terrainBreak(cell.pixelX or (cell.x + 0.5) * context.world.tileSize,
+                    cell.pixelY or (cell.y + 0.5) * context.world.tileSize, context.world.tileSize, cell.entity)
+            end
         end
         if #destroyed > 0 and context.effects.random:random(1, spec.breakChance) == 1 then
             item.held = false

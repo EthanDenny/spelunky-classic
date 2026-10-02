@@ -2,7 +2,9 @@
 
 Reviewed against the bundled **Spelunky Classic 1.1** extraction, imported upstream commit `9a9e3e865d489510bbc34e7bb1dc5006c5c3823c`; see [source provenance](../original-game-reference/SOURCE_OF_TRUTH.md). This is a source comparison of the implementation after `2fa3fe4`, including the corrections recorded below. It is **not a declaration of full Classic parity** or verification against the original executable.
 
-The walkthrough covers **96 individual modules**: 18 items, 26 pickups, 9 enemies, `fake_bones`, 8 tiles, 9 structures, 5 traps, 4 tools, 4 projectiles, 1 environmental object and 11 effects. The existing player controller is reviewed separately below. `types.lua` files and `arrow_trap_behavior.lua` are registry/shared infrastructure, not additional Classic objects. A file per kind does not imply a complete port: much of the behavior is inherited or coordinated elsewhere.
+The original walkthrough covers **96 individual modules**: 18 items, 26 pickups, 9 enemies, `fake_bones`, 8 tiles, 9 structures, 5 traps, 4 tools, 4 projectiles, 1 environmental object and 11 effects. The existing player controller is reviewed separately below. `types.lua` files and `arrow_trap_behavior.lua` are registry/shared infrastructure, not additional Classic objects. A file per kind does not imply a complete port: much of the behavior is inherited or coordinated elsewhere.
+
+**Historical baseline:** the numbered tables and shared findings below record the initial audit. The [Kali altar follow-up](#kali-altar-follow-up-2026-10-02) and [Mines completion follow-up](#mines-completion-follow-up-2026-10-02) supersede resolved gaps; read those sections for the current implementation. Five further object modules were added in the Mines pass, following the two Kali modules.
 
 ## Method and shared findings
 
@@ -33,7 +35,7 @@ Source links below point to object metadata; the executable GML is in the adjace
 | [bow.lua](../src/platform/items/bow.lua) | [oBow](../original-game-reference/source/extracted/spelunky/Objects/Items/oBow.xml) | $1000; first pickup grants six arrows; charge +0.2 to 12; release cooldown 10. | Arrow movement/contact inherits the gaps above; D/I. |
 | [chest.lua](../src/platform/items/chest.lua) | [oChest](../original-game-reference/source/extracted/spelunky/Objects/Collectibles/oChest.xml) | Heavy; bounds (6,0,8); 1/12 trapped bomb; 3–4 small gems and 1/4 big gem. | D/I; source chest release/animation lifecycle and collision ordering are approximated. |
 | [crate.lua](../src/platform/items/crate.lua) | [oCrate](../original-game-reference/source/extracted/spelunky/Objects/Collectibles/oCrate.xml) | Heavy; bounds (6,0,8); source player-opening sequential loot odds and fallback. | D/I; tutorial-only bomb-bag contents and source open-object lifecycle are absent. |
-| [die.lua](../src/platform/items/die.lua) | [oDice](../original-game-reference/source/extracted/spelunky/Objects/Items/oDice.xml) | Heavy; bounds (6,0,8); held offsets -2/0; settled betting lifecycle. | D/I; face changes use per-tick random rolls rather than the source sprite-cycle transitions. |
+| [die.lua](../src/platform/items/die.lua) | [oDice](../original-game-reference/source/extracted/spelunky/Objects/Items/oDice.xml) | Heavy; bounds (6,0,8); held offsets -2/0; settled betting lifecycle. | D/I; fast dice use per-tick random faces in the executable source too. The earlier sprite-cycle mismatch claim was incorrect. |
 | [gold_idol.lua](../src/platform/items/gold_idol.lua) | [oGoldIdol](../original-game-reference/source/extracted/spelunky/Objects/Items/oGoldIdol.xml) | Heavy; held offsets 0/2; Mines value $5000; delayed boulder activation. | D/I; conversion happens during next-level generation rather than source exit contact, and the final Mines exit does not convert it; exact altar-floor destruction is incomplete. |
 | [jar.lua](../src/platform/items/jar.lua) | [oJar](../original-game-reference/source/extracted/spelunky/Objects/Items/oJar.xml) | Bounds (4,-6,6); wall/ceiling/floor threshold 3; sequential loot odds. | I; enemy emergence position/velocity and sprite-mask collisions are approximated. |
 | [key.lua](../src/platform/items/key.lua) | [oKey](../original-game-reference/source/extracted/spelunky/Objects/Collectibles/oKey.xml) | Light carryable; default 4px mask; no base cost; unlocks locked chest. | D/I; unlock detection is a distance check rather than source key/chest collision. |
@@ -155,7 +157,7 @@ Source links below point to object metadata; the executable GML is in the adjace
 
 | Module | Classic source | Verified details / repairs | Remaining alignment gaps |
 |---|---|---|---|
-| [bullet.lua](../src/platform/projectiles/bullet.lua) | [oBullet](../original-game-reference/source/extracted/spelunky/Objects/Effects/oBullet.xml) | Source sprite/depth 0; gun paths pass four damage; safe flag protects enemies, not player/damsel; persistent until terrain/outside world. | P; source damsel -6 vertical/120-tick thrown impulse differs; ordinary invincible enemies can ignore damage while still consuming the clone bullet; source sprite collisions are replaced by swept circles/points. |
+| [bullet.lua](../src/platform/projectiles/bullet.lua) | [oBullet](../original-game-reference/source/extracted/spelunky/Objects/Effects/oBullet.xml) | Source sprite/depth 0; gun paths pass four damage; safe flag protects enemies, not player/damsel; persistent until terrain/outside world. | P; source damsel -6 vertical/120-tick thrown impulse differs; the executable oEnemy collision does not check enemy invincibility; actor-specific handling needs comparison; source sprite collisions are replaced by swept circles/points. |
 | [pellet.lua](../src/platform/projectiles/pellet.lua) | [oBullet](../original-game-reference/source/extracted/spelunky/Objects/Effects/oBullet.xml) | Reuses oBullet image/depth. | Synthetic projectile alias with finite sixty-tick life and generic impacts; source shotgun creates six oBullet instances. Live shotgun correctly uses bullet, not this alias. |
 | [muzzle_flash.lua](../src/platform/projectiles/muzzle_flash.lua) | [oShotgunBlastLeft](../original-game-reference/source/extracted/spelunky/Objects/Effects/oShotgunBlastLeft.xml), [oShotgunBlastRight](../original-game-reference/source/extracted/spelunky/Objects/Effects/oShotgunBlastRight.xml) | oShotgunBlastLeft/Right ten frames, depth 0; shot system advances at source 0.8 speed. | Verified narrow visual animation/offset contract; original engine animation-end cleanup is represented by age removal. |
 | [web_ball.lua](../src/platform/projectiles/web_ball.lua) | [oWebBall](../original-game-reference/source/extracted/spelunky/Objects/Effects/oWebBall.xml) | oWebBall depth 1; direct motion before 0.2 gravity; 20–100 lifetime; collision creation animation; giant-spider exemption. | Created webs are left dying=false, unlike source animation end dying=true; exact sprite masks, view/room lifecycle and some actor collisions remain approximated. |
@@ -204,7 +206,7 @@ Extended the existing primary behavior owners with five regression groups, rathe
 
 The existing full smoke suite passed before the changes. The four item/ghost regression groups failed together against an isolated pre-fix snapshot; the push-block regression failed in an isolated pre-fix dynamic-terrain runner. After repairs, **`love . --smoke-test` passes**, including the new regressions and existing item, enemy, shop, terrain, rendering, generation and screen checks. **`git diff --check` passes.** No new production test hooks or source-reference files were introduced or modified. Kapala's price is a directly checked source constant; no redundant definition-inventory test was added.
 
-## Suggested next source-parity batches
+## Batches identified by the initial audit
 
 1. Restore destruction consequences: gold-brick contents, material rubble, lamp support, unfired trap arrows and explosion object interactions.
 2. Correct supply collection and treasure alarms/dynamic depths; implement actual Kapala blood collection and scarab flight.
@@ -212,7 +214,7 @@ The existing full smoke suite passed before the changes. The four item/ghost reg
 4. Extend actor/environment source parity beyond the implemented Mines Kali interaction (see follow-up below).
 5. Correct web decay and particle motion/lifetimes; finish ghost death/turn animations and source exit transitions.
 
-These are documented gaps, not completed features. The source walkthrough and bounded repairs above are complete; full Classic parity remains work in progress.
+These were the next implementation batches at the initial audit. The Mines completion follow-up below records their subsequent repairs and remaining parity limits.
 
 
 ## Kali altar follow-up (2026-10-02)
@@ -223,7 +225,7 @@ Implemented [kali.lua](../src/platform/kali.lua) against `oEnemy` and `oDamsel` 
 - Cavemen contribute 2 living / 1 dead; shopkeepers 12 / 6. Damsels contribute 8 in both cases: the source's live bonus checks status 98, but its thrown status is 2. Severe anger (favor <= -8) consumes without credit; lesser anger permits recovery.
 - Gifts follow the source's ordered branches: unowned equipment at 8, Kapala at 16, 99 bombs at 32 when bombs <80, otherwise 4–8 vitality. Repeated vitality begins at 48, then advances by 16 favor. Jumping thresholds skips lower gifts. Equipment gifts are free world pickups and use the cyclic ownership scan with jetpack/bomb-box fallbacks.
 - Breaking either altar cell or its support removes every altar in the level and applies one -16 penalty. The first punishment arms every head for six spiders; the second attaches a carryable iron ball with four chain links; later punishments darken the level and summon a ghost immediately, or trigger spiders when darkness and a ghost already exist.
-- The ball restrains horizontal travel/jump/fall movement and follows source dragging rules. Teleporting moves it with the player. Exits retain favor/gifts/punishment and reattach the ball without duplicating a carried ball. Carried corpses remain dead across levels and do not rescue as living damsels. New runs reset the state.
+- The ball restrains horizontal travel/jump/fall movement and follows source dragging rules. Teleporting moves it with the player. Exits retain favor/gifts/punishment and reattach the ball without duplicating a carried ball. Heavy items and corpses are dropped on exit; living damsels enter their rescue animation. The previous carried-corpse persistence claim was incorrect. New runs reset the state.
 
 | New object module | Classic source | Implemented behavior |
 |---|---|---|
@@ -232,4 +234,37 @@ Implemented [kali.lua](../src/platform/kali.lua) against `oEnemy` and `oDamsel` 
 
 The [Kali integration tests](../src/tests/kali_altar_test.lua) exercise live simulation ticks, ACTION carrying/dropping, actual bomb destruction, support collapse, ownership/reward branches, anger recovery, punishment escalation, real level transitions, teleportation, and source sprite rendering. All ten scenario groups failed for the expected missing behaviors against an isolated pre-change snapshot and pass with the implementation. The full `love . --smoke-test` suite and `git diff --check` pass.
 
-This completes the Mines altar interaction. The inherited actor/environment and particle gaps in the tables remain separate work. Kapala's existing death-count approximation still needs replacement with source blood-droplet collection; awarding the altar gift does not certify that pickup's full behavior.
+This completes the Mines altar interaction. The subsequent Mines pass replaces the Kapala death-count approximation with mature blood-droplet collection and updates inherited actor/environment behavior as recorded below.
+
+
+## Mines completion follow-up (2026-10-02)
+
+Implemented the outstanding functional Mines batches against executable object events and `characterStepEvent`, `oPlayer1` Step/End Step, `oTransition`, `oLevel`, `scrGenerateItem`, and `scrUseItem`. Per-object properties and reactions remain in their individual modules; shared movement, destruction, lighting, and run bookkeeping live with their owners.
+
+| Batch | Current behavior | Source anchors |
+|---|---|---|
+| Supplies and cash | Free bomb bags/boxes and ropes collect on player contact; paid stock remains a shop transaction. Gold collects immediately; small/big gems and diamonds wait twenty ticks. Cash counts after the delay and flushes on exit. Hidden terrain contents use the source nineteen-choice selection. | `oPlayer1`, collectible Create/Alarm events, `scrGenerateItem`, `oTransition` |
+| Blood and rewards | Kapala heals after nine droplets mature for five ticks and overlap the player, with a heart effect and kiss sound. Hits emit blood; actor-specific death rewards include carryable skeleton skulls and giant-spider paste plus one to three big gems. Health can exceed its starting maximum. | `oBlood`, `oEnemy`, `oDamsel`, `oSkeleton`, `oGiantSpider` |
+| Treasure movement and visibility | Scarabs flee in horizontal/angled bursts without treasure gravity. Spectacles expose buried items and treasure through depth; Udjat Eye exposes treasure. Live inherited item/treasure depths replace static XML depths where appropriate. | `oScarab`, `oItem`, `oTreasure` |
+| Destruction | Gold bricks release chunks and nuggets; supported lamps become carryable lamps where the source child inherits that cleanup. Terrain and dynamic blocks emit material-specific rubble once. Unfired traps release arrows even when destroyed without a blast. | `oSolid` and child Destroy events, `oBrick`, `oLamp`, arrow traps |
+| Blasts, arrows and ropes | Explosions collide throughout their animation, damage players/enemies/damsels, break fragile items, remove webs, shorten nearby bomb fuses, and destroy boulders into rubble and possible rocks. Ordinary items receive additive directional impulses. Bomb attachment follows corpses until pickup. Arrow movement precedes gravity; trap beams accept any nonzero motion and use the source asymmetric rounding. Blocked downward ropes fall back to an upward throw. | `oExplosion`, `oBomb`, `oArrow`, `oArrowTrapTest`, rope creation |
+| Actors and hazards | Generated cavemen/skeletons share their kind's AI; cavemen walk and charge at source speeds. Shared movement uses global tick pulses before gravity. Fall distance and spike shoes affect stomps. Falling enemies impale and lodge without kill credit; embedded actors die. Damsels wait/yell, run after thrown recovery, and rescue at the door independently of the player. | `moveTo`, `oEnemy`, `oCaveman`, `oSkeleton`, `oDamsel`, `oSpikes` |
+| Ghost | Timed haunting starts after 150 seconds beyond the first depth, at the viewport edge. Pursuit turns use source sprites. Contact hides the player, drops equipment and creates skull/bones; the ghost disappears through its animation. Big gems convert into delayed $5000 diamonds; small gems do not. | `oLevel`, `oGhost`, big-gem collisions |
+| Darkness and effects | Darkness follows distance to lamps, carried/fallen lamps, flares and explosions. Smoke/sparks rise steadily; poofs preserve supplied vertical motion. Burning wisps, hearts, flame lifetime, rubble material/view/terrain cleanup and individual effect depths are implemented. Web-ball-created webs begin their source decay. | `oPlayer1` darkness calculation, effect events, `oWeb`, `oWebBall` |
+| Exits | Door point contact cashes held idols and rescues living damsels. Grounded, unstunned players enter a 32-tick exit animation while the world continues. Heavy items, corpses and armed bombs stay behind; lightweight items and Kali state persist. Rescue healing happens during transition. The final Mines exit finishes the animation before completion; R starts a new run. | `oExit`, `oPlayer1`, `oDamsel`, `oTransition`, `oLevel` |
+
+New individual object modules:
+
+| Module | Classic source | Role |
+|---|---|---|
+| [diamond.lua](../src/platform/pickups/diamond.lua) | `oDiamond` | $5000 ghost-converted treasure, twenty-tick collection alarm |
+| [lamp_item.lua](../src/platform/items/lamp_item.lua) | `oLampItem` | Heavy carryable light released from supported lamps |
+| [flare.lua](../src/platform/items/flare.lua) | `oFlare` | Carryable light with periodic source sparks |
+| [heart.lua](../src/platform/effects/heart.lua) | `oSmoochHeart` | Thirty-tick rising healing effect |
+| [burn.lua](../src/platform/effects/burn.lua) | `oBurn` | Animated rising burning wisps with terrain cleanup |
+
+The original source comments out both the F flare action and initial dark-level flare creation. The flare object is supported when spawned; no active player flare action was invented. Spectacles affect buried-object depth, not a larger circular darkness radius. Scarabs are not light sources. Bullets ignore ordinary enemy invincibility in the source, but rescuing damsels let bullets pass through. The source dice really do choose random faces on fast ticks.
+
+The [Mines completion tests](../src/tests/mines_completion_test.lua) cover 21 behavior scenarios through real owners and simulation ticks. All 21 fail against an isolated pre-change checkout for the missing behaviors or systems and pass after implementation. Existing supply, rope, explosion, web, loot, and Kali transition tests were updated where the source disproved their old expectations. The live [render-order regression](../src/tests/render_depth_test.lua) exercises actual flare/lamp/diamond/ghost/effect submissions, spectacles occlusion and player exit rendering. The full `love . --smoke-test` suite and `git diff --check` pass.
+
+This implements the identified functional Mines gaps. It does not certify exact GameMaker opaque-pixel masks, collision/event ordering, equal-depth ties, or every animation against the original executable. Small-enemy obstacle steering and fine movement/state timing remain adaptations. The standalone Enemy AI screen retains a visual-only skeleton-skull fallback; generated Mines use the carryable item. Water/lava, tutorial rules and later-area scaling/gameplay remain outside the Mines scope.

@@ -52,9 +52,16 @@ function World:remove(kind, x, y)
     local value = self[kind][key(x, y)]
     local existed = value ~= nil
     self[kind][key(x, y)] = nil
+    if kind == "solid" and existed then
+        local row = self.level and self.level.tiles and self.level.tiles[y+1]
+        local tile = row and row[x+1]
+        self.destructions = self.destructions or {}
+        self.destructions[#self.destructions+1] = { x = x, y = y, tile = tile,
+            entity = type(value) == "table" and value or nil }
+        if row and tile then row[x+1] = { kind = "empty" } end
+    end
     if kind == "solid" and existed and self.level then
-        local row = self.level.tiles and self.level.tiles[y + 1]
-        local tile = row and row[x + 1]
+        local tile = self.destructions[#self.destructions].tile
         if tile and tile.shopWall then
             self.destroyedShopWalls = self.destroyedShopWalls or {}
             self.destroyedShopWalls[#self.destroyedShopWalls + 1] = {
@@ -211,6 +218,12 @@ function World:addDynamicSolid(block)
 end
 
 function World:removeDynamicSolid(block)
+    if block.alive == false then return end
+    if block.kind ~= "boulder" then
+        self.destructions = self.destructions or {}
+        self.destructions[#self.destructions+1] = { entity = block,
+            x = block.x/16, y = block.y/16, pixelX = block.x+block.width/2, pixelY = block.y+block.height/2 }
+    end
     block.alive = false
     if block.kind ~= "boulder" then
         destroySpikesAbove(self, block.x, block.y, block.width)
@@ -304,7 +317,7 @@ function World:destroyTerrain(centerX, centerY, radius)
                     self.level.tiles[tileY + 1][tileX + 1] = { kind = "empty" }
                 end
                 destroyed[#destroyed + 1] = { x = tileX, y = tileY,
-                    entity = type(entity) == "table" and entity or nil }
+                    entity = type(entity) == "table" and entity or self.destructions[#self.destructions].tile }
             end
         end
     end

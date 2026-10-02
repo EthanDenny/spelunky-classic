@@ -1,4 +1,6 @@
 return {
+    heart = require("src.platform.effects.heart"),
+    burn = require("src.platform.effects.burn"),
     blood = require("src.platform.effects.blood"),
     bloodTrail = require("src.platform.effects.blood_trail"),
     smoke = require("src.platform.effects.smoke"),

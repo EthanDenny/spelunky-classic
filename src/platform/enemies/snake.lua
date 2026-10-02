@@ -62,4 +62,6 @@ end
 
 Snake.depth = 60
 
+Snake.deathBlood = 3
+
 return Snake

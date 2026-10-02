@@ -19,11 +19,11 @@ function Treasure.new(entity, released)
         alive = true,
         active = true,
         collisionBounds = definition.treasureBounds,
-        x = entity.x * 16,
-        y = entity.y * 16,
+        x = entity.x * 16 + (definition.treasureAnchor and definition.treasureAnchor[1] or 0),
+        y = entity.y * 16 + (definition.treasureAnchor and definition.treasureAnchor[2] or 0),
         vx = 0,
         vy = 0,
-        pickupDelay = released and 20 or 0,
+        pickupDelay = definition.collectDelay or 0,
         dropThroughTimer = 0,
         xRemainder = 0,
         yRemainder = 0,
@@ -39,10 +39,22 @@ function Treasure:getVerticalBounds()
     return -4, 4
 end
 
-function Treasure:update(world)
+function Treasure:syncEntity()
+    local anchor = self.definition.treasureAnchor
+    self.entity.x = (self.x - (anchor and anchor[1] or 0)) / 16
+    self.entity.y = (self.y - (anchor and anchor[2] or 0)) / 16
+end
+
+function Treasure:update(world, player)
     if not self.alive then return end
+    if not require("src.platform.activity").contains(world, self) then return end
     if self.pickupDelay > 0 then self.pickupDelay = self.pickupDelay - 1 end
     if not self.active then return end
+    if self.definition.updateTreasure then
+        self.definition.updateTreasure(self, world, player)
+        self:syncEntity()
+        return
+    end
     -- oTreasure samples side/floor contacts before moveTo, unlike oItem.
     local left = PhysicalBody.probe(world, self, "x", -1)
     local right = PhysicalBody.probe(world, self, "x", 1)
@@ -65,7 +77,7 @@ function Treasure:update(world)
         if not right then self.x = self.x + 1 end
     elseif right then self.x = self.x - 1 end
     PhysicalBody.stopInWeb(world, self)
-    self.entity.x, self.entity.y = self.x / 16, self.y / 16
+    self:syncEntity()
 end
 
 function Treasure:overlapsRectangle(left, top, right, bottom)

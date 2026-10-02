@@ -5,6 +5,8 @@ ClassicSounds.__index = ClassicSounds
 local CUES = {
     arrowtrap = "arrowtrap", bat = "bat", bowpull = "bowpull", break_item = "break",
     caveman_die = "cavemandie", chest_open = "chestopen",
+    damsel = "damsel", steps = "steps",
+    ghost = "ghost", die = "die",
     coin = "coin", crunch = "crunch", gem = "gem",
     giant_spider = "giantspider", hit = "hit", hurt = "hurt", jump = "jump", kiss = "kiss",
     climb1 = "climb1", climb2 = "climb2",

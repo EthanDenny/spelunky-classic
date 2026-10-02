@@ -1,4 +1,4 @@
-local PushBlock = { solid = true, dynamic = true, moveable = true, depth = 110, image = "block" }
+local PushBlock = { rubbleMaterial = "lush", solid = true, dynamic = true, moveable = true, depth = 110, image = "block" }
 
 local function moveVertical(world, block)
     -- gameStepEvent accelerates by oMoveableSolid.myGrav, then its y loop

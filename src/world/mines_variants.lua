@@ -18,19 +18,32 @@ function MinesVariants.apply(level, run)
     if not level.dark then return level end
 
     run.hadDarkLevel = true
-    for y = 2, level.height - 2 do
-        for x = 2, level.width - 3 do
-            local row = level.tiles[y + 1]
-            local tile = row and row[x + 1]
-            local above = level.tiles[y] and level.tiles[y][x + 1]
-            local rightAbove = level.tiles[y] and level.tiles[y][x + 2]
-            if solid(tile) and not solid(above) and not solid(rightAbove) then
-                level.entities[#level.entities + 1] = { kind = "lamp", x = x, y = y - 1, properties = {} }
-                level.entities[#level.entities + 1] = {
-                    kind = "scarab", x = math.min(level.width - 2, x + 5), y = y - 2,
-                    properties = {},
-                }
-                return level
+    local random = love.math.newRandomGenerator(level.seed + depth*17)
+    for y = 2, level.height-3 do
+        for x = 2, level.width-3 do
+            local tile = level.tiles[y+1] and level.tiles[y+1][x+1]
+            local below = level.tiles[y+2] and level.tiles[y+2][x+1]
+            local lower = level.tiles[y+3] and level.tiles[y+3][x+1]
+            if solid(tile) and not solid(below) and not solid(lower) then
+                local kind = random:random(1,60) == 1 and "lamp"
+                    or random:random(1,40) == 1 and "scarab"
+                if kind then
+                    local blocked = false
+                    for _, entity in ipairs(level.entities) do
+                        if entity.x == x and entity.y == y+1
+                            and entity.kind ~= "bat" and entity.kind ~= "spider" then blocked = true end
+                    end
+                    if not blocked then
+                        for index = #level.entities, 1, -1 do
+                            local entity = level.entities[index]
+                            if entity.x == x and entity.y == y+1
+                                and (entity.kind == "bat" or entity.kind == "spider") then
+                                table.remove(level.entities, index)
+                            end
+                        end
+                        level.entities[#level.entities+1] = { kind = kind, x = x, y = y+1, properties = {} }
+                    end
+                end
             end
         end
     end

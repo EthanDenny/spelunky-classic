@@ -1,5 +1,7 @@
 local Traits = require("src.platform.item_traits")
 
+local PhysicalBody = require("src.platform.physical_body")
+
 local Definition = Traits.carry({ stickOnWall = 6, gravity = 0.2, consumeOnEnemyHit = true })
 
 Definition.depth = 100
@@ -40,7 +42,6 @@ end
 
 function Definition.updateTrapProjectile(self, projectile, player, enemies, items)
     if not projectile.alive then return end
-    projectile.vy = math.min(8, projectile.vy + 0.2)
     local steps = math.max(1, math.floor(math.max(math.abs(projectile.vx), math.abs(projectile.vy))))
     local dx, dy = projectile.vx / steps, projectile.vy / steps
     for _ = 1, steps do
@@ -68,12 +69,14 @@ function Definition.updateTrapProjectile(self, projectile, player, enemies, item
         for _, enemy in ipairs(enemies or {}) do
             if enemy.alive and math.abs(projectile.x - enemy.x) < 8
                 and math.abs(projectile.y - enemy.y) < 8 then
-                enemy:damage(2)
+                PhysicalBody.strikeEnemy(projectile, enemy)
                 projectile.alive = false
                 return
             end
         end
     end
+    projectile.vy = math.min(8, projectile.vy+(projectile.gravity or 0.2))
+    projectile.gravity = 0.6
 end
 
 function Definition.drawTrapProjectile(system, arrow)

@@ -25,7 +25,7 @@ function Head.triggerIdol(self, player)
     local nearest, nearestDistance
     for _, trap in ipairs(self.traps) do
         if trap.alive and trap.kind == "giant_tiki_head" then
-            local dx, dy = trap.x - player.x, trap.y - 64 - player.y
+            local dx, dy = trap.x - player.x, trap.y + 64 - player.y
             local distance = dx * dx + dy * dy
             if not nearestDistance or distance < nearestDistance then
                 nearest, nearestDistance = trap, distance

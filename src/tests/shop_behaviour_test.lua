@@ -467,16 +467,13 @@ function Test.run()
             game.player:step(game.world, {})
             assert(game.player.health == 3, "Further bounces cannot repeat the throw's impact damage")
         end },
-        { "free supplies require pickup rather than touch", function()
+        { "free supplies collect on contact", function()
             local game = fixture()
             local bag = stock(game, "bomb_bag")
             bag.entity.properties.forSale = false
             game:simulationStepBody({})
-            assert(bag.alive and game.run.bombs == 4,
-                "Free oItem supplies must remain loose when the player merely touches them")
-            pickup(game)
             assert(not bag.alive and not game.heldItem and game.run.bombs == 7,
-                "DOWN + ACTION must consume free supplies immediately, without requiring PAY")
+                "Free supplies must collect on contact without ACTION or PAY")
         end },
         { "ordinary thrown items provoke without disarming", function()
             local game, keeper = fixture()

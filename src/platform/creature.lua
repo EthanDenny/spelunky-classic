@@ -58,7 +58,12 @@ function Creature.new(entity, metadata, options)
         shopType = entity.properties and entity.properties.shopType,
         state = "idle",
         dropThroughTimer = 0,
+        STATES = { idle = "idle", walk = "walk", attack = "attack", stunned = "stunned",
+            bones = "bones", rise = "rise" },
+        sightTimer = 0,
     }, Creature)
+    local random = love.math.newRandomGenerator(options.seed or 1)
+    creature.random = function(a, b) return random:random(a, b) end
     if spec.initializeCreature then spec.initializeCreature(creature, options.seed) end
     return creature
 end
@@ -94,9 +99,13 @@ function Creature:overlapsPlayer(player)
         player.x + half, player.y + bottom)
 end
 
+function Creature:setState(state, timer)
+    self.state, self.timer = state, timer or 0
+end
+
 function Creature:moveHorizontal(world, amount)
     local direction = sign(amount)
-    for _ = 1, math.floor(math.abs(amount) + 0.5) do
+    for _ = 1, math.abs(PhysicalBody.pixels(amount, world.time)) do
         if world:collidesSolid(self, self.x + direction, self.y) then return true end
         self.x = self.x + direction
     end
@@ -105,27 +114,32 @@ end
 
 function Creature:moveVertical(world, amount)
     local direction = sign(amount)
-    for _ = 1, math.floor(math.abs(amount) + 0.5) do
+    for _ = 1, math.abs(PhysicalBody.pixels(amount, world.time)) do
         local nextY = self.y + direction
         if world:collidesSolid(self, self.x, nextY) then
             return direction > 0 and "floor" or "ceiling"
-        end
-        if direction > 0 then
-            local landing = world:platformLanding(self, self.y, nextY)
-            if landing then self.y = landing return "floor" end
         end
         self.y = nextY
     end
 end
 
 function Creature:groundPhysics(world, gravity, terminalVelocity)
-    self.vy = math.min(terminalVelocity or 8, self.vy + (gravity or 0.6))
     local hitWall = self:moveHorizontal(world, self.vx)
     local vertical = self:moveVertical(world, self.vy)
     if hitWall then self.vx = -self.vx end
     if vertical == "floor" then self.vy = 0 end
     if vertical == "ceiling" then self.vy = 1 end
+    if vertical ~= "floor" then self.vy = math.min(terminalVelocity or 8, self.vy+(gravity or 0.6)) end
     return vertical == "floor" or world:groundBelow(self) ~= nil
+end
+
+function Creature:updateGroundPhysics(world)
+    local wall = self:moveHorizontal(world, self.vx)
+    local vertical = self:moveVertical(world, self.vy)
+    if vertical == "floor" then self.vy = 0
+    elseif vertical == "ceiling" then self.vy = 1
+    else self.vy = math.min(8, self.vy+0.6) end
+    return wall, vertical
 end
 
 function Creature:web(duration)
@@ -133,7 +147,7 @@ function Creature:web(duration)
 end
 
 function Creature:damage(amount, sourceX, hit)
-    if not self.alive or self.spec.canDamage and not self.spec.canDamage(self) then return false end
+    if not self.alive or self.spec.canDamage and not self.spec.canDamage(self, hit) then return false end
     if self.spec.damage then
         local damaged = self.spec.damage(self, amount, sourceX, hit)
         if self.hp <= 0 and self.spec.sacrifice then self.corpse = true end
@@ -158,9 +172,9 @@ function Creature:damage(amount, sourceX, hit)
 end
 
 function Creature:pickup(player)
-    if not (self.alive or self.corpse) or not self.spec.canBeHeld or self.held then return false end
+    if not (self.alive or self.corpse) or not self.spec.canBeHeld or self.held or self.rescued then return false end
     if not self.spec.holdWhenHealthy and not self.corpse and self.stunned <= 0 then return false end
-    self.held = true
+    self.held, self.impaled = true, false
     self.vx, self.vy = 0, 0
     self:updateHeldPosition(player)
     return true
@@ -180,8 +194,18 @@ function Creature:updateAI(world, player, context)
     self.spec.creatureStep(self, world, player, context)
 end
 
+function Creature:checkEmbedded(world, context)
+    if self.held or self.rescued or self.kind == "ghost" then return end
+    if world:solidAtPoint(self.x, self.y-8) then
+        self.hp, self.alive, self.corpse = 0, false, false
+        if context and self.spec.sacrifice then context.effects:blood(self.x, self.y-8, 3) end
+    end
+end
+
 function Creature:step(world, player, context)
     if not (self.alive or self.corpse) then return end
+    if not require("src.platform.activity").contains(world, self, self.kind == "giant_spider" and 32 or 20) then return end
+    if self.spec.updateExit and self.spec.updateExit(self) then return end
     if self.held then
         self:updateHeldPosition(player)
         self.animation = self.animation + 0.5
@@ -197,12 +221,14 @@ function Creature:step(world, player, context)
         return
     end
     if self.corpse then
+        if self.impaled then return end
         PhysicalBody.stepItem(world, self)
         PhysicalBody.stopInWeb(world, self)
         return
     end
     if self.spec.stepCreature then
         self.spec.stepCreature(self, world, player, context)
+        self:checkEmbedded(world, context)
         return
     end
     self.animation = self.animation + (self.spec.creatureAnimationPerTick or 0)
@@ -217,27 +243,29 @@ function Creature:step(world, player, context)
         end
         return
     end
-    if self.state == "stunned" then self.state = "idle" end
+    if self.state == "stunned" then self.state = self.spec.recoveryState or "idle" end
     self:updateAI(world, player, context)
+    self:checkEmbedded(world, context)
 end
 
-function Creature:resolvePlayerContact(player, previousY)
+function Creature:resolvePlayerContact(player, previousY, context)
     if not self.alive or self.held or (self.spec.sacrifice and self.stunned > 0)
         or self.spec.canContact == false
         or not self:overlapsPlayer(player) then return end
     if self.spec.canReachPlayer and not self.spec.canReachPlayer(self, player) then return end
-    if self.spec.resolvePlayerContact then return self.spec.resolvePlayerContact(self, player, previousY) end
+    if self.spec.resolvePlayerContact then return self.spec.resolvePlayerContact(self, player, previousY, context) end
     local _, playerBottom = player:getVerticalBounds()
     local _, enemyTop = self:getBounds()
     if player.vy > 0 and previousY + playerBottom <= enemyTop + 3 then
-        local damage = player.equipment and player.equipment.spike_shoes and 3 or 1
+        local damage = (math.floor((player.fallTimer or 0)/16)+1)
+            * (player.equipment and player.equipment.spike_shoes and 3 or 1)
         self:damage(damage, player.x)
         player.vy = -6
         player:setState("jumping")
         return "stomp"
     end
     if self.spec.contactPlayer then return self.spec.contactPlayer(self, player) end
-    return player:hurt(self.x, 1, self.kind) and "hurt" or "invincible"
+    return player:hurt(self.x, 1, self.kind, nil, "enemy_contact") and "hurt" or "invincible"
 end
 
 function Creature:draw(renderer)

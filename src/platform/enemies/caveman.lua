@@ -112,6 +112,10 @@ function Caveman.animationFps(self, animation, name)
     return self.state == self.STATES.attack and name == "run" and 30 or animation.fps
 end
 
+function Caveman.canDamage(body, hit)
+    return not hit or hit.kind ~= "whip" or hit.weapon == "machete" or body.stunned <= 0
+end
+
 function Caveman.canEnemyDamage(self)
     return self.state ~= self.STATES.stunned
 end
@@ -130,19 +134,7 @@ function Caveman.onPlayerHit(self, player)
     if player.y < self.y then player.vy = -6 end
 end
 
-function Caveman.creatureStep(self, world, player)
-    local dx = player and player.x - self.x or 0
-    local dy = player and player.y - self.y or 0
-    if player and dx * dx + dy * dy < 80 * 80 then
-        self.facing = player.x < self.x and -1 or 1
-    elseif self.timer <= 0 then
-        self.facing = -self.facing
-        self.timer = 45
-    end
-    self.timer = self.timer - 1
-    self.vx = self.facing * self.config.speed
-    self:groundPhysics(world)
-end
+Caveman.creatureStep = Caveman.step
 
 local Physics = require("src.platform.physical_body")
 local Assets = require("src.platform.object_assets")
@@ -151,6 +143,7 @@ function Caveman.initializeCreature(body)
     body.heavy = true
     body.definition = { hold = { standing = 4, ducking = 6 } }
     body.physicsOriginY = -8
+    body.timer, body.facing = 0, 1
 end
 
 function Caveman.stunnedStep(body, world)
@@ -166,8 +159,13 @@ end
 
 function Caveman.drawCreature(body, renderer)
     if not body.corpse and not body.held and body.stunned <= 0 then
-        renderer:drawEntity({ kind = "caveman", x = (body.x - 8) / 16,
-            y = (body.y - 16) / 16, properties = body.entity.properties })
+        local name = body.vx == 0 and "sCavemanLeft" or "sCavemanRunLeft"
+        local frame = body.vx == 0 and 0 or math.floor(body.animation*(body.state == "attack" and 2 or 1)) % 4
+        local key = name .. frame
+        sprites[key] = sprites[key] or Assets.image("Enemies/Caveman", name, frame)
+        love.graphics.setColor(1,1,1,1)
+        love.graphics.draw(sprites[key], math.floor(body.x), math.floor(body.y-16),
+            0, body.facing < 0 and 1 or -1, 1, 8, 0)
         return
     end
     local name = body.corpse and (body.held and "sCavemanDHeldL" or "sCavemanDieLL")
@@ -181,5 +179,7 @@ function Caveman.drawCreature(body, renderer)
 end
 
 Caveman.depth = 60
+
+Caveman.deathBlood = 0
 
 return Caveman

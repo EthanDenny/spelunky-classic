@@ -1,4 +1,15 @@
 local ItemContents = {}
+local underground = {
+    { "jetpack", 0, -2 }, { "cape" }, { "shotgun" }, { "mattock" },
+    { "teleporter", 0, 3 }, { "gloves", 0, -1 }, { "spectacles" },
+    { "web_cannon", -2 }, { "pistol" }, { "mitt", 0, -1 }, { "paste" },
+    { "spring_shoes" }, { "spike_shoes" }, { "machete" },
+    { "bomb_box", 0, -2 }, { "bow" }, { "compass" }, { "parachute" }, { "rope_pile" },
+}
+function ItemContents.underground(random)
+    local choice = underground[random:random(1, #underground)]
+    return choice[1], choice[2] or 0, choice[3] or 0
+end
 
 local function rollChain(spec, random)
     for _, choice in ipairs(spec.rolls) do

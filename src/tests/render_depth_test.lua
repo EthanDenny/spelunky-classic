@@ -173,6 +173,49 @@ function Test.run(app)
     before(liveOrder, "bat", "lip")
     before(liveOrder, "lip", "effects")
 
+    do
+        local game = require("src.screens.full_level_playtest").new(app)
+        game.renderer = renderer
+        game:generateLevel(17)
+        game:spawnEntity("flare", 80, 80)
+        game:spawnEntity("lamp_item", 96, 80)
+        game:spawnEntity("diamond", 112, 80)
+        game:spawnEntity("ghost", 144, 96)
+        game.effects:add("teleport_spark", 120, 80)
+        local entityDraw, tileDraw, itemDraw = renderer.drawEntity, renderer.drawTile, renderer.drawItem
+        local order = {}
+        renderer.drawEntity = function(self, entity)
+            order[#order+1] = entity.kind
+            return entityDraw(self, entity)
+        end
+        renderer.drawItem = function(self, item, ...)
+            order[#order+1] = item.kind
+            return itemDraw(self, item, ...)
+        end
+        renderer.drawTile = function(self, tile, ...)
+            order[#order+1] = tile.kind
+            return tileDraw(self, tile, ...)
+        end
+        local ok, err = pcall(function()
+            local view = { x = 0, y = 0, width = 320, height = 240,
+                scale = 1, logicalWidth = 320, logicalHeight = 240 }
+            game:drawWorld(view)
+            before(order, "flare", "brick")
+            before(order, "lamp_item", "brick")
+            before(order, "diamond", "brick")
+            game.player.equipment.spectacles = true
+            order = {}
+            game:drawWorld(view)
+            before(order, "brick", "flare")
+            before(order, "brick", "lamp_item")
+            before(order, "brick", "diamond")
+            game.exiting, game.player.state = 16, "exiting"
+            game:drawWorld(view)
+        end)
+        renderer.drawEntity, renderer.drawTile, renderer.drawItem = entityDraw, tileDraw, itemDraw
+        assert(ok, err)
+    end
+
     local heldImages, heldAngles = {}, {}
     local drawImage = love.graphics.draw
     love.graphics.draw = function(image, ...)

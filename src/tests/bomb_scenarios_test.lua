@@ -50,15 +50,25 @@ function Test.run(app)
     local skeleton = Enemy.new("skeleton", 88, 88, { seed = 18 })
     local skeletonTools = ToolSystem.new(World.new(12, 9, 16), Player.TICK_RATE)
     skeletonTools:explode(88, 88)
-    skeletonTools:update(Player.new(16, 16), { skeleton }, {})
+    local skeletonItems = {}
+    skeletonTools:update(Player.new(16, 16), { skeleton }, skeletonItems)
     local bones, skulls, blood = 0, 0, 0
     for _, particle in ipairs(skeletonTools.effects.particles) do
         if particle.kind == "bone" then bones = bones + 1 end
         if particle.kind == "skull" then skulls = skulls + 1 end
         if particle.kind == "blood" then blood = blood + 1 end
     end
+    for _, item in ipairs(skeletonItems) do if item.kind == "skull" then skulls = skulls+1 end end
     assert(not skeleton.alive and bones == 3 and skulls == 1 and blood == 0,
         "A skeleton killed by a blast must shatter into bones and a skull")
+
+    local survivor = Player.new(88, 88)
+    survivor.health = 14
+    local survivorTools = ToolSystem.new(World.new(12, 9, 16), Player.TICK_RATE)
+    survivorTools:explode(88, 88)
+    survivorTools:update(survivor, {}, {})
+    assert(survivor.health == 4 and survivor.stunTimer == 100 and survivor.vy == -6,
+        "A high-vitality player must survive ten blast damage with the source stun and launch")
 
     local launchWorld = World.new(14, 9, 16)
     launchWorld:fill("solid", 1, 7, 12, 2)

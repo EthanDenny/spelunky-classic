@@ -95,4 +95,6 @@ end
 
 Spider.depth = 40
 
+Spider.deathBlood = 3
+
 return Spider

@@ -32,6 +32,8 @@ function RunState.new(seed)
         ropes = 4,
         arrows = 0,
         money = 0,
+        pendingMoney = 0,
+        collectCounter = 0,
         time = 0,
         kills = 0,
         damsels = 0,
@@ -52,7 +54,7 @@ end
 
 function RunState:applyToPlayer(player)
     player.maxHealth = self.maxHealth
-    player.health = math.min(self.health, self.maxHealth)
+    player.health = self.health
     player.equipment = copy(self.equipment)
 end
 
@@ -70,7 +72,23 @@ function RunState:currentMessage()
     return self.messages[1]
 end
 
+function RunState:queueMoney(amount)
+    self.pendingMoney = self.pendingMoney + amount
+    self.collectCounter = math.min(100, self.collectCounter + 20)
+end
+
+function RunState:flushMoney()
+    self.money = self.money + self.pendingMoney
+    self.pendingMoney, self.collectCounter = 0, 0
+end
+
 function RunState:update()
+    if self.collectCounter > 0 then
+        self.collectCounter = self.collectCounter - 1
+    elseif self.pendingMoney > 0 then
+        local amount = math.min(100, self.pendingMoney)
+        self.money, self.pendingMoney = self.money + amount, self.pendingMoney - amount
+    end
     local message = self.messages[1]
     if not message then return end
     message.timer = message.timer - 1

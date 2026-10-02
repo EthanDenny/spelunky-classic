@@ -70,6 +70,7 @@ function ToolSystem:submit(queue, player)
         end
     end
     queue:add(Depth.EFFECT, function() self:drawExplosions() end)
+    self.effects:submit(queue)
 end
 
 return ToolSystem

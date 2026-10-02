@@ -312,4 +312,6 @@ function Shopkeeper.creatureVerticalBounds(body)
 end
 Shopkeeper.depth = 60
 
+Shopkeeper.deathBlood = 0
+
 return Shopkeeper

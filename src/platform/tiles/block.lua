@@ -1,1 +1,1 @@
-return { solid = true, worldLayer = "solid", depth = 110, image = "block" }
+return { solid = true, worldLayer = "solid", rubbleMaterial = "lush", depth = 110, image = "block" }

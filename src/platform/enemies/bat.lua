@@ -63,4 +63,6 @@ end
 
 Bat.depth = 40
 
+Bat.deathBlood = 3
+
 return Bat
