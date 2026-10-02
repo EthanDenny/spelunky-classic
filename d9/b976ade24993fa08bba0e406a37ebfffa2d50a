@@ -1,0 +1,269 @@
+src/platform/pickups/diamond.lua
+  s_a149baf2181030::t_cfd675acfe774c 1-5
+src/platform/creature.lua
+  s_a149baf2181030::t_565f36a6e71e4d 175,208,246
+  s_a149baf2181030::t_95242fc26407c3 61-63,65-66,102-105,108,117,132,136-142,224,251,256,260-261,268
+  s_a149baf2181030::t_bb2e3c3dc8c3b1 150
+  s_a149baf2181030::t_7b5a0d671e0b85 177
+  s_a149baf2181030::t_606a0227a2c88c 143,197-204,231,248
+  s_a149baf2181030::t_3ffafc2a77c679 207
+  s_a149baf2181030::t_13eb1983cb5eab 144
+src/platform/treasure.lua
+  s_a149baf2181030::t_ae02e9e83cd06b 22-23,42-47,55,80
+  s_a149baf2181030::t_cfd675acfe774c 26,48,53-54,56-57
+  s_a149baf2181030::t_3ffafc2a77c679 50
+src/platform/tiles/brick.lua
+  s_a149baf2181030::t_ae02e9e83cd06b 2
+  s_a149baf2181030::t_4edfdae8113428 12-23
+src/platform/enemies/skeleton.lua
+  s_a149baf2181030::t_95242fc26407c3 84
+  s_a149baf2181030::t_bb2e3c3dc8c3b1 110-117
+src/platform/item.lua
+  s_a149baf2181030::t_cfd675acfe774c 36
+  s_a149baf2181030::t_3ffafc2a77c679 145
+  s_a149baf2181030::t_9e62e039000fcc 149
+src/platform/pickups/emerald.lua
+  s_a149baf2181030::t_cfd675acfe774c 5
+src/tests/dynamic_world_test.lua
+  s_a149baf2181030::t_ceede7b2e27a79 85-87
+src/platform/traps/giant_tiki_head.lua
+  s_a149baf2181030::t_bcc5b7245de1c3 28
+src/platform/enemies/damsel.lua
+  s_a149baf2181030::t_bb2e3c3dc8c3b1 35,140-141
+  s_a149baf2181030::t_4df54aec56923b 50-64
+  s_a149baf2181030::t_565f36a6e71e4d 11,20,26-29,31,34,36-46,48-49,65-94,113-124,139
+src/platform/enemies/ghost.lua
+  s_a149baf2181030::t_bcc5b7245de1c3 45-46
+  s_a149baf2181030::t_ce85de2afd7a5f 1,4-5,7-12,14-37,39-44,47-63
+src/render/README.md
+  s_a149baf2181030::t_28886e4ec20da6 15-19,32-35
+src/audio/classic_sounds.lua
+  s_a149baf2181030::t_bcc5b7245de1c3 9
+  s_a149baf2181030::t_565f36a6e71e4d 8
+src/tests/mines_completion_test.lua
+  s_a149baf2181030::t_bcc5b7245de1c3 62,66,154,170-181
+  s_a149baf2181030::t_cfde65a3a72479 237-239
+  s_a149baf2181030::t_565f36a6e71e4d 230-236,240-245
+  s_a149baf2181030::t_4df54aec56923b 223-229
+  s_a149baf2181030::t_606a0227a2c88c 155-161
+  s_a149baf2181030::t_6f1f26fd9430d6 1-5,9-23,27-61,70-81,83-85,263-273
+  s_a149baf2181030::t_d4e1d6f64e8daa 6-8,24-26,67,86-93,95,97-111,114-153,182-202,214-215,217,219-220,222,246-262
+  s_a149baf2181030::t_3ffafc2a77c679 94,96,216,218,221
+  s_a149baf2181030::t_ce85de2afd7a5f 82
+  s_a149baf2181030::t_9e62e039000fcc 203-213
+  s_a149baf2181030::t_bb2e3c3dc8c3b1 162-169
+  s_a149baf2181030::t_5b6a21712f3d4f 63-65,68-69,112-113
+src/platform/enemies/giant_spider.lua
+  s_a149baf2181030::t_4df54aec56923b 188,190
+  s_a149baf2181030::t_3ffafc2a77c679 92,189,191
+  s_a149baf2181030::t_bb2e3c3dc8c3b1 209-218
+src/platform/enemies/snake.lua
+  s_a149baf2181030::t_bb2e3c3dc8c3b1 65-66
+src/platform/pickups/sapphire_big.lua
+  s_a149baf2181030::t_cfd675acfe774c 5-6
+src/platform/items/flare.lua
+  s_a149baf2181030::t_4edfdae8113428 1-4,6-7,9-11
+  s_a149baf2181030::t_9e62e039000fcc 5
+  s_a149baf2181030::t_ce85de2afd7a5f 8
+src/platform/effects/burn.lua
+  s_a149baf2181030::t_bcc5b7245de1c3 1-3
+src/platform/effects/teleport_spark.lua
+  s_a149baf2181030::t_cfd675acfe774c 3-4
+src/platform/enemies/shopkeeper.lua
+  s_a149baf2181030::t_bb2e3c3dc8c3b1 315-316
+docs/object-source-audit.md
+  s_a149baf2181030::t_28886e4ec20da6 5-7,38,160,209,217,228,237-270
+src/platform/pickups/ruby.lua
+  s_a149baf2181030::t_cfd675acfe774c 5
+src/platform/activity.lua
+  s_a149baf2181030::t_3ffafc2a77c679 1-9
+src/platform/effects/types.lua
+  s_a149baf2181030::t_bcc5b7245de1c3 2-3
+main.lua
+  s_a149baf2181030::t_6f1f26fd9430d6 44
+src/tests/gameplay_systems_test.lua
+  s_a149baf2181030::t_ce85de2afd7a5f 29-31,164,166-167
+src/platform/item_contents.lua
+  s_a149baf2181030::t_4edfdae8113428 2-12
+src/tests/render_depth_test.lua
+  s_a149baf2181030::t_9e62e039000fcc 176-218
+src/platform/structures/altar_right.lua
+  s_a149baf2181030::t_29f1b326fd36fa 1
+src/platform/items/lamp_item.lua
+  s_a149baf2181030::t_4edfdae8113428 1-5
+src/platform/structures/shop_sign.lua
+  s_a149baf2181030::t_29f1b326fd36fa 1
+src/platform/pickups/jetpack.lua
+  s_a149baf2181030::t_9e62e039000fcc 11
+  s_a149baf2181030::t_bcc5b7245de1c3 12-16
+src/platform/tool_system.lua
+  s_a149baf2181030::t_ceede7b2e27a79 73
+src/tests/kali_altar_test.lua
+  s_a149baf2181030::t_ce85de2afd7a5f 255,266
+src/platform/structures/exit.lua
+  s_a149baf2181030::t_ce85de2afd7a5f 2-18,20-27,35-47,49-61
+  s_a149baf2181030::t_565f36a6e71e4d 19
+  s_a149baf2181030::t_3ffafc2a77c679 28-34
+  s_a149baf2181030::t_ceede7b2e27a79 48
+src/platform/enemy.lua
+  s_a149baf2181030::t_3ffafc2a77c679 176
+  s_a149baf2181030::t_606a0227a2c88c 179-181
+  s_a149baf2181030::t_29f1b326fd36fa 4,113,126,152,156,222-223
+  s_a149baf2181030::t_bb2e3c3dc8c3b1 199
+src/platform/items/types.lua
+  s_a149baf2181030::t_4edfdae8113428 2-3
+src/platform/trap_system.lua
+  s_a149baf2181030::t_4edfdae8113428 64-66,78-85,89-90,98-107
+  s_a149baf2181030::t_29f1b326fd36fa 35
+src/platform/tiles/solid.lua
+  s_a149baf2181030::t_ae02e9e83cd06b 2
+src/platform/traps/arrow_trap_right.lua
+  s_a149baf2181030::t_29f1b326fd36fa 3
+src/platform/effects.lua
+  s_a149baf2181030::t_7b5a0d671e0b85 118-119
+  s_a149baf2181030::t_cfd675acfe774c 56,184-185,194-195,198-200,203-207,210-213
+  s_a149baf2181030::t_3ffafc2a77c679 169,175-183,301
+  s_a149baf2181030::t_29f1b326fd36fa 121
+  s_a149baf2181030::t_bcc5b7245de1c3 186-193,196-197,201-202,208-209,330-340
+  s_a149baf2181030::t_ae02e9e83cd06b 1,104
+  s_a149baf2181030::t_ceede7b2e27a79 315,324-329,341-348
+src/platform/environment/web.lua
+  s_a149baf2181030::t_4edfdae8113428 5,14
+src/platform/items/arrow.lua
+  s_a149baf2181030::t_9e62e039000fcc 78-79
+  s_a149baf2181030::t_29f1b326fd36fa 3-4
+  s_a149baf2181030::t_ce85de2afd7a5f 72
+src/platform/effects/flame.lua
+  s_a149baf2181030::t_cfd675acfe774c 2
+src/platform/lighting.lua
+  s_a149baf2181030::t_95242fc26407c3 1-12,20,22-23
+  s_a149baf2181030::t_29f1b326fd36fa 13-19,21
+src/platform/structures/bones.lua
+  s_a149baf2181030::t_29f1b326fd36fa 2-11
+src/render/classic_depth.lua
+  s_a149baf2181030::t_95242fc26407c3 23-32
+src/tests/playtest_feedback_test.lua
+  s_a149baf2181030::t_bcc5b7245de1c3 121-123
+src/platform/pickups/types.lua
+  s_a149baf2181030::t_cfd675acfe774c 2
+src/platform/pickups/scarab.lua
+  s_a149baf2181030::t_ae02e9e83cd06b 6,14-20
+  s_a149baf2181030::t_3ffafc2a77c679 22-23
+  s_a149baf2181030::t_cfd675acfe774c 7-13,21,24-35
+README.md
+  s_a149baf2181030::t_28886e4ec20da6 5,9,13,19
+  s_a149baf2181030::t_d33855788e6986 20
+src/game/run_state.lua
+  s_a149baf2181030::t_cfd675acfe774c 35-36,57,75-84,86-91
+src/platform/pickups/sapphire.lua
+  s_a149baf2181030::t_cfd675acfe774c 5
+src/platform/tiles/smooth_brick.lua
+  s_a149baf2181030::t_ae02e9e83cd06b 1
+src/platform/enemies/caveman.lua
+  s_a149baf2181030::t_ceede7b2e27a79 162-168
+  s_a149baf2181030::t_bb2e3c3dc8c3b1 115-118,183
+  s_a149baf2181030::t_95242fc26407c3 137,146
+  s_a149baf2181030::t_307c9a65dcce82 184
+src/platform/item_actions.lua
+  s_a149baf2181030::t_bb2e3c3dc8c3b1 92-96
+  s_a149baf2181030::t_7b5a0d671e0b85 135-138
+  s_a149baf2181030::t_3ffafc2a77c679 134
+  s_a149baf2181030::t_4df54aec56923b 91
+src/platform/effects/heart.lua
+  s_a149baf2181030::t_bcc5b7245de1c3 1-2
+src/platform/tools/explosion.lua
+  s_a149baf2181030::t_563e707e546317 52,79,103-105
+  s_a149baf2181030::t_bb2e3c3dc8c3b1 80
+  s_a149baf2181030::t_4edfdae8113428 24-50,69-70,72-77,85-96,106
+  s_a149baf2181030::t_ff39ded0a79311 71
+  s_a149baf2181030::t_bcc5b7245de1c3 62-68
+  s_a149baf2181030::t_3ffafc2a77c679 12,55-58,60-61
+  s_a149baf2181030::t_7b5a0d671e0b85 13-16
+src/platform/tools/rope.lua
+  s_a149baf2181030::t_95242fc26407c3 41-44,52-53
+src/platform/traps/arrow_trap_behavior.lua
+  s_a149baf2181030::t_29f1b326fd36fa 3,34
+  s_a149baf2181030::t_95242fc26407c3 4-6,9-15,54-57,63
+  s_a149baf2181030::t_9e62e039000fcc 33,38-41,45
+src/platform/effects/smoke.lua
+  s_a149baf2181030::t_cfd675acfe774c 3
+src/platform/terrain_destruction.lua
+  s_a149baf2181030::t_7b5a0d671e0b85 2,9-10
+  s_a149baf2181030::t_ae02e9e83cd06b 14
+  s_a149baf2181030::t_4edfdae8113428 1,3-7,12-13,15-22
+  s_a149baf2181030::t_3ffafc2a77c679 8,11
+src/world/mines_variants.lua
+  s_a149baf2181030::t_ae02e9e83cd06b 30-46
+  s_a149baf2181030::t_95242fc26407c3 21-29
+src/platform/tiles/block.lua
+  s_a149baf2181030::t_29f1b326fd36fa 1
+src/tests/bomb_scenarios_test.lua
+  s_a149baf2181030::t_bcc5b7245de1c3 65-72
+  s_a149baf2181030::t_3ffafc2a77c679 53-54,61
+src/platform/enemies/spider.lua
+  s_a149baf2181030::t_bb2e3c3dc8c3b1 98-99
+src/screens/full_level_playtest.lua
+  s_a149baf2181030::t_29f1b326fd36fa 811-815,981
+  s_a149baf2181030::t_ae02e9e83cd06b 589-590,910,912-913
+  s_a149baf2181030::t_4edfdae8113428 28-29,149-152,215,510,824
+  s_a149baf2181030::t_565f36a6e71e4d 857,1105
+  s_a149baf2181030::t_bb2e3c3dc8c3b1 376-380,665,862-865
+  s_a149baf2181030::t_ceede7b2e27a79 251-256,506,509,512,735-740,742,963,1068-1074,1077-1079,1134
+  s_a149baf2181030::t_95242fc26407c3 838,855,1088,1096,1137
+  s_a149baf2181030::t_ce85de2afd7a5f 322,349-354,356-357,732-734,741,743-746,751-752,922,924,979,1115-1119
+  s_a149baf2181030::t_3ffafc2a77c679 726-729,840-845
+  s_a149baf2181030::t_9e62e039000fcc 748-750,763
+  s_a149baf2181030::t_cfd675acfe774c 468-478,483-484,888-900,905
+  s_a149baf2181030::t_bcc5b7245de1c3 224,511,901-902,914,1075-1076,1162
+  s_a149baf2181030::t_ace5228b96e714 225,906
+src/platform/tiles/push_block.lua
+  s_a149baf2181030::t_ae02e9e83cd06b 1
+src/platform/traps/arrow_trap_left.lua
+  s_a149baf2181030::t_29f1b326fd36fa 3
+src/platform/tools/bomb.lua
+  s_a149baf2181030::t_4edfdae8113428 19,91
+src/platform/enemies/bat.lua
+  s_a149baf2181030::t_bb2e3c3dc8c3b1 66-67
+src/platform/world.lua
+  s_a149baf2181030::t_29f1b326fd36fa 320
+  s_a149baf2181030::t_4edfdae8113428 55-62,64
+  s_a149baf2181030::t_3ffafc2a77c679 221-226
+src/tests/shop_behaviour_test.lua
+  s_a149baf2181030::t_ce85de2afd7a5f 470,476
+src/platform/projectile_body.lua
+  s_a149baf2181030::t_bcc5b7245de1c3 82
+  s_a149baf2181030::t_ce85de2afd7a5f 60,65
+  s_a149baf2181030::t_cfde65a3a72479 61
+  s_a149baf2181030::t_9e62e039000fcc 16,67-70,97
+src/platform/effects/rubble.lua
+  s_a149baf2181030::t_29f1b326fd36fa 2-4
+src/platform/effects/rubble_large.lua
+  s_a149baf2181030::t_29f1b326fd36fa 2-4
+src/platform/traps/spikes.lua
+  s_a149baf2181030::t_bb2e3c3dc8c3b1 28-32
+  s_a149baf2181030::t_95242fc26407c3 20-27,33-37
+src/platform/pickups/ruby_big.lua
+  s_a149baf2181030::t_cfd675acfe774c 5-6
+src/platform/structures/altar_left.lua
+  s_a149baf2181030::t_29f1b326fd36fa 1
+src/platform/pickups/emerald_big.lua
+  s_a149baf2181030::t_cfd675acfe774c 5-6
+src/tests/platform_item_test.lua
+  s_a149baf2181030::t_5f07b330faa148 220
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "d9b976ade24993fa08bba0e406a37ebfffa2d50a",
+  "prompts": {},
+  "sessions": {
+    "s_a149baf2181030": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0fdc3-ae05-7e41-a96b-bd7a333b41c3",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Ethan Denny <ethandenny@protonmail.com>"
+    }
+  }
+}
