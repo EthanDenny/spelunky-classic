@@ -350,35 +350,71 @@ function Test.run(app)
         "A thrown jar hitting a wall must open and emit fragments in the full playtest")
 
     local potCases = {
-        { name = "wall", x = 72, y = 79, vx = 8, vy = 0,
+        { name = "right wall", x = 72, y = 79, vx = 8, vy = 0,
             solid = { 5, 0, 1, 12 } },
+        { name = "left wall", x = 88, y = 79, vx = -8, vy = 0,
+            solid = { 4, 0, 1, 12 } },
         { name = "ceiling", x = 390, y = 199, vx = -8.53, vy = -6,
             solid = { 23, 11, 1, 1 } },
         { name = "floor", x = 80, y = 89, vx = 0, vy = 4,
             solid = { 5, 6, 1, 1 } },
+        { name = "wall-floor corner", x = 72, y = 89, vx = 8, vy = 4,
+            solid = { 5, 0, 1, 12 }, floor = true },
+        { name = "push block", x = 72, y = 79, vx = 8, vy = 0,
+            block = { x = 80, y = 32, width = 16, height = 64 } },
     }
-    for _, case in ipairs(potCases) do
-        local potWorld = World.new(32, 16, 16)
-        potWorld:fill("solid", unpack(case.solid))
-        screen.world = potWorld
-        screen.player = Player.new(32, 32)
-        screen.enemies = {}
-        local pot = Item.new({ kind = "jar", x = case.x / 16, y = case.y / 16 })
-        pot.vx, pot.vy = case.vx, case.vy
-        screen.items = { pot }
-        screen:simulationStepBody({})
-        assert(pot.opened, "A " .. case.name .. " impact must break the pot")
-        screen.enemies = {}
-        screen.effects.random = love.math.newRandomGenerator(jarSeedFor("snake", screen.run))
-        local rewardPot = Item.new({ kind = "jar", x = pot.x / 16, y = pot.y / 16 })
-        rewardPot.impactSide = case.name == "wall" and "right" or case.name
-        screen:openContainer(rewardPot)
-        assert(#screen.enemies == 1 and screen.enemies[1].kind == "snake",
-            "A " .. case.name .. "-broken pot must be able to release its snake")
-        local snake = screen.enemies[1]
-        assert(not potWorld:collidesSolid(snake, snake.x, snake.y),
-            "A " .. case.name .. "-broken pot must not create a snake inside terrain")
+    for _, kind in ipairs({ "snake", "spider" }) do
+        for _, case in ipairs(potCases) do
+            local potWorld = World.new(32, 16, 16)
+            potWorld:fill("solid", 0, 14, 32, 1)
+            if case.solid then potWorld:fill("solid", unpack(case.solid)) end
+            if case.floor then potWorld:fill("solid", 0, 6, 32, 1) end
+            if case.block then potWorld:addDynamicSolid(case.block) end
+            screen.world = potWorld
+            screen.player = Player.new(32, 32)
+            screen.enemies, screen.collectibles = {}, {}
+            screen.effects = Effects.new(jarSeedFor(kind, screen.run))
+            local pot = Item.new({ kind = "jar", x = case.x / 16, y = case.y / 16 })
+            pot.vx, pot.vy = case.vx, case.vy
+            screen.items = { pot }
+            pot:update(potWorld, screen.player)
+            assert(pot.justHit, "A " .. case.name .. " impact must break the pot")
+            screen:processItemImpact(pot)
+            assert(pot.opened and #screen.enemies == 1 and screen.enemies[1].kind == kind,
+                "A " .. case.name .. "-broken pot must release its rolled " .. kind)
+            local enemy = screen.enemies[1]
+            assert(enemy.x > 0 and enemy.x < potWorld.width*16
+                and enemy.y > 0 and enemy.y < potWorld.height*16,
+                "A pot enemy must spawn in the level, not at the removed pot's offscreen location")
+            assert(not potWorld:collidesSolid(enemy, enemy.x, enemy.y),
+                "A " .. case.name .. "-broken pot must not create a " .. kind .. " inside terrain")
+            local moved = false
+            for tick = 1, 45 do
+                potWorld.time = tick
+                local oldX, oldY = enemy.x, enemy.y
+                enemy:step(potWorld, screen.player)
+                moved = moved or enemy.x ~= oldX or enemy.y ~= oldY
+                assert(enemy.alive and not potWorld:collidesSolid(enemy, enemy.x, enemy.y),
+                    "A released " .. kind .. " must remain alive and clear of the " .. case.name)
+            end
+            assert(moved, "A released " .. kind .. " must be able to move after the pot breaks")
+        end
     end
+
+    screen.world = World.new(32, 16, 16)
+    screen.player = Player.new(144, 90)
+    screen.player.facing, screen.player.whipping, screen.player.animationFrame = 1, true, 5
+    screen.enemies, screen.collectibles = {}, {}
+    screen.effects = Effects.new(jarSeedFor("spider", screen.run))
+    local whippedPot = Item.new({ kind = "jar", x = 10, y = 90/16 })
+    screen.items = { whippedPot }
+    assert(screen.player:whipOverlapsRectangle(156, 84, 164, 96),
+        "The unobstructed pot regression must begin with a real whip collision")
+    screen:checkWhip()
+    assert(whippedPot.opened and #screen.enemies == 1,
+        "A real whip hit must smash the pot and release its spider")
+    assert(screen.enemies[1].x == 160 and screen.enemies[1].y == 98,
+        "An unobstructed pot spider must retain oJar's x-8/y-8 spawn converted to bottom-center")
 
     local gemWorld = World.new(32, 16, 16)
     gemWorld:set("solid", 23, 11)
@@ -389,13 +425,10 @@ function Test.run(app)
     local gemPot = Item.new({ kind = "jar", x = 391 / 16, y = 199 / 16 })
     gemPot.vx, gemPot.vy = -8.53, -6
     screen.items = { gemPot }
-    screen:simulationStepBody({})
+    screen.effects = Effects.new(jarSeedFor("emerald_big", screen.run))
+    gemPot:update(gemWorld, screen.player)
+    screen:processItemImpact(gemPot)
     assert(gemPot.opened, "A ceiling impact must break the pot")
-    screen.collectibles = {}
-    screen.effects.random = love.math.newRandomGenerator(jarSeedFor("emerald_big", screen.run))
-    local rewardPot = Item.new({ kind = "jar", x = gemPot.x / 16, y = gemPot.y / 16 })
-    rewardPot.impactSide = "ceiling"
-    screen:openContainer(rewardPot)
     assert(#screen.collectibles == 1, "A ceiling-broken pot must be able to release its gem")
     local releasedGem = screen.collectibles[1]
     assert(not gemWorld:collidesSolid(releasedGem, releasedGem.x, releasedGem.y),

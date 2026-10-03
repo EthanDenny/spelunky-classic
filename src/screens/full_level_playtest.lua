@@ -434,15 +434,21 @@ function FullLevelPlaytest:openContainer(item)
         self.sounds:play("chest_open")
     end
     for _, reward in ipairs(rewards) do
-    if reward.kind == "snake" and effect == "jar" then
-        -- oJar's Destroy event creates an oSnake at x/y-8 after a left hit,
-        -- x-16/y-8 after a right hit, and x-8/y-8 otherwise. Our enemy
-        -- coordinates are bottom-center rather than GameMaker's top-left.
-        local snakeX = x + (item.impactSide == "left" and 8
-            or item.impactSide == "right" and -8 or 0)
-        local snakeY = y + 8
-        local snake = self:spawnEntity(reward.kind, snakeX, snakeY)
-        if self.world:collidesSolid(snake, snake.x, snake.y) then
+    if effect == "jar" and (reward.kind == "snake" or reward.kind == "spider") then
+        -- oJar creates spiders at x-8/y-8. Snakes use the same origin,
+        -- shifted eight pixels away from a side impact. Convert both from
+        -- GameMaker's top-left to our bottom-center coordinates.
+        local enemyX = x
+        if reward.kind == "snake" then
+            enemyX = x + (item.impactSide == "left" and 8
+                or item.impactSide == "right" and -8 or 0)
+        end
+        local enemyY = y + 8
+        local enemy = self:spawnEntity(reward.kind, enemyX, enemyY)
+        -- The released enemy's collision mask is larger than the pot's.
+        -- Keep its source position when clear; otherwise place the whole
+        -- body in nearby free space, preferring the impact's outward normal.
+        if self.world:collidesSolid(enemy, enemy.x, enemy.y) then
             local normal = item.impactSide == "left" and { 1, 0 }
                 or item.impactSide == "right" and { -1, 0 }
                 or item.impactSide == "ceiling" and { 0, 1 }
@@ -452,11 +458,11 @@ function FullLevelPlaytest:openContainer(item)
             local placed = false
             for distance = 1, 16 do
                 for _, direction in ipairs(directions) do
-                    local nextX = snakeX + direction[1] * distance
-                    local nextY = snakeY + direction[2] * distance
-                    if not self.world:collidesSolid(snake, nextX, nextY) then
-                        snake.x, snake.y = nextX, nextY
-                        snake.spawnX, snake.spawnY = nextX, nextY
+                    local nextX = enemyX + direction[1] * distance
+                    local nextY = enemyY + direction[2] * distance
+                    if not self.world:collidesSolid(enemy, nextX, nextY) then
+                        enemy.x, enemy.y = nextX, nextY
+                        enemy.spawnX, enemy.spawnY = nextX, nextY
                         local entity = self.level.entities[#self.level.entities]
                         entity.x, entity.y = nextX / 16, nextY / 16
                         placed = true
