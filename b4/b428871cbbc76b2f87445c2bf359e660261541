@@ -1,0 +1,110 @@
+src/platform/pickups/bomb_bag.lua
+  s_a149baf2181030::t_f93ae1325dcbb9 8-10
+src/platform/pickups/udjat_eye.lua
+  s_a149baf2181030::t_f93ae1325dcbb9 7-9
+src/platform/items/pistol.lua
+  s_a149baf2181030::t_f93ae1325dcbb9 13-15
+src/platform/items/web_cannon.lua
+  s_a149baf2181030::t_f93ae1325dcbb9 14-16
+src/platform/enemies/shopkeeper.lua
+  s_a149baf2181030::t_87d43f6b8a2c90 29-33
+  s_a149baf2181030::t_2cc73172405c77 26-28
+  s_a149baf2181030::t_f74db441f7501c 22-25
+src/tests/kali_altar_test.lua
+  s_a149baf2181030::t_87d43f6b8a2c90 137-144
+src/platform/items/machete.lua
+  s_a149baf2181030::t_f93ae1325dcbb9 15-17
+src/tests/gameplay_messages_test.lua
+  s_a149baf2181030::t_87d43f6b8a2c90 6,43-44,48-85
+  s_a149baf2181030::t_5ec76062ae21b1 1-5,7-42,45-46,86-88
+  s_a149baf2181030::t_9b9aafe13e7ef1 47
+src/platform/item_contents.lua
+  s_a149baf2181030::t_f93ae1325dcbb9 26,32,34,36,38
+src/platform/pickups/mitt.lua
+  s_a149baf2181030::t_f93ae1325dcbb9 8-10
+docs/object-source-audit.md
+  s_a149baf2181030::t_ab5e82a527dd58 327-359
+main.lua
+  s_a149baf2181030::t_5ec76062ae21b1 42
+src/platform/shop.lua
+  s_a149baf2181030::t_87d43f6b8a2c90 241
+  s_a149baf2181030::t_ce9e104ca4b6d7 68,74,82,86,91-93,115-116,123,129,143,164,166,182,190,196,227-240,242-251
+src/screens/full_level_playtest.lua
+  s_a149baf2181030::t_f93ae1325dcbb9 16,332-334,420-421,508-509,752,929-945,1227
+  s_a149baf2181030::t_fae1928b68abf7 1228-1230,1241,1259,1261
+src/platform/item.lua
+  s_a149baf2181030::t_f93ae1325dcbb9 32-37,43,57-58,62
+src/platform/items/bow.lua
+  s_a149baf2181030::t_f93ae1325dcbb9 93-95
+src/platform/pickups/parachute.lua
+  s_a149baf2181030::t_f93ae1325dcbb9 8-10
+src/game/run_state.lua
+  s_a149baf2181030::t_f93ae1325dcbb9 68,101
+src/tests/shop_behaviour_test.lua
+  s_a149baf2181030::t_5ec76062ae21b1 6,52-91
+src/platform/items/shotgun.lua
+  s_a149baf2181030::t_f93ae1325dcbb9 14-16
+src/platform/items/jar.lua
+  s_a149baf2181030::t_f93ae1325dcbb9 13
+src/platform/pickups/cape.lua
+  s_a149baf2181030::t_f93ae1325dcbb9 9-11
+src/platform/items/teleporter.lua
+  s_a149baf2181030::t_f93ae1325dcbb9 42-44
+src/platform/items/mattock.lua
+  s_a149baf2181030::t_f93ae1325dcbb9 16-18
+src/platform/pickups/bomb_box.lua
+  s_a149baf2181030::t_f93ae1325dcbb9 10-12
+src/platform/pickups/compass.lua
+  s_a149baf2181030::t_f93ae1325dcbb9 8-10
+src/platform/kali.lua
+  s_a149baf2181030::t_f93ae1325dcbb9 63-64
+src/platform/items/chest.lua
+  s_a149baf2181030::t_f93ae1325dcbb9 4
+src/platform/items/crate.lua
+  s_a149baf2181030::t_f93ae1325dcbb9 18
+src/platform/pickups/jetpack.lua
+  s_a149baf2181030::t_f93ae1325dcbb9 17-19
+src/platform/pickups/paste.lua
+  s_a149baf2181030::t_f93ae1325dcbb9 8-10
+src/platform/pickups/rope_pile.lua
+  s_a149baf2181030::t_f93ae1325dcbb9 8-10
+src/platform/pickups/spike_shoes.lua
+  s_a149baf2181030::t_f93ae1325dcbb9 8-10
+src/platform/pickups/spring_shoes.lua
+  s_a149baf2181030::t_f93ae1325dcbb9 8-10
+src/platform/items/locked_chest.lua
+  s_a149baf2181030::t_f93ae1325dcbb9 5
+src/platform/pickups/spectacles.lua
+  s_a149baf2181030::t_f93ae1325dcbb9 8-10
+src/screens/kali_scenarios.lua
+  s_a149baf2181030::t_f93ae1325dcbb9 160,163-165
+src/platform/pickups/kapala.lua
+  s_a149baf2181030::t_f93ae1325dcbb9 7-9
+src/platform/pickups/gloves.lua
+  s_a149baf2181030::t_f93ae1325dcbb9 8,10-13
+  s_a149baf2181030::t_189aae426de7ba 9
+src/screens/full_game.lua
+  s_a149baf2181030::t_f93ae1325dcbb9 78,107
+README.md
+  s_a149baf2181030::t_74782454f4ef57 7
+src/tests/full_game_test.lua
+  s_a149baf2181030::t_dfe1bc86592b8d 125-127
+src/ui/original_messages.lua
+  s_a149baf2181030::t_65cc4b814b4bf4 1-39
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "b4b428871cbbc76b2f87445c2bf359e660261541",
+  "prompts": {},
+  "sessions": {
+    "s_a149baf2181030": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0fdc3-ae05-7e41-a96b-bd7a333b41c3",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Ethan Denny <ethandenny@protonmail.com>"
+    }
+  }
+}
