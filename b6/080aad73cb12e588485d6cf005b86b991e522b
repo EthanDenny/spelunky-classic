@@ -1,0 +1,25 @@
+README.md
+  s_a149baf2181030::t_4861b626d44c1d 7,15,119,506,508
+src/tests/full_game_test.lua
+  s_a149baf2181030::t_241e58784a34a3 11-16,33,50,80-98,105,114,127-128
+src/screens/full_game.lua
+  s_a149baf2181030::t_f5af705d679268 4,36,46-51,54-60,89,94
+src/audio/mines_music.lua
+  s_a149baf2181030::t_f5af705d679268 1-37
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "b6080aad73cb12e588485d6cf005b86b991e522b",
+  "prompts": {},
+  "sessions": {
+    "s_a149baf2181030": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0fdc3-ae05-7e41-a96b-bd7a333b41c3",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Ethan Denny <ethandenny@protonmail.com>"
+    }
+  }
+}
