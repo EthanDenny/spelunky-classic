@@ -1,0 +1,26 @@
+docs/object-source-audit.md
+  s_a149baf2181030::t_d7989a08ebe0c0 40
+  s_a149baf2181030::t_adc26351050587 319-326
+src/screens/full_level_playtest.lua
+  s_a149baf2181030::t_9ebe60bad9d719 437-451,461-464
+  s_a149baf2181030::t_5153933798da0d 465
+src/tests/playtest_feedback_test.lua
+  s_a149baf2181030::t_5beae8525747dc 353,355-356,361-364,366,401,404,406-410,413-418,428-430
+  s_a149baf2181030::t_643f8f4b498fe7 367-400,405,411-412
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "0267fb445f07c33a62147e9c00ba03ef7999e351",
+  "prompts": {},
+  "sessions": {
+    "s_a149baf2181030": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0fdc3-ae05-7e41-a96b-bd7a333b41c3",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Ethan Denny <ethandenny@protonmail.com>"
+    }
+  }
+}
