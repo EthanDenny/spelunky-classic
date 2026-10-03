@@ -1,6 +1,7 @@
 -- The live Mines simulation, with run and display rules for normal play.
 local FullLevel = require("src.screens.full_level_playtest")
 local Player = require("src.platform.player")
+local MinesMusic = require("src.audio.mines_music")
 local FullGame = setmetatable({}, { __index = FullLevel })
 FullGame.__index = FullGame
 local STEP = 1/Player.TICK_RATE
@@ -32,6 +33,7 @@ function FullGame:enter()
 end
 
 function FullGame:leave()
+    if self.music then self.music:stop() end
     local previous = self.previousWindow
     if not previous then return end
     self.previousWindow = nil
@@ -41,9 +43,21 @@ function FullGame:leave()
     love.mouse.setVisible(previous.mouseVisible)
 end
 
+function FullGame:generateLevel(seed)
+    FullLevel.generateLevel(self, seed)
+    self.music = self.music or MinesMusic.new()
+    self.music:start(self.app.controls.settings.musicVol)
+end
+
 function FullGame:simulationStepBody(input)
     if not self.player:isDead() then FullLevel.simulationStepBody(self, input) end
-    if self.player:isDead() then self.app:showScreen("menu") end
+    if self.player:isDead() then
+        self.app:showScreen("menu")
+    elseif self.exiting or self.completed then
+        self.music:stop()
+    elseif self.levelNumber > 1 and self.levelTime > 120 then
+        self.music:fade()
+    end
 end
 
 function FullGame:update(dt)
@@ -72,10 +86,12 @@ function FullGame:keypressed(key, scancode, isRepeat)
         return
     end
     if self.exiting then return end
+    if key == "m" then self.music:toggle() end
     local controls = self.app.controls
     if controls:matches("pay", key) or controls:matches("rope", key)
         or controls:matches("bomb", key) or controls:matches("up", key) then
         FullLevel.keypressed(self, key, scancode, false)
+        if self.exiting then self.music:stop() end
     end
 end
 

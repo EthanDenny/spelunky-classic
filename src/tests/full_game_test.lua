@@ -8,6 +8,12 @@ local function start(app)
     app:keypressed("6", "6", false)
     assert(app.currentScreenName == "full_game", "Menu option 6 must launch Full game")
     local game = app.currentScreen
+    assert(game.music and game.music.source:isPlaying() and game.music.source:isLooping(),
+        "Full game must play looping Mines music on entry")
+    assert(game.music.source:getType() == "stream" and game.music.source:getPitch() == 1
+        and math.abs(game.music.source:getVolume()-0.01) < 0.000001,
+        "Mines music must stream at normal pitch with the configured Classic volume")
+    assert(love.audio.getVolume() == 0, "Music must preserve the smoke suite's global mute")
     local fullscreen, mode = love.window.getFullscreen()
     assert(fullscreen and mode == "exclusive", "Full game must enter real exclusive fullscreen")
     assert(game.levelNumber == 1 and game.level.absoluteLevel == 1 and game.subtypeIndex == 1
@@ -24,6 +30,7 @@ local function useExit(app, game)
     game.player.state, game.player.whipping = Player.STATES.standing, false
     app:keypressed("up", "up", false)
     assert(game.exiting == 0, "UP at the real door must begin the exit animation")
+    assert(not game.music.source:isPlaying(), "Entering an exit must stop the level music")
     local level, run = game.level, game.run
     app:keypressed("r", "r", false)
     app:keypressed("n", "n", false)
@@ -40,7 +47,7 @@ function Test.run(app)
     local lab = app.screens.full_level_playtest
     local labLevel, labSubtype, labRun = lab.levelNumber, lab.subtypeIndex, lab.run
     local ok, err = pcall(function()
-        local normalControls = Controls.fromContents(nil, "0\n1\n1\n0\n3\n15\n15")
+        local normalControls = Controls.fromContents(nil, "0\n1\n1\n0\n3\n9\n15")
         app.controls = normalControls
         lab.levelNumber, lab.subtypeIndex, lab.run = 4, 3, RunState.new(17)
         lab.run.money, lab.run.bombs = 9999, 99
@@ -70,12 +77,32 @@ function Test.run(app)
         assert(app.currentScreenName == "full_game" and game.levelNumber == 2
             and game.run == run and game.run.money == 333 and game.run.bombs == 3,
             "The door must advance to 1-2 while preserving the live run")
+        local music = game.music.source
+        assert(music:isPlaying() and music:getPitch() == 1,
+            "The next Mines level must restart its music at normal pitch")
+        game.levelTime = 119
+        game:simulationStepBody({})
+        assert(music:getPitch() == 1, "Music must retain normal pitch before the ghost warning")
+        game.levelTime, game.player.invincibleTimer = 120, 999
+        for _ = 1, 110 do game:simulationStepBody({}) end
+        assert(music:isPlaying() and math.abs(music:getPitch()-34100/44100) < 0.000001,
+            "After two minutes, the music must slow by 100 Hz per tick for at most 100 ticks")
+        app:keypressed("m", "m", false)
+        assert(not music:isPlaying(), "M must disable music")
+        app:keypressed("m", "m", true)
+        assert(not music:isPlaying(), "Key repeat must not re-enable music")
+        useExit(app, game)
+        assert(not music:isPlaying() and music:getPitch() == 1,
+            "A new level must reset pitch while preserving the music toggle")
+        app:keypressed("m", "m", false)
+        assert(music:isPlaying(), "M must re-enable music in the current level")
         app:draw()
         app:keypressed("escape", "escape", false)
         local restoredWidth, restoredHeight, restoredFlags = love.window.getMode()
         assert(app.currentScreenName == "menu" and restoredWidth == width and restoredHeight == height
             and restoredFlags.fullscreen == flags.fullscreen and love.mouse.isVisible() == mouseVisible,
             "Leaving Full game must restore the menu's window and cursor")
+        assert(not music:isPlaying(), "Returning to the menu must stop Full game music")
 
         game = start(app)
         run, level = game.run, game.level
@@ -84,6 +111,7 @@ function Test.run(app)
         assert(game.player:isDead() and app.currentScreenName == "menu"
             and game.run == run and game.level == level,
             "A lethal explosion must end the run at the menu without regenerating the level")
+        assert(not game.music.source:isPlaying(), "Death must stop Full game music")
 
         game = start(app)
         level = game.level
@@ -96,6 +124,8 @@ function Test.run(app)
         for _ = 1, 4 do useExit(app, game) end
         assert(game.completed and game.levelNumber == 4,
             "The current playable Mines run must complete after the fourth exit animation")
+        app:keypressed("m", "m", false)
+        assert(not game.music.source:isPlaying(), "Completion must keep level music stopped")
         level, run = game.level, game.run
         app:keypressed("r", "r", false)
         app:keypressed("n", "n", false)
