@@ -1,7 +1,7 @@
 local Traits = require("src.platform.item_traits")
 
 local Definition = Traits.carry({ heavy = true, bounds = { 6, 0, 8 }, action = "open",
-    container = { mode = "chest", message = "TREASURE!" } })
+    container = { mode = "chest" } })
 
 Definition.depth = 900
 

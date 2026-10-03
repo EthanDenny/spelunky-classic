@@ -60,10 +60,10 @@ local function sacrifice(game, body, altar)
     local spec = body.spec.sacrifice
     local message = body.kind == "damsel" and "KALI ACCEPTS YOUR SACRIFICE!"
         or "KALI ACCEPTS THE SACRIFICE!"
-    if game.run.favor <= -8 then message = "KALI DEVOURS THE SACRIFICE!"
+    if game.run.favor <= -8 then message = body.kind == "damsel"
+        and "KALI DEVOURS YOUR SACRIFICE!" or "KALI DEVOURS THE SACRIFICE!"
     else game.run.favor = game.run.favor + (body.corpse and spec.deadFavor or spec.favor) end
     local response = favorMessage(game, body, altar)
-    game.run.messages = {}
     game.run:addMessage(message .. "\n" .. response, 200)
     game.shakeTicks = 10
     game.effects:add("flame", body.x, body.y - 8)
@@ -97,7 +97,6 @@ local function punish(game)
     local run = game.run
     run.favor = run.favor - 16
     game.shakeTicks = 10
-    run.messages = {}
     run:addMessage("YOU DARE DEFILE MY ALTAR?\nI WILL PUNISH YOU!", 200)
     if run.kaliPunish == 0 then armHeads(game)
     elseif run.kaliPunish == 1 then Kali.attachBall(game)

@@ -122,20 +122,9 @@ function Test.run(app)
 
         game = start(app)
         for _ = 1, 4 do useExit(app, game) end
-        assert(game.completed and game.levelNumber == 4,
-            "The current playable Mines run must complete after the fourth exit animation")
-        app:keypressed("m", "m", false)
-        assert(not game.music.source:isPlaying(), "Completion must keep level music stopped")
-        level, run = game.level, game.run
-        app:keypressed("r", "r", false)
-        app:keypressed("n", "n", false)
-        assert(game.completed and game.level == level and game.run == run,
-            "Completion must not enable in-place restarts or rerolls")
-        assert(not game.run:currentMessage().text:find("PRESS R"),
-            "Full game must not advertise a disabled testing shortcut")
-        app:draw()
-        app:keypressed("return", "return", false)
-        assert(app.currentScreenName == "menu", "Completion confirmation must return to the menu")
+        assert(game.completed and game.levelNumber == 4 and app.currentScreenName == "menu",
+            "The current playable Mines run returns to the menu after the fourth exit")
+        assert(not game.music.source:isPlaying(), "Completion must stop level music")
     end)
     if app.currentScreenName == "full_game" then app:showScreen("menu") end
     lab.levelNumber, lab.subtypeIndex, lab.run = labLevel, labSubtype, labRun

@@ -6,4 +6,7 @@ Definition.depth = 100
 Definition.shopOffsetY = 10
 Definition.replaces = "jetpack"
 
+Definition.pickupMessage = "YOU GOT A CAPE!"
+Definition.buyMessage = "A CAPE FOR $%s."
+
 return Definition

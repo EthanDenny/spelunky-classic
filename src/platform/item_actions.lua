@@ -146,7 +146,6 @@ function ItemActions.updateMelee(context)
             context.heldItem = nil
             local head = context:spawnEntity("mattock_head", x, y)
             if head then head.vy = -2 end
-            context.run:addMessage("THE MATTOCK BROKE", 75)
             context.sounds:play("mattock_break")
         elseif #destroyed > 0 then
             context.sounds:play("crunch")

@@ -157,20 +157,14 @@ function KaliScenarios.draw(scenario, x, y, width, height, font)
     -- with a stencil so cards cannot paint over the header or footer.
     love.graphics.stencil(function() love.graphics.rectangle("fill", x, y, width, height) end, "replace", 1)
     love.graphics.setStencilTest("greater", 0)
-    game:drawWorld({ x = math.floor(x+(width-worldWidth*scale)/2),
+    local viewport = { x = math.floor(x+(width-worldWidth*scale)/2),
         y = math.floor(y+(height-worldHeight*scale)/2), width = worldWidth*scale,
         height = worldHeight*scale, scale = scale,
-        logicalWidth = worldWidth, logicalHeight = worldHeight })
+        logicalWidth = worldWidth, logicalHeight = worldHeight }
+    game:drawWorld(viewport)
+    game:drawGameplayMessages(viewport)
     love.graphics.setStencilTest()
     love.graphics.setScissor(clipX, clipY, clipWidth, clipHeight)
-    local message = game.run:currentMessage()
-    if message then
-        love.graphics.setFont(font)
-        love.graphics.setColor(0.02, 0.015, 0.01, 0.92)
-        love.graphics.rectangle("fill", x+4, y+4, width-8, 44)
-        love.graphics.setColor(1, 0.94, 0.78)
-        love.graphics.printf(message.text, x+8, y+6, width-16, "center")
-    end
 end
 
 return KaliScenarios

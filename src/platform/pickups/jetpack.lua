@@ -14,4 +14,7 @@ function Definition.update(item, _, player)
     end
 end
 
+Definition.pickupMessage = "YOU GOT A JETPACK!"
+Definition.buyMessage = "JETPACK FOR $%s."
+
 return Definition

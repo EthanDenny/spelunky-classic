@@ -12,4 +12,7 @@ Definition.melee.cutsWebs = true
 
 Definition.leftSprite = { group = "Items/Saleable", name = "sMacheteLeft" }
 
+Definition.pickupMessage = "YOU GOT A MACHETE!"
+Definition.buyMessage = "A MACHETE FOR $%s."
+
 return Definition

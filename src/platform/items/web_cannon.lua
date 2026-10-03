@@ -11,4 +11,7 @@ Definition.shopOffsetY = 12
 
 Definition.leftSprite = { group = "Items/Saleable", name = "sWebCannonL" }
 
+Definition.pickupMessage = "YOU GOT A WEB CANNON!"
+Definition.buyMessage = "A WEB CANNON FOR $%s."
+
 return Definition

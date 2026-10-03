@@ -39,4 +39,7 @@ function Definition.use(context, _, input)
     return 1
 end
 
+Definition.pickupMessage = "YOU GOT A TELEPORTER!"
+Definition.buyMessage = "A TELEPORTER FOR $%s."
+
 return Definition

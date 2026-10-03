@@ -10,4 +10,7 @@ Definition.shopOffsetY = 12
 
 Definition.leftSprite = { group = "Items/Saleable", name = "sPistolLeft" }
 
+Definition.pickupMessage = "YOU GOT A PISTOL!"
+Definition.buyMessage = "A PISTOL FOR $%s."
+
 return Definition

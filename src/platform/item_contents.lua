@@ -23,20 +23,19 @@ end
 function ItemContents.open(item, run, random)
     local spec = item.definition.container
     if not spec or item.opened then return nil end
-    if spec.requires and not run.hasKey then return nil, "IT'S LOCKED" end
+    if spec.requires and not run.hasKey then return nil end
     if spec.requires then run.hasKey = false end
     item.opened = true
     if spec.mode == "fixed" then
         if spec.scatter then
             return { { kind = spec.reward,
-                vx = random:random(0, 3) - random:random(0, 3), vy = -2 } },
-                spec.message
+                vx = random:random(0, 3) - random:random(0, 3), vy = -2 } }
         end
-        return { { kind = spec.reward } }, spec.message
+        return { { kind = spec.reward } }
     elseif spec.roll then
-        return spec.roll(random), spec.message
+        return spec.roll(random)
     end
-    return rollChain(spec, random), spec.message
+    return rollChain(spec, random)
 end
 
 return ItemContents

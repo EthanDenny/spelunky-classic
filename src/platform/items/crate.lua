@@ -15,7 +15,7 @@ local crateLoot = {
 
 local Definition = Traits.carry({ heavy = true, bounds = { 6, 0, 8 }, action = "open",
     container = { mode = "chain", rolls = crateLoot, fallback = "bomb_bag",
-        message = "CRATE OPENED", effect = "smoke" } })
+        effect = "smoke" } })
 
 Definition.depth = 900
 

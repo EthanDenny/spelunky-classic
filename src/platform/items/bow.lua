@@ -90,4 +90,7 @@ end
 
 Definition.leftSprite = { group = "Items/Saleable", name = "sBowLeft" }
 
+Definition.pickupMessage = "YOU GOT THE BOW AND ARROWS!"
+Definition.buyMessage = "BOW AND ARROWS FOR $%s."
+
 return Definition

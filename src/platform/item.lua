@@ -29,12 +29,18 @@ function Item.price(kind, absoluteLevel)
     return base + base * 0.1 * math.max(0, (absoluteLevel or 1) - 2)
 end
 
+function Item.announce(kind, run, game)
+    local message = Definitions[kind] and Definitions[kind].pickupMessage
+    if type(message) == "function" then message = message(game) end
+    if message then run:addMessage(message, 120) end
+end
+
 function Item.collect(kind, run, player, game)
     local pickup = Definitions[kind] and Definitions[kind].pickup
     if not pickup then return nil end
     if pickup.money then
         run:queueMoney(pickup.money)
-        return "COLLECTED $" .. pickup.money
+        return
     end
     if pickup.equipment then
         local replaced = Definitions[kind].replaces
@@ -48,11 +54,12 @@ function Item.collect(kind, run, player, game)
         end
         run.equipment[kind] = true
         player.equipment[kind] = true
-        return string.upper((kind:gsub("_", " "))) .. " ACQUIRED"
+        Item.announce(kind, run, game)
+        return
     end
     if pickup.resource then
         run[pickup.resource] = run[pickup.resource] + pickup.amount
-        return "+" .. pickup.amount .. " " .. string.upper(pickup.resource)
+        Item.announce(kind, run, game)
     end
 end
 

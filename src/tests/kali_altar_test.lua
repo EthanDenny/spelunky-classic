@@ -134,6 +134,14 @@ function Test.run(app)
             assert(game.run.kaliGift == 4 and game.player.health == health,
                 "Vitality must not repeat until the next sixteen favor milestone")
         end },
+        { "angry Kali addresses a damsel sacrifice as your sacrifice", function()
+            local game = fixture()
+            game.run.favor = -8
+            sacrificeBody(game, "damsel", false)
+            ticks(game, 21)
+            assert(game.run:currentMessage().text == "KALI DEVOURS YOUR SACRIFICE!\nSHE SEEMS VERY ANGRY WITH YOU!"
+                and game.run:currentMessage().timer == 200)
+        end },
         { "severe anger devours sacrifices while lesser anger can be forgiven", function()
             for _, favor in ipairs({ -8, -2 }) do
                 local game = fixture()

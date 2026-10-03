@@ -5,4 +5,7 @@ local Definition = Traits.equipment(3000)
 Definition.depth = 100
 Definition.shopOffsetY = 10
 
+Definition.pickupMessage = "YOU GOT A COMPASS!"
+Definition.buyMessage = "A COMPASS FOR $%s."
+
 return Definition

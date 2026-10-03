@@ -19,6 +19,18 @@ local function setState(body, state, vx, vy, stun)
     if state == "stunned" then body.counter, body.bounced = body.stunned, false end
 end
 
+-- scrGetName's 32 equally likely welcome names.
+local NAMES = {
+    "AHKMED", "TERRY", "SMITHY", "LEON", "ALI", "ELBERT", "KAO", "DUKE",
+    "TONY", "GUERT", "PANCHO", "EARL", "IVAN", "OLLIE", "SPOONY", "BOB", "RUDY", "JIMBO",
+    "TOR", "WILLY", "HAMISH", "LAZLO", "WANG", "HERBIE", "ANDY", "DONG", "LEMMY", "BARNEY",
+    "LOU", "TARN", "SLASH", "BROM",
+}
+
+function Shopkeeper.name(body)
+    return NAMES[body.random:random(1, #NAMES)]
+end
+
 function Shopkeeper.provoke(body)
     setState(body, "attack")
 end

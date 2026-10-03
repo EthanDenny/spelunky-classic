@@ -3,6 +3,7 @@ local Creature = require("src.platform.creature")
 local Effects = require("src.platform.effects")
 local FullLevel = require("src.screens.full_level_playtest")
 local Item = require("src.platform.item")
+local Shop = require("src.platform.shop")
 local Player = require("src.platform.player")
 local Projectiles = require("src.platform.projectile_system")
 local RunState = require("src.game.run_state")
@@ -48,6 +49,46 @@ end
 
 function Test.run()
     local cases = {
+        { "stock quotes and purchases use Classic's two message lines", function()
+            local game, keeper = fixture()
+            keeper.welcomed = true
+            local gun = stock(game, "shotgun")
+            pickup(game)
+            Shop.update(game)
+            assert(game.run:currentMessage().text == "A SHOTGUN FOR $15000.\nPRESS P TO PURCHASE.")
+            Shop.pay(game)
+            assert(game.run:currentMessage().text == "YOU GOT A SHOTGUN!"
+                and game.run:currentMessage().timer == 80)
+            gun.held, game.heldItem = false, nil
+            pickup(game)
+            assert(game.run:currentMessage().timer == 80,
+                "Dropping and picking up an owned gun must not announce it again")
+        end },
+        { "the source keeper welcome happens once on entry", function()
+            local game, keeper = fixture("Craps")
+            Shop.update(game)
+            local welcome = game.run:currentMessage()
+            assert(welcome.text:match("^WELCOME TO %u+'S DICE HOUSE!\nPRESS P TO BET %$2000%.$")
+                and welcome.timer == 200)
+            game.run:addMessage("I'M OUT OF ARROWS!", 80)
+            Shop.update(game)
+            assert(game.run:currentMessage().text == "I'M OUT OF ARROWS!",
+                "An already welcomed keeper must not replace subsequent messages")
+        end },
+        { "dice and kissing messages preserve the source second line", function()
+            local game, keeper = fixture("Craps")
+            keeper.welcomed = true
+            Shop.pay(game)
+            assert(game.run:currentMessage().text == "YOU BET $2000!\nNOW ROLL THE DICE!")
+            Shop.pay(game)
+            assert(game.run:currentMessage().text == "ONE BET AT A TIME!\nPLEASE ROLL THE DICE!")
+            local parlor, owner = fixture("Kissing")
+            owner.welcomed = true
+            parlor:spawnEntity("damsel", 84, 108, { forSale = true })
+            parlor.run.money = 0
+            Shop.pay(parlor)
+            assert(parlor.run:currentMessage().text == "YOU NEED $10000!\nGET OUTTA HERE, DEADBEAT!")
+        end },
         { "a hard landing blocks held-item ACTION before dropping the item", function()
             for _, kind in ipairs({ "shotgun", "teleporter", "crate", "rock", "machete" }) do
                 local game, keeper = fixture()

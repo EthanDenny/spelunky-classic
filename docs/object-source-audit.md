@@ -324,3 +324,36 @@ The [oJar Destroy event](../original-game-reference/source/extracted/spelunky/Ob
 When the enemy's larger collision body overlaps terrain, both kinds now search nearby free space, preferring the impact's outward direction. This bounded clearance correction is a clone adaptation rather than an exact GameMaker collision-event reproduction. Unobstructed spawn coordinates retain the source conversion.
 
 The pot cases in [playtest_feedback_test.lua](../src/tests/playtest_feedback_test.lua) now exercise the actual impact and reward from the same pot. Earlier cases incorrectly reused its coordinates after destruction had moved it offscreen. The corrected regression failed on a spider overlapping the right wall before the fix. Both enemy kinds now pass left/right wall, ceiling, floor, corner and dynamic push-block impacts, with 45 movement ticks checking survival and clearance. A real whip hit verifies the unobstructed source position; the ceiling-gem case also uses the actual impact. The full Love smoke suite passes.
+
+
+### Gameplay message follow-up (2026-10-03)
+
+Compared the live gameplay notices against `scrStealItem`, saleable Create events,
+`oShopkeeper.Step`, `scrShopkeeperAnger`, `oPlayer1` alarms, `scrInitLevel`,
+`oGame.Step`, and the normal/dark message draw events. Pickup and sale text now
+belongs to each individual object module. All 22 pickup-message definitions and
+22 sale templates were checked against the extracted source.
+
+- Removed prototype cash, container, locked-chest, mattock-break, purchase,
+  exit, death, and Mines-completion notices, and the bottom-right Full game level label.
+- Restored exact item, shop, dice, kissing, anger, and Kali wording and line breaks.
+  Shop instructions use the configured Pay key. Keeper greetings use the original
+  32-name pool and happen once on entering the room.
+- Restored the ten-tick Mines feeling alarm and dark-level follow-up 210 ticks later.
+  The ghost warning reads “A CHILL RUNS UP YOUR SPINE...” / “LET'S GET OUT OF HERE!”
+  after two minutes on 1-2 or later; the ghost's later arrival adds no notice.
+- A new notice replaces the previous notice instead of queuing it. Source durations
+  run on the clone's 30 Hz simulation clock, including exit/death animation ticks,
+  so rendering at 60 Hz does not halve their lifetime. Level changes clear notices.
+- Full game, Full Level Playtest, and Kali replay cards share the original
+  `sFontSmall` sprites: eight-pixel character spacing, centered white/yellow lines,
+  y=216/224 in the 320×240 camera, no panel or wrapping. Larger lab viewports adapt
+  the center and bottom offsets. Lab controls and scenario event labels remain lab UI.
+- The current Mines-only Full game returns to the menu after its fourth exit;
+  no invented victory message substitutes for the unimplemented Jungle transition.
+
+Validation: the new supply-message regression failed against the pre-fix code;
+source-text, replacement/expiry, ghost/feeling timing, locked/pot silence, shop
+transactions/greetings, and damsel-devouring checks pass. The rendering check
+compares the entire 320×240 camera against independently positioned original
+font sprites, detecting wrong placement, colour, font, or added backgrounds.

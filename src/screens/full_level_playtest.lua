@@ -13,6 +13,7 @@ local DynamicTerrain = require("src.platform.dynamic_terrain")
 local ToolSystem = require("src.platform.tool_system")
 local TrapSystem = require("src.platform.trap_system")
 local OriginalHUD = require("src.ui.original_hud")
+local OriginalMessages = require("src.ui.original_messages")
 local Creature = require("src.platform.creature")
 local ProjectileSystem = require("src.platform.projectile_system")
 local RunState = require("src.game.run_state")
@@ -328,7 +329,9 @@ function FullLevelPlaytest:buildSimulation()
     self.payHeld, self.payQueued = false, false
     self.weaponCooldown = 0
     self.levelTime = 0
-    self.ghostSpawned = false
+    self.ghostSpawned, self.ghostWarningSent = false, false
+    self.run.messages = {}
+    self.entryMessageTimer, self.darkEntryAnnounced = 10, false
     if self.app.playtestLog then self.app.playtestLog:level(self.screenName, self) end
 end
 
@@ -351,7 +354,6 @@ FullLevelPlaytest.isNearExit = Exit.isNear
 
 function FullLevelPlaytest:finishMines()
     self.completed = true
-    self.run:addMessage("MINES COMPLETE — PRESS R FOR A NEW RUN", 999999)
 end
 
 function FullLevelPlaytest:advanceLevel()
@@ -415,11 +417,8 @@ end
 
 function FullLevelPlaytest:openContainer(item)
     local x, y = item.x, item.y
-    local rewards, message = item:open(self.run, self.effects.random)
-    if not rewards then
-        if message then self.run:addMessage(message, 60) end
-        return false
-    end
+    local rewards = item:open(self.run, self.effects.random)
+    if not rewards then return false end
     local effect = item.definition.container.effect
     if effect == "jar" then
         self.effects:jarBreak(x, y, item.impactSide)
@@ -484,7 +483,6 @@ function FullLevelPlaytest:openContainer(item)
         end
     end
     end
-    if message then self.run:addMessage(message, 60) end
     if item.kind ~= "chest" then item.x, item.y = -1000, -1000 end
     return true
 end
@@ -507,18 +505,11 @@ function FullLevelPlaytest:checkCollectibles()
             local x, y = entity.x * 16, entity.y * 16
             if collectible:overlapsRectangle(self.player.x-8, self.player.y-8,
                 self.player.x+8, self.player.y+8) then
-                if entity.properties and entity.properties.forSale then
-                    local price = Item.price(entity.kind, self.level.absoluteLevel)
-                    if not self.run:currentMessage() then
-                        self.run:addMessage("$" .. price .. " - PICK UP, THEN "
-                            .. self.app.controls:label("pay") .. " TO BUY", 45)
-                    end
-                else
-                    local message = Item.collect(entity.kind, self.run, self.player, self)
+                if not (entity.properties and entity.properties.forSale) then
+                    Item.collect(entity.kind, self.run, self.player, self)
                     if collectible.definition.onCollected then collectible.definition.onCollected(collectible, self) end
                     collectible.alive = false
                     self.sounds:play(Item.pickupSound(entity.kind))
-                    if message then self.run:addMessage(message, 75) end
                 end
             end
         end
@@ -758,6 +749,7 @@ function FullLevelPlaytest:simulationStepBody(input)
     local payPressed = self.payQueued or (input.pay and not self.payHeld)
     self.payQueued, self.payHeld = false, input.pay or false
     if self.completed then return end
+    self.run:update()
     if self.exiting then
         self.exiting = self.exiting+1
         self.world.time = self.world.time+1
@@ -788,7 +780,6 @@ function FullLevelPlaytest:simulationStepBody(input)
         return
     end
 
-    self.run:update()
     local actionPressed = input.attack and not self.actionHeld
     self.actionHeld = input.attack
     local containerToOpen = actionPressed and input.up and self:containerAtPlayer()
@@ -935,12 +926,28 @@ function FullLevelPlaytest:simulationStepBody(input)
     self.run:capturePlayer(self.player)
     self.run.time = self.run.time + 1 / Player.TICK_RATE
     self.levelTime = self.levelTime + 1 / Player.TICK_RATE
+    if self.entryMessageTimer then
+        self.entryMessageTimer = self.entryMessageTimer - 1
+        if self.entryMessageTimer == 0 then
+            local text = self.level.hasSnakePit and "I HEAR SNAKES... I HATE SNAKES!"
+                or self.level.hasAltar and "I CAN HEAR PRAYERS TO KALI!"
+            if self.level.dark and not self.darkEntryAnnounced then
+                self.darkEntryAnnounced = true
+                self.entryMessageTimer = 210
+                text = "I CAN'T SEE A THING!\nI'D BETTER USE THESE FLARES!"
+            else self.entryMessageTimer = nil end
+            if text then self.run:addMessage(text, 200) end
+        end
+    end
+    if self.levelNumber > 1 and self.levelTime > 120 and not self.ghostWarningSent then
+        self.ghostWarningSent = true
+        self.run:addMessage("A CHILL RUNS UP YOUR SPINE...\nLET'S GET OUT OF HERE!", 200)
+    end
     if self.levelNumber > 1 and self.levelTime > 150 and not self.ghostSpawned then
         self.ghostSpawned = true
         local x = self.cameraX + (self.player.x > self.world.width*8 and viewport.logicalWidth+8 or -32)
         self:spawnEntity("ghost", x+8, self.cameraY+math.floor(viewport.logicalHeight/2)+16)
         self.sounds:play("ghost")
-        self.run:addMessage("A TERRIBLE CHILL RUNS UP YOUR SPINE", 120)
     end
     if self.player:isDead() then self.deathTimer = 75 end
     if self.player.y > self.world.height * self.world.tileSize + 32 then
@@ -1217,6 +1224,10 @@ function FullLevelPlaytest:drawPlayerHUD(viewport)
     love.graphics.setScissor()
 end
 
+function FullLevelPlaytest:drawGameplayMessages(viewport)
+    OriginalMessages.draw(self.run, viewport)
+end
+
 function FullLevelPlaytest:levelLabel()
     return "1-" .. self.levelNumber
 end
@@ -1227,6 +1238,7 @@ function FullLevelPlaytest:draw()
     love.graphics.clear(COLORS.background)
     self:drawWorld(viewport)
     self:drawPlayerHUD(viewport)
+    self:drawGameplayMessages(viewport)
 
     love.graphics.setColor(COLORS.panel)
     love.graphics.rectangle("fill", 0, 0, width, HEADER_HEIGHT)
@@ -1244,24 +1256,9 @@ function FullLevelPlaytest:draw()
         .. "    " .. string.upper(MinesLevelSelection.choices[self.subtypeIndex].label)
         .. "    SEED " .. self.seed, 20, 42)
 
-    if self.exitReady then
-        love.graphics.setColor(0.04, 0.03, 0.02, 0.88)
-        love.graphics.rectangle("fill", width / 2 - 155, HEADER_HEIGHT + 18, 310, 34, 4, 4)
-        love.graphics.setColor(COLORS.text)
-        love.graphics.printf("PRESS UP TO ENTER THE EXIT", width / 2 - 150,
-            HEADER_HEIGHT + 26, 300, "center")
-    elseif self.player:isDead() then
+    if self.selectionError then
         love.graphics.setColor(COLORS.danger)
-        love.graphics.printf("YOU DIED", 0, HEADER_HEIGHT + 24, width, "center")
-    end
-
-    local message = self.selectionError or (self.run and self.run:currentMessage())
-    if message then
-        love.graphics.setColor(0.04, 0.03, 0.02, 0.9)
-        love.graphics.rectangle("fill", width / 2 - 190, height - FOOTER_HEIGHT - 42, 380, 30, 4, 4)
-        love.graphics.setColor(COLORS.text)
-        love.graphics.printf(type(message) == "table" and message.text or message, width / 2 - 185,
-            height - FOOTER_HEIGHT - 35, 370, "center")
+        love.graphics.printf(self.selectionError, width / 2, 42, width / 2 - 20, "right")
     end
 
     love.graphics.setColor(COLORS.muted)

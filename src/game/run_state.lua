@@ -65,7 +65,7 @@ function RunState:capturePlayer(player)
 end
 
 function RunState:addMessage(text, duration)
-    self.messages[#self.messages + 1] = { text = text, timer = duration or 90 }
+    self.messages = { { text = text, timer = duration or 200 } }
 end
 
 function RunState:currentMessage()
@@ -98,7 +98,7 @@ end
 function RunState:angerShopkeepers(reason)
     self.thief = true
     self.shopkeeperAnger = self.shopkeeperAnger + (self.shopkeeperAnger > 0 and 3 or 2)
-    self:addMessage(reason or "STOP, THIEF!", 120)
+    self:addMessage(reason or "COME BACK HERE, THIEF!", 80)
 end
 
 function RunState:finishLevel()

@@ -13,4 +13,7 @@ Definition.melee.digs = true
 
 Definition.leftSprite = { group = "Items/Saleable", name = "sMattockLeft" }
 
+Definition.pickupMessage = "YOU GOT A MATTOCK!\nIT SEEMS A BIT RUSTY."
+Definition.buyMessage = "A MATTOCK FOR $%s."
+
 return Definition

@@ -65,14 +65,13 @@ function Shop.kissPrice(game)
 end
 
 local function notice(game, message, timer)
-    -- Classic has one shop message, refreshed by the keeper, rather than a
-    -- queue of identical per-frame prompts that hides later purchase results.
-    game.run.messages = { { text = message, timer = timer or 200 } }
+    game.run:addMessage(message, timer or 200)
 end
 
 function Shop.anger(game, x, y, reason)
     local keeper = Shop.keeper(game, x, y)
     if not keeper or keeper.angered then return false end
+    if game.run.murderer then reason = "YOU'LL PAY FOR YOUR CRIMES!" end
     keeper.spec.provoke(keeper)
     game.run:angerShopkeepers(reason)
     notice(game, reason, 80)
@@ -80,15 +79,18 @@ function Shop.anger(game, x, y, reason)
 end
 
 function Shop.claim(game, body)
+    local purchased = Shop.forSale(body)
     Shop.release(body)
     local pickup = body.definition and body.definition.pickup
     if pickup and body.definition.consumeOnPickup and body.held then
-        local message = Item.collect(body.kind, game.run, game.player, game)
+        Item.collect(body.kind, game.run, game.player, game)
         body.alive, body.held = false, false
         body.opened, body.visible = true, false
         game.heldItem = nil
         game.sounds:play(Item.pickupSound(body.kind))
-        if message then notice(game, message, 120) end
+    elseif purchased and body.held then
+        if body.kind == "damsel" then notice(game, "YOU MUST BE IN LOVE!", 120)
+        else Item.announce(body.kind, game.run, game) end
     end
 end
 
@@ -110,20 +112,21 @@ function Shop.pay(game)
         else
             game.run.money = game.run.money - price
             Shop.claim(game, held)
-            notice(game, "PURCHASED FOR $" .. price, 80)
+            local message = game.run:currentMessage()
+            if message then message.timer = 80 end
         end
     end
     if game.run.shopkeeperAnger > 0 or game.run.murderer or keeper.angry then return true end
     if keeper.shopType == "Craps" then
         local bet = 1000 + (game.level.absoluteLevel or 1) * 500
         if (player.bet or 0) > 0 then
-            notice(game, "ONE BET AT A TIME! PLEASE ROLL THE DICE!")
+            notice(game, "ONE BET AT A TIME!\nPLEASE ROLL THE DICE!")
         elseif game.run.money < bet then
             notice(game, "YOU NEED $" .. bet .. " TO BET!")
         else
             player.bet = bet
             game.run.money = game.run.money - bet
-            notice(game, "YOU BET $" .. bet .. "! NOW ROLL THE DICE!")
+            notice(game, "YOU BET $" .. bet .. "!\nNOW ROLL THE DICE!")
         end
     elseif keeper.shopType == "Kissing" and not failed then
         for _, damsel in ipairs(game.enemies) do
@@ -137,7 +140,7 @@ function Shop.pay(game)
                     damsel.kissTimer = 12
                     game.sounds:play("kiss")
                     notice(game, "NOW AIN'T SHE SWEET!")
-                else notice(game, "YOU NEED $" .. price .. "!") end
+                else notice(game, "YOU NEED $" .. price .. "!\nGET OUTTA HERE, DEADBEAT!") end
                 break
             end
         end
@@ -158,9 +161,9 @@ local function settleBet(game, keeper)
     for _, die in ipairs(dice) do die.rolled = false end
     if value > 7 then
         game.run.money = game.run.money + bet * 2
-        notice(game, "YOU ROLLED A " .. value .. "! CONGRATULATIONS! YOU WIN!")
+        notice(game, "YOU ROLLED A " .. value .. "!\nCONGRATULATIONS! YOU WIN!")
     elseif value == 7 then
-        notice(game, "YOU ROLLED A SEVEN! YOU WIN A PRIZE!")
+        notice(game, "YOU ROLLED A SEVEN!\nYOU WIN A PRIZE!")
         for _, group in ipairs({ game.items, game.collectibles }) do
             for _, prize in ipairs(group) do
                 if prize.properties.inDiceHouse then
@@ -176,7 +179,7 @@ local function settleBet(game, keeper)
                 end
             end
         end
-    else notice(game, "YOU ROLLED A " .. value .. "! I'M SORRY, BUT YOU LOSE!") end
+    else notice(game, "YOU ROLLED A " .. value .. "!\nI'M SORRY, BUT YOU LOSE!") end
 end
 
 function Shop.update(game)
@@ -184,13 +187,13 @@ function Shop.update(game)
     local keeper = Shop.keeper(game, player.x, player.y)
     local wanted = game.run.shopkeeperAnger > 0 or game.run.murderer
     for _, wall in ipairs(game.world.destroyedShopWalls or {}) do
-        Shop.anger(game, wall.x, wall.y, "VANDAL!")
+        Shop.anger(game, wall.x, wall.y, "DIE, YOU VANDAL!")
     end
     game.world.destroyedShopWalls = nil
     for _, die in ipairs(game.items) do
         if die.diceCheated then
             die.diceCheated = false
-            Shop.anger(game, die.x, die.y, "COME BACK HERE, THIEF!")
+            Shop.anger(game, die.x, die.y, "HEY, ONLY I CAN DO THAT!")
             wanted = game.run.shopkeeperAnger > 0 or game.run.murderer
         end
     end
@@ -220,11 +223,32 @@ function Shop.update(game)
             end
         end
     end
-    if keeper then settleBet(game, keeper) end
     local held = game.heldItem or game.heldNpc
-    if held and Shop.forSale(held) then
-        local key = game.app.controls:label("pay")
-        notice(game, "$" .. Shop.price(game, held) .. " - PRESS " .. key .. " TO PURCHASE.")
+    if keeper and (keeper.state == "idle" or keeper.state == "follow") and held and Shop.forSale(held) then
+        local template = held.kind == "damsel" and "I'LL LET YOU HAVE HER FOR $%s!"
+            or held.definition and held.definition.buyMessage
+        if template then
+            notice(game, string.format(template, Shop.price(game, held))
+                .. "\nPRESS " .. game.app.controls:label("pay") .. " TO PURCHASE.")
+        end
+    end
+    if keeper and keeper.state == "idle" and not wanted then
+        if not keeper.welcomed and Shop.sameRoom(player, keeper) then
+            keeper.welcomed = true
+            local shops = { Bomb = "BOMB SHOP", Weapon = "ARMORY", Clothing = "CLOTHING SHOP",
+                Rare = "SPECIALTY SHOP", Craps = "DICE HOUSE", Kissing = "KISSING PARLOR" }
+            local text = keeper.shopType == "Ankh" and "I HAVE SOMETHING SPECIAL..."
+                or "WELCOME TO " .. keeper.spec.name(keeper) .. "'S "
+                    .. (shops[keeper.shopType] or "SUPPLY SHOP") .. "!"
+            local key = game.app.controls:label("pay")
+            if keeper.shopType == "Craps" then
+                text = text .. "\nPRESS " .. key .. " TO BET $" .. (1000 + game.level.absoluteLevel * 500) .. "."
+            elseif keeper.shopType == "Kissing" then
+                text = text .. "\n$" .. Shop.kissPrice(game) .. " A KISS. PRESS " .. key .. "."
+            end
+            notice(game, text)
+        end
+        settleBet(game, keeper)
     end
 end
 
