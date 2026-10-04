@@ -51,6 +51,54 @@ function Test.run()
             game.run:flushMoney()
             assert(game.run.money == 2100 and game.run.pendingMoney == 0)
         end },
+        { "treasure stays above a blocked diagonal corner until the gap opens", function()
+            for _, treasure in ipairs({
+                { "gold_chunk", 2, 2, 100 }, { "gold_bar", 4, 4, 500 },
+                { "gold_bars", 7, 8, 1000 }, { "ruby", 2, 2, 400 },
+                { "ruby_big", 4, 4, 1600 },
+            }) do
+                for _, side in ipairs({ -1, 1 }) do
+                    local game = fixture()
+                    local lowerTile = side == 1 and 5 or 4
+                    game.world:set("solid", side == 1 and 4 or 5, 5)
+                    game.world:set("solid", lowerTile, 6)
+                    game.player.x = 80-side*5
+                    local pickup = game:spawnEntity(treasure[1], 80+side*treasure[2], 96-treasure[3])
+                    for tick = 1, 20 do
+                        game.world.time = tick
+                        pickup:update(game.world, game.player)
+                        game:checkCollectibles()
+                        assert(pickup.alive and game.run.pendingMoney == 0,
+                            treasure[1] .. " must not collect through the closed corner, side " .. side)
+                    end
+                    game.world:remove("solid", lowerTile, 6)
+                    for tick = 21, 40 do
+                        game.world.time = tick
+                        pickup:update(game.world, game.player)
+                        game:checkCollectibles()
+                    end
+                    assert(not pickup.alive and game.run.pendingMoney == treasure[4],
+                        treasure[1] .. " must collect once it falls into reach through the opened corner")
+                end
+            end
+        end },
+        { "gold collects on its sprite pixels rather than its movement bounds", function()
+            for _, gold in ipairs({ { "gold_bar", 114, 500 }, { "gold_bars", 115, 1000 } }) do
+                local game = fixture()
+                local pickup = game:spawnEntity(gold[1], 80, gold[2])
+                game:checkCollectibles()
+                assert(pickup.alive and game.run.pendingMoney == 0,
+                    gold[1] .. " transparent pixels above the gold must not collect")
+                game.player.y = game.player.y+1
+                game:checkCollectibles()
+                assert(not pickup.alive and game.run.pendingMoney == gold[3],
+                    gold[1] .. " first opaque row must still collect")
+            end
+            local game = fixture()
+            game:spawnEntity("gold_bars", 96, 104)
+            game:checkCollectibles()
+            assert(game.run.pendingMoney == 1000, "The gold pile's leftmost sprite pixel is collectible")
+        end },
         { "Kapala collects nine mature droplets rather than enemy deaths", function()
             local game = fixture()
             game.player.equipment.kapala = true

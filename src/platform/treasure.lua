@@ -102,10 +102,15 @@ function Treasure:update(world, player)
 end
 
 function Treasure:overlapsRectangle(left, top, right, bottom)
-    local half = self:getCollisionHalfWidth()
-    local a, b = self:getVerticalBounds()
-    return left <= self.x + half and right >= self.x - half
-        and top <= self.y + b and bottom >= self.y + a
+    local x1, y1, x2, y2 = self:getBounds()
+    local bounds = self.definition.treasurePickupBounds
+    if bounds then
+        x1, y1, x2, y2 = self.x+bounds[1], self.y+bounds[2],
+            self.x+bounds[3], self.y+bounds[4]
+    end
+    -- oPlayer1's collision_rectangle uses the sprite's last occupied pixel.
+    -- Movement bounds instead end one pixel past the right/bottom edges.
+    return left <= x2-1 and right >= x1 and top <= y2-1 and bottom >= y1
 end
 
 return Treasure
