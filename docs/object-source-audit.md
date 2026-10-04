@@ -390,3 +390,41 @@ spawn settle naturally; its initial spawn is not necessarily supported.
 This verifies the clone's callback delivery and the source's collision/state
 contracts. Sub-tick keyboard handling by the original GameMaker 8 executable has
 not been measured; these checks do not claim timing parity with that runner.
+
+## Arrow trap sensor and flight audit (2026-10-04)
+
+The active detection path is `oArrowTrapLeft/Right` Alarm 1 plus
+`oArrowTrapTest` collision events. The line sensors in the traps' Step events
+are commented out. The sensor uses `sRed`, a precise 16×16 sprite whose opaque
+rows are 1 through 14. Its horizontal scale and anchor retain the original
+asymmetric obstacle rounding, maximum reach and cached geometry.
+
+Detection now uses the bundled sprite XML and image alpha masks rather than
+movement bounds. Masks retain frame changes, character mirroring, rectangular
+versus precise shapes, and arrow rotation. Characters, items (including flying
+rope ends and damsels), treasure, enemies (including moving corpses), push blocks
+and boulders can trigger. Bullets, pellets, web balls and ghosts lack the relevant
+source inheritance and cannot trigger. Any nonzero x/y velocity qualifies; the
+late crouch-to-hang exception remains. Extending rope ends explicitly have zero
+velocities in `oRopeThrow` Step; their positional extension and fixed `oRope`
+segments do not qualify as moving sensor targets.
+
+The level checks sensors after body updates, with the same target set during exit.
+Collision-created arrows wait until the next movement tick. Trap arrows share
+`oItem` movement quantization, initial 0.2 gravity followed by 0.6, activity bounds,
+wall rebounds and web stops. A terrain handoff retains velocity, gravity, angle
+and the unsafe state. Fast unsafe arrows use the source player's inclusive x/y
+±8 rectangle, deal two hearts, transfer x velocity, stun for 20 ticks, and emit
+three blood particles. That source check has no enemy-contact immunity gate;
+loose arrows use the same player-hit owner.
+
+Regressions exercise both trap directions, empty sensor edge rows, crouching,
+precise rock corners, animation frames and mirroring, rotated arrow pixels,
+source inheritance, cached obstacle widths, single firing, real upward rope
+crossings during play and exit, stationary rope extension, quantized arrow
+flight, offscreen pause, arrow damage and rebound handoff. The old implementation
+fails the sensor-edge, projectile-class, rope-timing, flight and hit regressions.
+Verification uses extracted source and sprite assets plus the native LÖVE smoke
+suite. GameMaker 8 runner timing and arbitrary-angle mask rasterization have not
+been measured against the original executable. Bow projectile flight and its
+handoff remain a separate implementation outside this trap audit.

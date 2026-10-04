@@ -17,72 +17,63 @@ local function materializeArrow(projectile, items, x, y, velocityFactor)
     items[#items + 1] = arrow
 end
 
-local function arrowHitsWorld(world, projectile, x, y)
-    local left, top, right, bottom = x - 4, y - 4, x + 4, y + 4
-    if projectile.launchTrapX == nil then
-        return world:solidRect(left, top, right, bottom)
+function Definition.hitPlayer(arrow, player, game)
+    if arrow.alive == false or arrow.opened or arrow.held or arrow.safe
+        or (arrow.safeTimer or 0) > 0 or math.abs(arrow.vx) <= 3 or player:isDead() then return false end
+    -- oPlayer1 asks collision_rectangle with prec=false, not its movement mask.
+    local Collision = require("src.platform.sprite_collision")
+    if not Collision.overlaps("sArrowRight", 0, arrow.x, arrow.y, false,
+        player.x-8, player.y-8, player.x+9, player.y+9, true, arrow.arrowAngle) then return false end
+    if not player:hurt(arrow.x, 2, "arrow", 20, "arrow", arrow.vx) then return false end
+    arrow.alive, arrow.opened = false, true
+    if game then
+        game.effects:blood(player.x, player.y, 3)
+        game.sounds:play("hurt")
+        game:dropHeldItemFromHurt()
     end
-    local size = world.tileSize
-    local overlapsLaunch = right > projectile.launchTrapX * size
-        and left < (projectile.launchTrapX + 1) * size
-        and bottom > projectile.launchTrapY * size
-        and top < (projectile.launchTrapY + 1) * size
-    if not overlapsLaunch then projectile.clearOfLaunchTrap = true end
-    for cellY = math.floor(top / size), math.floor((bottom - 0.001) / size) do
-        for cellX = math.floor(left / size), math.floor((right - 0.001) / size) do
-            if world:has("solid", cellX, cellY)
-                and (projectile.clearOfLaunchTrap
-                    or cellX ~= projectile.launchTrapX or cellY ~= projectile.launchTrapY) then
-                return true
-            end
-        end
-    end
-    return world:dynamicSolidAt(left, top, right, bottom) ~= nil
+    return true
 end
 
 function Definition.updateTrapProjectile(self, projectile, player, enemies, items)
-    if not projectile.alive then return end
-    local steps = math.max(1, math.floor(math.max(math.abs(projectile.vx), math.abs(projectile.vy))))
-    local dx, dy = projectile.vx / steps, projectile.vy / steps
-    for _ = 1, steps do
-        local nextX, nextY = projectile.x + dx, projectile.y + dy
-        local solidHit = projectile.kind == "arrow"
-            and arrowHitsWorld(self.world, projectile, nextX, nextY)
-            or (projectile.kind ~= "arrow" and self.world:solidAtPoint(nextX, nextY))
-        if solidHit then
-            if projectile.kind == "arrow" and items then
-                local arrow = require("src.platform.item").new({ kind = "arrow", x = projectile.x / 16,
-                    y = projectile.y / 16 })
-                arrow.vx, arrow.vy = projectile.vx, projectile.vy
-                arrow.facing = projectile.direction
-                items[#items + 1] = arrow
-            end
-            projectile.alive = false
-            return
-        end
-        projectile.x, projectile.y = nextX, nextY
-        if math.abs(projectile.x - player.x) < 7 and math.abs(projectile.y - player.y) < 8 then
-            player:hurt(projectile.x)
-            projectile.alive = false
-            return
-        end
+    if not projectile.alive or not require("src.platform.activity").contains(self.world, projectile) then return end
+    projectile.definition = Definition
+    projectile.gravity = projectile.gravity or 0.2
+    local oldVx = projectile.vx
+    PhysicalBody.stepItem(self.world, projectile)
+    Definition.updateLoose(projectile)
+    PhysicalBody.stopInWeb(self.world, projectile)
+    if Definition.hitPlayer(projectile, player, self.game) then return end
+    if math.abs(projectile.vx) > 2 or math.abs(projectile.vy) > 2 then
+        local Sensor = require("src.platform.traps.arrow_trap_sensor")
         for _, enemy in ipairs(enemies or {}) do
-            if enemy.alive and math.abs(projectile.x - enemy.x) < 8
-                and math.abs(projectile.y - enemy.y) < 8 then
-                PhysicalBody.strikeEnemy(projectile, enemy)
+            if enemy.alive and enemy.kind ~= "ghost" and not (enemy.invincible and enemy.invincible > 0)
+                and Sensor.overlaps(enemy, player, projectile.x-2, projectile.y-2,
+                    projectile.x+3, projectile.y+3, true) then
+                if PhysicalBody.strikeEnemy(projectile, enemy) and self.game then
+                    self.game.effects:blood(enemy.x, enemy.y-8, 1)
+                end
                 projectile.alive = false
                 return
             end
         end
     end
-    projectile.vy = math.min(8, projectile.vy+(projectile.gravity or 0.2))
-    projectile.gravity = 0.6
+    if items and (projectile.vx ~= oldVx or PhysicalBody.probe(self.world, projectile, "x", -1)
+        or PhysicalBody.probe(self.world, projectile, "x", 1)
+        or PhysicalBody.probe(self.world, projectile, "y", 1)
+        or self.world:webRect(projectile.x-4, projectile.y-4, projectile.x+4, projectile.y+4)) then
+        local arrow = require("src.platform.item").new({ kind = "arrow",
+            x = projectile.x/16, y = projectile.y/16 })
+        arrow.vx, arrow.vy, arrow.gravity = projectile.vx, projectile.vy, projectile.gravity
+        arrow.stuck, arrow.facing, arrow.arrowAngle = projectile.stuck, projectile.facing, projectile.arrowAngle
+        items[#items+1] = arrow
+        projectile.alive = false
+    end
 end
 
 function Definition.drawTrapProjectile(system, arrow)
     love.graphics.setColor(1, 1, 1, 1)
-    local image = arrow.direction < 0 and system.assets.arrowLeft or system.assets.arrowRight
-    love.graphics.draw(image, math.floor(arrow.x), math.floor(arrow.y), 0, 1, 1, 4, 4)
+    love.graphics.draw(system.assets.arrowRight, math.floor(arrow.x), math.floor(arrow.y),
+        arrow.arrowAngle or math.atan2(arrow.vy, arrow.vx), 1, 1, 4, 4)
 end
 
 function Definition.loadTrapAssets(assets)

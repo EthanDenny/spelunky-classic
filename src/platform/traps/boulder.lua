@@ -2,6 +2,7 @@ local Boulder = { depth = 200 }
 
 function Boulder.spawn(self, trap)
     local boulder = {
+        kind = "boulder",
         x = trap.x, y = trap.y, vx = 0, vy = 0, alive = true, bounced = false,
         animation = 0,
     }

@@ -5,6 +5,10 @@ local Definition = Traits.carry({ heavy = true, bounds = { 6, 0, 8 }, action = "
 
 Definition.depth = 900
 
+function Definition.collisionSprite(item)
+    return item.opened and "sChestOpen" or "sChest", 0, item.x, item.y, false
+end
+
 local function rollChest(random)
     if random:random(1, 12) == 1 then
         return { { kind = "bomb", vx = random:random(0, 3) - random:random(0, 3),

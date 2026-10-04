@@ -107,6 +107,8 @@ function Test.run(app)
         "A trap arrow must become a persistent physical item after hitting terrain")
     assert(not arrowWorld:collidesSolid(trapItems[1], trapItems[1].x, trapItems[1].y),
         "A trap arrow must become physical outside the wall so it can rebound")
+    assert(trapItems[1].vx == -4 and trapItems[1].gravity == 0.6 and trapItems[1].safeTimer == 0,
+        "The wall rebound must preserve oItem's reversed velocity and leave the trap arrow unsafe")
     local bow = ProjectileSystem.new(arrowWorld)
     local bowArrow = bow:spawn("arrow", 74, 72, 10, 0, player,
         { damage = 2, gravity = 0.12, radius = 3, life = 90 })

@@ -109,10 +109,19 @@ end
 
 local Assets = require("src.platform.object_assets")
 local sprites = {}
+function Damsel.collisionSprite(body)
+    local name = "sDamselLeft"
+    if body.state == "exiting" then name = "sDamselExit2"
+    elseif body.state == "yell" then name = "sDamselYellL"
+    elseif body.state == "run" then name = "sDamselRunL"
+    elseif body.corpse then name = "sDamselDieL"
+    elseif body.stunned > 0 then name = "sDamselStunL" end
+    return name, body.animation, body.x, body.y-8, body.facing > 0 and body.state ~= "exiting"
+end
+
 function Damsel.drawCreature(body, renderer)
     if body.state == "exiting" or body.state == "yell" or body.state == "run" then
-        local name = body.state == "exiting" and "sDamselExit2"
-            or body.state == "yell" and "sDamselYellL" or "sDamselRunL"
+        local name = Damsel.collisionSprite(body)
         local count = body.state == "exiting" and 17 or body.state == "yell" and 10 or 4
         local frame = math.floor(body.animation) % count
         local key = name .. frame
@@ -127,7 +136,7 @@ function Damsel.drawCreature(body, renderer)
             y = (body.y - 8) / 16, properties = body.entity.properties })
         return
     end
-    local name = body.corpse and "sDamselDieL" or "sDamselStunL"
+    local name = Damsel.collisionSprite(body)
     local frame = body.corpse and 0 or math.floor(body.animation) % 5
     local key = name .. frame
     sprites[key] = sprites[key] or Assets.image("Character/Damsel", name, frame)

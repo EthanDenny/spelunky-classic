@@ -698,27 +698,24 @@ end
 
 function FullLevelPlaytest:resolveItemPlayerContact(item)
     local player = self.player
+    if item.kind == "arrow" then
+        return require("src.platform.items.arrow").hitPlayer(item, player, self)
+    end
     if item.held or item.opened or item.safeTimer > 0 or player:isDead()
         or player:isStunned() then return end
     local halfWidth = player:getCollisionHalfWidth()
     local top, bottom = player:getVerticalBounds()
     if not item:overlapsRectangle(player.x - halfWidth, player.y + top,
         player.x + halfWidth, player.y + bottom) then return end
-    -- Classic's player Step names fast arrows and rocks. Falling ordinary
-    -- carryables are an additional requested hazard; respect throw immunity.
-    local arrowHit = item.kind == "arrow" and math.abs(item.vx) > 3
+    -- Falling ordinary carryables are an additional requested hazard.
     local rockHit = item.kind == "rock" and math.abs(item.vx) > 4
-    local fallHit = item.kind ~= "arrow" and item.vy > 4
-    if not (arrowHit or rockHit or fallHit) then return end
-    local damage = (arrowHit or rockHit or item.kind == "rock") and 2 or 1
+    local fallHit = item.vy > 4
+    if not (rockHit or fallHit) then return end
+    local damage = (rockHit or item.kind == "rock") and 2 or 1
     if not player:hurt(item.x, damage, item.kind, 20) then return end
     self.effects:blood(player.x, player.y, 3)
     self.sounds:play("hurt")
     self:dropHeldItemFromHurt()
-    if arrowHit then
-        item.opened = true
-        item.x, item.y = -1000, -1000
-    end
 end
 
 function FullLevelPlaytest:applyEnvironment(input)
@@ -742,6 +739,15 @@ function FullLevelPlaytest:handleActionPressed(input, containerToOpen)
     end
 end
 
+function FullLevelPlaytest:updateTraps()
+    local targets = {}
+    for _, group in ipairs({ self.collectibles, self.tools.bombs, self.tools.ropes,
+        self.projectiles.projectiles }) do
+        for _, target in ipairs(group) do targets[#targets+1] = target end
+    end
+    self.traps:update(self.player, self:combatActors(), self.items, targets)
+end
+
 function FullLevelPlaytest:simulationStepBody(input)
     local viewport = self:getViewport()
     self:updateCamera(viewport)
@@ -757,9 +763,9 @@ function FullLevelPlaytest:simulationStepBody(input)
         for _, enemy in ipairs(self.enemies) do enemy:step(self.world, self.player, self) end
         for _, item in ipairs(self.items) do item:update(self.world, self.player) end
         for _, treasure in ipairs(self.collectibles) do treasure:update(self.world, self.player) end
-        self.traps:update(self.player, self:combatActors(), self.items, self.collectibles)
         self.projectiles:update(self:combatActors(), self.player, self.items)
         self.tools:update(self.player, self:combatActors(), self.items)
+        self:updateTraps()
         TerrainDestruction.update(self)
         self.effects:update(self.world)
         if self.exiting >= 32 then self:advanceLevel() end
@@ -834,12 +840,6 @@ function FullLevelPlaytest:simulationStepBody(input)
         end
     end
     DynamicTerrain.update(self.world)
-    local trapTargets = {}
-    for _, group in ipairs({ self.collectibles, self.tools.bombs, self.tools.ropes,
-        self.projectiles.projectiles }) do
-        for _, target in ipairs(group) do trapTargets[#trapTargets + 1] = target end
-    end
-    self.traps:update(self.player, self:combatActors(), self.items, trapTargets)
     self.tools:update(self.player, self:combatActors(), self.items)
     TerrainDestruction.update(self)
     Kali.update(self)
@@ -918,6 +918,8 @@ function FullLevelPlaytest:simulationStepBody(input)
             end
         end
     end
+    -- oArrowTrapTest collision events observe bodies after their Step events.
+    self:updateTraps()
     self.effects:burning(self.player)
     for _, enemy in ipairs(self.enemies) do self.effects:burning(enemy) end
     self.effects:update(self.world)

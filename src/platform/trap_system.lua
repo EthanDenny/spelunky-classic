@@ -60,18 +60,19 @@ TrapSystem.updateProjectile = Arrow.updateTrapProjectile
 TrapSystem.triggerIdol = Head.triggerIdol
 
 function TrapSystem:update(player, enemies, items, movingTargets)
+    -- Collision-created arrows do not receive a Step in their creation tick.
+    for _, projectile in ipairs(self.projectiles) do
+        self:updateProjectile(projectile, player, enemies, items)
+    end
+    for _, boulder in ipairs(self.boulders) do
+        if boulder.alive then self:updateBoulder(boulder, player, enemies) end
+    end
     for _, trap in ipairs(self.traps) do
         if trap.alive and trap.entity.destroyed then
             self:destroyTrap(trap)
         elseif trap.alive then
             trap.definition.update(self, trap, player, enemies, items, movingTargets)
         end
-    end
-    for _, projectile in ipairs(self.projectiles) do
-        self:updateProjectile(projectile, player, enemies, items)
-    end
-    for _, boulder in ipairs(self.boulders) do
-        if boulder.alive then self:updateBoulder(boulder, player, enemies) end
     end
 end
 

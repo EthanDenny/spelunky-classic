@@ -86,6 +86,11 @@ function Skeleton.facePlayerOnSpawn(body, player, facing)
     body.facing = facing or (player.x < body.x and -1 or 1)
 end
 
+function Skeleton.collisionSprite(self)
+    return self.vx == 0 and "sSkeletonLeft" or "sSkeletonWalkLeft",
+        self.vx == 0 and 0 or math.floor(self.animation*0.5), self.x-8, self.y-self.height, false
+end
+
 function Skeleton.drawCreature(self)
     local sprites = Skeleton.creatureSprites
     if not sprites then
@@ -102,8 +107,8 @@ function Skeleton.drawCreature(self)
         end
         Skeleton.creatureSprites = sprites
     end
-    local image = self.vx == 0 and sprites.idle
-        or sprites.walk[(math.floor(self.animation * 0.5) % #sprites.walk) + 1]
+    local name, frame = Skeleton.collisionSprite(self)
+    local image = name == "sSkeletonLeft" and sprites.idle or sprites.walk[frame % #sprites.walk + 1]
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.draw(image, math.floor(self.x), math.floor(self.y - self.height),
         0, self.facing < 0 and 1 or -1, 1, 8, 0)

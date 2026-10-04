@@ -275,6 +275,20 @@ function Shopkeeper.contact(body, player)
     return "throw"
 end
 
+function Shopkeeper.collisionSprite(body)
+    local name = body.vx == 0 and "sShopLeft" or "sShopRunLeft"
+    if body.corpse then name = body.held and "sShopDHeldL" or "sShopDieLL"
+    elseif body.held then name = "sShopHeldL"
+    elseif body.state == "throw" then name = "sShopThrowL"
+    elseif body.state == "stunned" then
+        name = body.bounced and (body.vy < 0 and "sShopBounceL" or "sShopFallL")
+            or (body.vx < 0 and "sShopDieLL" or "sShopDieLR")
+        if body.vy == 0 then name = "sShopStunL" end
+    end
+    -- Its Draw event mirrors the image without changing image_xscale.
+    return name, body.animation, body.x-8, body.y-16, false
+end
+
 function Shopkeeper.draw(body)
     if not sprites then
         sprites = {}
@@ -295,15 +309,7 @@ function Shopkeeper.draw(body)
         sprites.gunLeft:setFilter("nearest", "nearest")
         sprites.gunRight:setFilter("nearest", "nearest")
     end
-    local name = body.vx == 0 and "sShopLeft" or "sShopRunLeft"
-    if body.corpse then name = body.held and "sShopDHeldL" or "sShopDieLL"
-    elseif body.held then name = "sShopHeldL"
-    elseif body.state == "throw" then name = "sShopThrowL"
-    elseif body.state == "stunned" then
-        name = body.bounced and (body.vy < 0 and "sShopBounceL" or "sShopFallL")
-            or (body.vx < 0 and "sShopDieLL" or "sShopDieLR")
-        if body.vy == 0 then name = "sShopStunL" end
-    end
+    local name = Shopkeeper.collisionSprite(body)
     local frames = sprites[name]
     local image = frames[math.floor(body.animation) % #frames + 1]
     love.graphics.setColor(1, 1, 1, 1)

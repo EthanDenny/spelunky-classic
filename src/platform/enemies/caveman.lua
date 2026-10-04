@@ -157,20 +157,20 @@ function Caveman.onThrown(body)
     body.state = body.corpse and "dead" or "stunned"
 end
 
-function Caveman.drawCreature(body, renderer)
+function Caveman.collisionSprite(body)
     if not body.corpse and not body.held and body.stunned <= 0 then
         local name = body.vx == 0 and "sCavemanLeft" or "sCavemanRunLeft"
         local frame = body.vx == 0 and 0 or math.floor(body.animation*(body.state == "attack" and 2 or 1)) % 4
-        local key = name .. frame
-        sprites[key] = sprites[key] or Assets.image("Enemies/Caveman", name, frame)
-        love.graphics.setColor(1,1,1,1)
-        love.graphics.draw(sprites[key], math.floor(body.x), math.floor(body.y-16),
-            0, body.facing < 0 and 1 or -1, 1, 8, 0)
-        return
+        return name, frame, body.x-8, body.y-16, false
     end
     local name = body.corpse and (body.held and "sCavemanDHeldL" or "sCavemanDieLL")
         or body.held and "sCavemanHeldL" or "sCavemanStunL"
     local frame = body.corpse and 0 or math.floor(body.animation) % 5
+    return name, frame, body.x-8, body.y-16, false
+end
+
+function Caveman.drawCreature(body, renderer)
+    local name, frame = Caveman.collisionSprite(body)
     local key = name .. frame
     sprites[key] = sprites[key] or Assets.image("Enemies/Caveman", name, frame)
     love.graphics.setColor(1, 1, 1, 1)

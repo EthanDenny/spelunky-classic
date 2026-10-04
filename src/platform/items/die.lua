@@ -5,6 +5,11 @@ local Definition = Traits.carry({ flight = "die", hitSpeed = 3, heavy = true, bo
 
 Definition.depth = 100
 
+function Definition.collisionSprite(item)
+    return item.diceRolling and "sDiceRoll" or "sDice" .. (item.diceValue or 1),
+        item.diceRolling and item.diceAge % 6 or 0, item.x, item.y, false
+end
+
 function Definition.initialize(self)
     self.diceValue = love.math.random(1, 6)
     self.diceRolling = false

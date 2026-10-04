@@ -190,6 +190,195 @@ function Test.run()
             game.traps:update(game.player, {}, {}, { gem })
             assert(game.traps.traps[1].fired)
         end },
+        { "arrow sensors use occupied sprite rows rather than movement rectangles", function()
+            for _, direction in ipairs({ -1, 1 }) do
+                for _, position in ipairs({
+                    { 73, "sStandLeft", false }, { 74, "sStandLeft", true },
+                    { 103, "sStandLeft", false }, { 102, "sStandLeft", true },
+                    { 100, "sDuckLeft", false },
+                }) do
+                    local game = fixture()
+                    local entity = { kind = direction < 0 and "arrow_trap_left" or "arrow_trap_right", x = 5, y = 5 }
+                    game.world:set("solid", 5, 5, entity)
+                    game.traps = Traps.new(game.world, { entities = { entity } })
+                    game.player.x, game.player.y = 88+direction*32, position[1]
+                    game.player.spriteName, game.player.animationFrame = position[2], 0
+                    game.player.vx, game.player.vy = 0.01, 0
+                    game.traps:update(game.player, {}, {})
+                    assert(game.traps.traps[1].fired == position[3],
+                        position[2] .. " at y=" .. position[1] .. " must respect the sensor's empty edge rows")
+                end
+            end
+        end },
+        { "arrow sensors reject unrelated projectile classes and accept moving corpses", function()
+            for _, kind in ipairs({ "bullet", "pellet", "web", "caveman", "boulder", "chest", "die", "damsel" }) do
+                local game = fixture()
+                game.player.x = 8
+                local entity = { kind = "arrow_trap_right", x = 2, y = 3 }
+                game.world:set("solid", 2, 3, entity)
+                game.traps = Traps.new(game.world, { entities = { entity } })
+                local enemies, items, extras = {}, {}, {}
+                if kind == "caveman" then
+                    local corpse = game:spawnEntity(kind, 72, 64)
+                    corpse:damage(999)
+                    corpse.vx, corpse.vy = 1, 0
+                    enemies[1] = corpse
+                elseif kind == "boulder" then
+                    game.traps:spawnBoulder({ x = 80, y = 56 })
+                    game.traps.boulders[1].vx = 1
+                elseif kind == "damsel" then
+                    local damsel = game:spawnEntity(kind, 80, 64)
+                    damsel.vx = 1
+                    enemies[1] = damsel
+                elseif kind == "chest" or kind == "die" then
+                    local item = game:spawnEntity(kind, 80, 56)
+                    item.vx = 1
+                    item.opened = kind == "chest"
+                    items[1] = item
+                else
+                    extras[1] = game.projectiles:spawn(kind, 80, 56, 1, 0)
+                end
+                game.traps:update(game.player, enemies, items, extras)
+                local eligible = kind ~= "bullet" and kind ~= "pellet" and kind ~= "web"
+                assert(game.traps.traps[1].fired == eligible,
+                    kind .. " must follow the source collision-event inheritance")
+            end
+        end },
+        { "arrow sensors respect precise pixels and changing character frames", function()
+            local game = fixture()
+            game.player.x = 8
+            local entity = { kind = "arrow_trap_right", x = 2, y = 3 }
+            game.world:set("solid", 2, 3, entity)
+            game.traps = Traps.new(game.world, { entities = { entity } })
+            local rock = game:spawnEntity("rock", 130, 46)
+            rock.vx = 1
+            game.traps:update(game.player, {}, { rock })
+            assert(not game.traps.traps[1].fired, "A transparent corner in sRock's precise mask must not trigger")
+            rock.x = rock.x-1
+            game.traps:update(game.player, {}, { rock })
+            assert(game.traps.traps[1].fired, "Moving one opaque rock pixel into the sensor must trigger")
+
+            for _, angle in ipairs({ 0, math.pi }) do
+                game = fixture()
+                game.player.x = 8
+                game.world:set("solid", 2, 3, entity)
+                game.traps = Traps.new(game.world, { entities = { entity } })
+                local arrow = game:spawnEntity("arrow", 80, 66)
+                arrow.vx, arrow.arrowAngle = 8, angle
+                game.traps:update(game.player, {}, { arrow })
+                assert(game.traps.traps[1].fired == (angle ~= 0),
+                    "image_angle rotates the arrow's collision pixels, including its vertical offset")
+            end
+
+            for _, direction in ipairs({ -1, 1 }) do
+                for frame = 0, 1 do
+                    game = fixture()
+                    entity = { kind = direction < 0 and "arrow_trap_left" or "arrow_trap_right", x = 10, y = 5 }
+                    game.world:set("solid", 10, 5, entity)
+                    game.traps = Traps.new(game.world, { entities = { entity } })
+                    game.player.x, game.player.y = direction < 0 and 57 or 262, 88
+                    game.player.spriteName, game.player.animationFrame = "sRunLeft", frame
+                    game.player.facing, game.player.vx = direction, 0.01
+                    game.traps:update(game.player, {}, {})
+                    assert(game.traps.traps[1].fired == (frame == 0),
+                        "The mirrored character's current frame controls the outer sensor edge")
+                end
+            end
+        end },
+        { "arrow sensor widths stay cached with the source asymmetric obstacle rounding", function()
+            for _, direction in ipairs({ -1, 1 }) do
+                local game = fixture()
+                game.player.x = 8
+                local entity = { kind = direction < 0 and "arrow_trap_left" or "arrow_trap_right", x = 10, y = 5 }
+                local wall = direction < 0 and 7 or 14
+                game.world:set("solid", 10, 5, entity)
+                game.world:set("solid", wall, 5)
+                game.traps = Traps.new(game.world, { entities = { entity } })
+                local rock = game:spawnEntity("rock", direction < 0 and 123 or 227, 88)
+                rock.vx = 1
+                game.traps:update(game.player, {}, { rock })
+                assert(not game.traps.traps[1].fired, "Touching the cached outer boundary is not overlap")
+                game.world:remove("solid", wall, 5)
+                game.traps:update(game.player, {}, { rock })
+                assert(not game.traps.traps[1].fired, "Removing the wall cannot lengthen the existing sensor")
+                rock.x = rock.x-direction
+                game.traps:update(game.player, {}, { rock })
+                assert(game.traps.traps[1].fired and #game.traps.projectiles == 1,
+                    "The first occupied pixel inside the source-rounded sensor must fire")
+                game.traps:update(game.player, {}, { rock })
+                assert(#game.traps.projectiles == 1, "The spent trap must never fire twice")
+            end
+        end },
+        { "flying rope ends trigger on the crossing tick, including during exit", function()
+            for _, exiting in ipairs({ false, true }) do
+                local game = fixture()
+                local entity = { kind = "arrow_trap_right", x = 2, y = 3 }
+                game.level.entities = { entity }
+                game.world:set("solid", 2, 3, entity)
+                game.traps = Traps.new(game.world, game.level)
+                game.traps.game = game
+                local rope = game.tools:throwRope(game.player, {})
+                if exiting then game.exiting = 1 end
+                for _ = 1, 3 do game:simulationStepBody({}) end
+                assert(rope.alive and not rope.deployed and not game.traps.traps[1].fired,
+                    "The flying end must remain outside the sensor for the first three ticks")
+                game:simulationStepBody({})
+                assert(game.traps.traps[1].fired and #game.traps.projectiles == 1,
+                    "An upward rope must trigger immediately on its first overlapping tick")
+                local arrow = game.traps.projectiles[1]
+                assert(arrow.x == 50 and arrow.y == 52 and arrow.vx == 8,
+                    "An arrow created by a collision waits for the next movement tick")
+            end
+        end },
+        { "extending and fixed ropes do not masquerade as flying sensor targets", function()
+            local game = fixture()
+            game.player.x = 8
+            local entity = { kind = "arrow_trap_right", x = 2, y = 3 }
+            game.world:set("solid", 2, 3, entity)
+            game.traps = Traps.new(game.world, { entities = { entity } })
+            local rope = game.tools:throwRope(Player.new(80, 24), { down = true })
+            for _ = 1, 5 do
+                game.tools:update(game.player, {}, {})
+                game.traps:update(game.player, {}, {}, { rope })
+            end
+            assert(#rope.segments == 5 and not game.traps.traps[1].fired,
+                "oRopeThrow sets both velocities to zero during extension; oRope is an oLadder")
+        end },
+        { "trap arrows use inherited item motion rather than fractional projectile drift", function()
+            local game = fixture()
+            game.player.x = 8
+            local entity = { kind = "arrow_trap_right", x = 2, y = 3 }
+            game.world:set("solid", 2, 3, entity)
+            game.traps = Traps.new(game.world, { entities = { entity } })
+            game.traps:fireArrow(game.traps.traps[1], 1)
+            for tick = 2, 3 do
+                game.world.time = tick
+                game.traps:update(game.player, {}, game.items)
+            end
+            local arrow = game.traps.projectiles[1]
+            assert(arrow.x == 66 and arrow.y == 52 and math.abs(arrow.vy-0.8) < 0.001,
+                "moveTo quantizes travel before oItem applies 0.2 initial and then 0.6 gravity")
+            game.world.activeView = { x = 300, y = 0, width = 100, height = 120 }
+            game.traps:update(game.player, {}, game.items)
+            assert(arrow.x == 66 and arrow.y == 52, "Trap arrows share oItem's offscreen movement pause")
+        end },
+        { "trap arrows deal two hearts with the source pickup-sized hit rectangle", function()
+            for _, invincibility in ipairs({ 0, 30 }) do
+                local game = fixture()
+                local entity = { kind = "arrow_trap_right", x = 2, y = 3 }
+                game.world:set("solid", 2, 3, entity)
+                game.traps = Traps.new(game.world, { entities = { entity } })
+                game.traps.game = game
+                game.player.x, game.player.y, game.player.invincibleTimer = 66, 52, invincibility
+                game.traps:fireArrow(game.traps.traps[1], 1)
+                game.world.time = 2
+                game.traps:update(game.player, {}, game.items)
+                assert(game.player.health == 2 and game.player.vx == 8 and game.player.vy == -4
+                    and game.player.stunTimer == 20 and not game.traps.projectiles[1].alive,
+                    "A fast, unsafe arrow uses x/y ±8, removes two hearts and transfers its x velocity")
+                assert(#game.effects.particles == 3, "An arrow hit emits three blood particles")
+            end
+        end },
         { "generated cavemen use the source facing and charge rules", function()
             local game = fixture()
             game.player.x = 160
