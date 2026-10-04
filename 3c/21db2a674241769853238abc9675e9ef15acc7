@@ -1,0 +1,43 @@
+src/tests/full_game_test.lua
+  s_a149baf2181030::t_25dfe843e4fd42 26,59,151-194
+  s_a149baf2181030::t_9cdfe0945943f5 40-50,54-58,60-64
+  s_a149baf2181030::t_8bd59fc6e9be2c 51-53,215
+  s_a149baf2181030::t_ba30d8fb98c2bb 195
+src/ui/original_messages.lua
+  s_a149baf2181030::t_3fb67fd01a6db9 4,8
+src/app.lua
+  s_a149baf2181030::t_8bd59fc6e9be2c 111-114
+docs/object-source-audit.md
+  s_a149baf2181030::t_0919e287dddc5f 453-480
+src/screens/full_game.lua
+  s_a149baf2181030::t_ea7bb87c39dbe6 5-6,39,50-51,57-77,79,110,113-119,142
+  s_a149baf2181030::t_25dfe843e4fd42 83
+  s_a149baf2181030::t_8bd59fc6e9be2c 111-112
+src/screens/level_transition.lua
+  s_a149baf2181030::t_ea7bb87c39dbe6 1-129,131-141,143-227
+  s_a149baf2181030::t_25dfe843e4fd42 130,142
+src/platform/structures/exit.lua
+  s_a149baf2181030::t_3fb67fd01a6db9 13
+src/ui/original_small_font.lua
+  s_a149baf2181030::t_3fb67fd01a6db9 1-22
+src/platform/item.lua
+  s_a149baf2181030::t_4e16e57efd36bf 43
+src/screens/full_level_playtest.lua
+  s_a149baf2181030::t_6490241a4a7397 825
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "3c21db2a674241769853238abc9675e9ef15acc7",
+  "prompts": {},
+  "sessions": {
+    "s_a149baf2181030": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0fdc3-ae05-7e41-a96b-bd7a333b41c3",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Ethan Denny <ethandenny@protonmail.com>"
+    }
+  }
+}
