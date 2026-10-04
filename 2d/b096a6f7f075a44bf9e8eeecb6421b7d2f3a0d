@@ -1,0 +1,83 @@
+src/screens/full_level_playtest.lua
+  s_a149baf2181030::t_76d691c050586f 714,742-743
+  s_fc2ae5499b6401::t_ef93f0a0db6795 701-703,710,712-713,744-750,768,921-922
+src/platform/enemies/caveman.lua
+  s_a149baf2181030::t_183013de641715 160,164,169
+  s_fc2ae5499b6401::t_d3404f68b23ce6 170-173
+src/platform/enemies/shopkeeper.lua
+  s_a149baf2181030::t_183013de641715 278-290
+  s_fc2ae5499b6401::t_b79bd07362fb0a 291,312
+docs/object-source-audit.md
+  s_a149baf2181030::t_b567f7b82bc7d6 393-430
+src/platform/traps/arrow_trap_behavior.lua
+  s_a149baf2181030::t_41a354ca57f8ed 20-23
+  s_a149baf2181030::t_76d691c050586f 2,32,34,36
+src/platform/traps/boulder.lua
+  s_a149baf2181030::t_013e96a7641b82 5
+src/platform/items/die.lua
+  s_a149baf2181030::t_9d7138f029158b 8-12
+src/tests/mines_report_regression_test.lua
+  s_a149baf2181030::t_b2237d4f1ab7e4 110-111
+src/platform/traps/arrow_trap_sensor.lua
+  s_a149baf2181030::t_d29ab2b6432782 1-8,10,12-19,21-28,30-32,35-37,39-47,54,56-59,61-63
+  s_a149baf2181030::t_2c70a900cc80f9 9,11
+  s_a149baf2181030::t_41a354ca57f8ed 48,50,52-53,60
+  s_a149baf2181030::t_7b700891b0e8d0 29,49,51
+  s_a149baf2181030::t_013e96a7641b82 33-34
+  s_a149baf2181030::t_d73b9e92fbeabd 20
+  s_a149baf2181030::t_9d7138f029158b 38,55
+src/platform/player.lua
+  s_a149baf2181030::t_41a354ca57f8ed 221-222,232
+src/tests/mines_completion_test.lua
+  s_a149baf2181030::t_ab0054caa6a146 347-381
+  s_a149baf2181030::t_de3f4648840f88 193-196,198-213,215-219,221,223-225,238-240,244-246,312-346
+  s_a149baf2181030::t_b63406d8f08620 197
+  s_a149baf2181030::t_d73b9e92fbeabd 222
+  s_a149baf2181030::t_013e96a7641b82 214,220,226-237,241-243
+  s_a149baf2181030::t_ff9eecb1ba2106 247-260,273-311
+  s_a149baf2181030::t_7b700891b0e8d0 261-272
+src/platform/trap_system.lua
+  s_a149baf2181030::t_76d691c050586f 63-69
+src/platform/enemies/damsel.lua
+  s_a149baf2181030::t_183013de641715 112-114
+  s_a149baf2181030::t_9d7138f029158b 117
+  s_fc2ae5499b6401::t_5c8440de30e7fd 115-116,118-121,124,139
+src/platform/items/chest.lua
+  s_a149baf2181030::t_9d7138f029158b 8-11
+src/platform/enemies/skeleton.lua
+  s_a149baf2181030::t_9d7138f029158b 110-111
+  s_a149baf2181030::t_183013de641715 89-93
+src/platform/items/arrow.lua
+  s_a149baf2181030::t_7b700891b0e8d0 26
+  s_a149baf2181030::t_a7c48de73cd156 20-25,27-32,34,38-40,42-47,49-54,61,63-70,75-76
+  s_a149baf2181030::t_46342a9ce4f956 62
+  s_a149baf2181030::t_4ec342094ee391 41,60
+src/platform/sprite_collision.lua
+  s_a149baf2181030::t_d29ab2b6432782 1-56,58-59,78-82,84-96
+  s_a149baf2181030::t_7b700891b0e8d0 57,60-77
+  s_a149baf2181030::t_41a354ca57f8ed 83
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "2db096a6f7f075a44bf9e8eeecb6421b7d2f3a0d",
+  "prompts": {},
+  "sessions": {
+    "s_a149baf2181030": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0fdc3-ae05-7e41-a96b-bd7a333b41c3",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Ethan Denny <ethandenny@protonmail.com>"
+    },
+    "s_fc2ae5499b6401": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0fe11-ef49-7b10-9efc-7d3e265e115a",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Ethan Denny <ethandenny@protonmail.com>"
+    }
+  }
+}
