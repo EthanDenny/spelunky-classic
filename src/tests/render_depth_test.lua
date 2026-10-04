@@ -9,6 +9,95 @@ local Player = require("src.platform.player")
 
 local Test = {}
 
+local function assertDarkLighting(app)
+    local game = require("src.screens.full_level_playtest").new(app)
+    game:loadAssets()
+    game:generateLevel(17)
+    game.player.x, game.player.y, game.player.visible = 400, 300, false
+    game.enemies, game.items, game.collectibles, game.hiddenEntities = {}, {}, {}, {}
+    game.fakeBones, game.level.entities, game.level.decorations, game.level.backdrops = {}, {}, {}, {}
+    game.tools.bombs, game.tools.ropes, game.tools.explosions = {}, {}, {}
+    game.traps.traps = {}
+    -- A uniform visible field makes tint and circle boundaries independent of
+    -- the cave texture's naturally black pixels. The world render path is live.
+    function game:drawBackground()
+        love.graphics.setColor(0.6, 0.4, 0.2, 1)
+        love.graphics.rectangle("fill", 0, 0, self.world.width*16, self.world.height*16)
+    end
+    for _, row in ipairs(game.level.tiles) do
+        for x in ipairs(row) do row[x] = { kind = "empty" } end
+    end
+    for _, scale in ipairs({ 1, 2 }) do
+        local view = { x = 7, y = 9, width = 320*scale, height = 240*scale,
+            scale = scale, logicalWidth = 320, logicalHeight = 240 }
+        local canvas = love.graphics.newCanvas(view.width+14, view.height+18)
+        local function render(dark)
+            game.level.dark = dark
+            love.graphics.push("all")
+            love.graphics.origin()
+            love.graphics.setScissor()
+            love.graphics.setCanvas({ canvas, stencil = true })
+            love.graphics.clear(0.3, 0.4, 0.5, 1)
+            game:drawWorld(view)
+            love.graphics.pop()
+            return canvas:newImageData()
+        end
+        local function pixel(image, x, y)
+            return image:getPixel(view.x+x*scale, view.y+y*scale)
+        end
+        local function lit(actual, x, y, tint)
+            local r, g, b = pixel(actual, x, y)
+            assert(math.abs(r-0.6*tint) < 0.01 and math.abs(g-0.4*tint) < 0.01
+                and math.abs(b-0.2) < 0.01, "Dark-level light circles must retain the source blue tint")
+        end
+        local function black(actual, x, y)
+            local r, g, b = pixel(actual, x, y)
+            assert(r == 0 and g == 0 and b == 0, "Terrain outside light circles must be black")
+        end
+        local dark = render(true)
+        -- oScreen: radius 96-64*0.9 = 38.4, centered on the player.
+        lit(dark, 160, 120, 0.1)
+        lit(dark, 197, 120, 0.1)
+        black(dark, 200, 120)
+        game.player.equipment.spectacles = true
+        black(render(true), 200, 120)
+        game.level.entities = { { kind = "lamp", x = 35, y = 19 } }
+        dark = render(true)
+        lit(dark, 234, 132, 0.1) -- lamp center (x+8,y+8), radius 96
+        black(dark, 230, 132)
+        game.level.entities = { { kind = "lamp", x = 25, y = 18.75 } }
+        dark = render(true)
+        lit(dark, 160, 30, 1) -- nearby lamp expands the player's radius to 96
+        black(dark, 160, 20)
+        local r, g, b = dark:getPixel(0, 0)
+        assert(math.abs(r-0.3) < 0.01 and math.abs(g-0.4) < 0.01 and math.abs(b-0.5) < 0.01,
+            "Darkness must stay inside the scaled camera viewport")
+        game.level.entities = {}
+        for _, source in ipairs({
+            { "lamp_item", 240, 304, 0, 26, 22 },
+            { "flare", 240, 300, 0, 26, 22 },
+            { "scarab", 272, 300, 32, 105, 101 },
+            { "ghost", 264, 300, 32, 58, 52 },
+        }) do
+            local body = game:spawnEntity(source[1], source[2], source[3])
+            dark = render(true)
+            lit(dark, source[4], source[5], 0.1)
+            black(dark, source[4], source[6])
+            body.alive = false
+            black(render(true), source[4], source[5])
+            game.items, game.collectibles, game.enemies = {}, {}, {}
+        end
+        game.tools:explode(240, 300)
+        dark = render(true)
+        lit(dark, 0, 26, 0.1)
+        black(dark, 0, 22)
+        game.tools.explosions[1].alive = false
+        black(render(true), 0, 26)
+        game.tools.explosions = {}
+        canvas:release()
+    end
+end
+
 local function before(order, a, b)
     local positions = {}
     for index, label in ipairs(order) do
@@ -287,6 +376,7 @@ function Test.run(app)
     end)
     love.graphics.draw = drawImage
     assert(heldOk, heldError)
+    assertDarkLighting(app)
 end
 
 return Test

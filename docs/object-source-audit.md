@@ -263,7 +263,7 @@ New individual object modules:
 | [heart.lua](../src/platform/effects/heart.lua) | `oHeart` (sprite `sSmoochHeart`) | Thirty-tick rising healing effect |
 | [burn.lua](../src/platform/effects/burn.lua) | `oBurn` | Animated rising burning wisps with terrain cleanup |
 
-The original source comments out both the F flare action and initial dark-level flare creation. The flare object is supported when spawned; no active player flare action was invented. Spectacles affect buried-object depth, not a larger circular darkness radius. Scarabs are not light sources. Bullets ignore ordinary enemy invincibility in the source, but rescuing damsels let bullets pass through. The source dice really do choose random faces on fast ticks.
+The original source comments out both the F flare action and initial dark-level flare creation. The flare object is supported when spawned; no active player flare action was invented. Spectacles affect buried-object depth, not a larger circular darkness radius. Scarabs emit small light circles without changing the player's distance-derived darkness. Bullets ignore ordinary enemy invincibility in the source, but rescuing damsels let bullets pass through. The source dice really do choose random faces on fast ticks.
 
 The [Mines completion tests](../src/tests/mines_completion_test.lua) cover 21 behavior scenarios through real owners and simulation ticks. All 21 fail against an isolated pre-change checkout for the missing behaviors or systems and pass after implementation. Existing supply, rope, explosion, web, loot, and Kali transition tests were updated where the source disproved their old expectations. The live [render-order regression](../src/tests/render_depth_test.lua) exercises actual flare/lamp/diamond/ghost/effect submissions, spectacles occlusion and player exit rendering. The full `love . --smoke-test` suite and `git diff --check` pass.
 
@@ -520,3 +520,27 @@ uses the real exit/intermission callbacks through all four Mines depths,
 checking terrain rather than depth labels or seed metadata. It reproduced
 the repeated 1-3 layout before the repair and passed afterward, along with
 the native smoke suite's deterministic generation and laboratory checks.
+
+
+## Dark-level light mask (2026-10-04)
+
+The earlier darkness follow-up ported the distance calculation in `oPlayer1`
+and `oLevel`, but replaced the rendered light circle with a uniform translucent
+black rectangle. The actual mask lives in `oScreen.Begin Step`: black outside
+light circles, with the world multiplied by RGB `(1-darkness,1-darkness,1)`
+inside them. The commented-out rectangle in `oLevel.Draw` is not the active
+source rendering path.
+
+The shared Full Level/Full game renderer now restores that mask. The player's
+circle is centered at its source anchor with radius `96-64*darkness` (38.4 at
+maximum darkness). Static lamps, loose/carried lamps, flares and explosions
+emit radius-96 circles; scarabs emit radius 16 and ghosts radius 64, with source
+origin offsets translated into the clone's body coordinates. Spectacles do not
+enlarge the circle. The mask is skipped when the player is dead, and the HUD
+and gameplay messages remain outside it. Unsupported later-area emitters and
+red lamp color overrides are outside this Mines repair.
+
+The rendered regression exercises the live world drawing path at 1x and 2x
+scale against independent color and boundary expectations, covering player
+radius/tint, lamp offsets, live/dead light sources and viewport clipping. It
+fails on the committed uniform rectangle and passes with the restored mask.

@@ -1118,12 +1118,7 @@ function FullLevelPlaytest:drawWorld(viewport)
     end
     if self.effects then self.effects:submit(queue) end
     queue:draw()
-    if self.level.dark then
-        love.graphics.setColor(0, 0, 0, require("src.platform.lighting").darkness(self))
-        love.graphics.rectangle("fill", self.cameraX, self.cameraY,
-            viewport.logicalWidth, viewport.logicalHeight)
-        love.graphics.setStencilTest()
-    end
+    require("src.platform.lighting").draw(self, viewport)
     if self.debugCollision then
         self:drawDebugBounds(self.player, { 0.2, 1, 0.35, 0.9 })
         for _, enemy in ipairs(self.enemies) do
