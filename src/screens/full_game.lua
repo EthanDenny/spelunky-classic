@@ -11,6 +11,7 @@ local STEP = 1/Player.TICK_RATE
 function FullGame.new(app)
     local game = setmetatable(FullLevel.new(app), FullGame)
     game.screenName = "full_game"
+    game.forceDarkLevels = true -- Temporary lighting playtest; false restores normal dark-level odds.
     return game
 end
 

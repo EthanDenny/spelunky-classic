@@ -11,10 +11,10 @@ local function solid(value)
         or value.kind == "push_block")
 end
 
-function MinesVariants.apply(level, run)
+function MinesVariants.apply(level, run, forceDark)
     local depth = level.levelNumber or 1
-    level.dark = depth > 1 and not run.hadDarkLevel
-        and darkRoll(level.seed, depth) < (1 / 12)
+    level.dark = depth > 1 and (forceDark or not run.hadDarkLevel
+        and darkRoll(level.seed, depth) < (1 / 12))
     if not level.dark then return level end
 
     run.hadDarkLevel = true

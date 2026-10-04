@@ -174,7 +174,7 @@ function FullLevelPlaytest:generateLevel(seed)
     self.seed = seed
     self.run = self.run or RunState.new(seed)
     self.level = MinesGenerator.generate(seed, { levelNumber = self.levelNumber })
-    MinesVariants.apply(self.level, self.run)
+    MinesVariants.apply(self.level, self.run, self.forceDarkLevels)
     self.level.selectedSubtype = MinesLevelSelection.choices[self.subtypeIndex].key
     self:buildSimulation()
 end
