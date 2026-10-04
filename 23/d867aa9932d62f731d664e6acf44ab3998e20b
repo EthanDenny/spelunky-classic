@@ -1,0 +1,66 @@
+src/platform/whip_mask.lua
+  s_a149baf2181030::t_1baaa4f689cbb6 37,39-40
+src/platform/effects.lua
+  s_a149baf2181030::t_a4ca1306f6af2e 9
+src/platform/enemy.lua
+  s_a149baf2181030::t_4e3b704c2f5e84 5,94,102,106,148-149,176
+src/platform/traps/boulder.lua
+  s_a149baf2181030::t_a4ca1306f6af2e 16,18
+src/screens/full_level_playtest.lua
+  s_a149baf2181030::t_8becbd552e15ca 9
+  s_a149baf2181030::t_ecc13bb6b60d20 23,32-33,266-267,366,557,622,624-627,632,636,639,707-708,719,735,840,846
+src/platform/creature.lua
+  s_a149baf2181030::t_4e3b704c2f5e84 83
+  s_a149baf2181030::t_7c62898ab193ba 80,91,95
+  s_a149baf2181030::t_f261fe2cc54668 7,84,232
+src/platform/items/jar.lua
+  s_a149baf2181030::t_dcb4fb649a5c34 1,59-65
+src/platform/melee_mask.lua
+  s_a149baf2181030::t_1baaa4f689cbb6 4,7-8,33
+src/platform/body_contact.lua
+  s_a149baf2181030::t_dcb4fb649a5c34 1-21
+src/platform/physical_body.lua
+  s_a149baf2181030::t_a4ca1306f6af2e 9-10,21
+src/platform/README.md
+  s_a149baf2181030::t_7c62898ab193ba 316-341
+  s_a149baf2181030::t_2066ecacec31ba 342
+src/screens/mine_item_scenarios.lua
+  s_a149baf2181030::t_dcb4fb649a5c34 1,127,177-180
+  s_a149baf2181030::t_c98e627f285625 181,183,185
+src/platform/sprite_collision.lua
+  s_a149baf2181030::t_1baaa4f689cbb6 3,39,65-66
+src/platform/items/arrow.lua
+  s_a149baf2181030::t_dcb4fb649a5c34 1,10,14-22,52,54-58,60-66,72
+src/platform/entity_body.lua
+  s_a149baf2181030::t_8becbd552e15ca 1-18,24-28,30-31,33-47
+  s_a149baf2181030::t_fc3d7130c220f6 29,32
+  s_a149baf2181030::t_0b5981aea57743 19-23
+src/platform/sprite_mask.lua
+  s_a149baf2181030::t_1baaa4f689cbb6 1-49
+src/platform/actor_body.lua
+  s_a149baf2181030::t_4e3b704c2f5e84 1-65
+src/platform/player.lua
+  s_a149baf2181030::t_a4ca1306f6af2e 39-40,449
+src/platform/object_simulation.lua
+  s_a149baf2181030::t_dcb4fb649a5c34 1-30
+src/screens/enemy_ai.lua
+  s_a149baf2181030::t_dcb4fb649a5c34 1,915
+src/platform/source_math.lua
+  s_a149baf2181030::t_a4ca1306f6af2e 1-29
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "23d867aa9932d62f731d664e6acf44ab3998e20b",
+  "prompts": {},
+  "sessions": {
+    "s_a149baf2181030": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0fdc3-ae05-7e41-a96b-bd7a333b41c3",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Ethan Denny <ethandenny@protonmail.com>"
+    }
+  }
+}
