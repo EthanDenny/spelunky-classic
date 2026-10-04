@@ -478,3 +478,26 @@ Scope is the four playable Mines levels: the final summary returns to the menu.
 Jungle generation and boundary Tunnel Man donations remain unimplemented.
 The room's source brick surfaces are retained; randomized cave fringe decoration
 and dummy cape/jetpack/ball-chain accessory rendering are not reproduced here.
+
+## Glove wall grab and resting corpse poses (2026-10-04)
+
+The final hang in playtest `20261004T194735Z-907296` occurred at x=453/y=76
+beside solid cell (27,4), with climbing gloves equipped after collecting shop
+stock. The source's `characterStepEvent` glove branch permits wall grips without
+requiring an exposed upper edge and snaps y to an eight-pixel grid. The observed
+x=453/y=80 hang is therefore expected. The player regression now checks that
+this wall can be gripped with gloves and cannot be gripped without them.
+
+Caveman and shopkeeper corpse drawing incorrectly selected `sCavemanDieLL` and
+`sShopDieLL` indefinitely. Their source DEAD branches select `sCavemanDeadL` and
+`sShopDieL` when the body settles; moving and held bodies have different poses.
+The clone now selects those flat sprites at zero horizontal/vertical velocity
+and loads the previously omitted shopkeeper corpse image. Body movement and
+the existing held/flight poses are unchanged.
+
+The live-level regression kills, settles, picks up, throws and resettles both
+actors, comparing actual rendered pixels against the bundled source sprites.
+It failed first for the caveman, then independently for the shopkeeper after
+repairing the caveman. The repaired working tree passes native smoke checks.
+This fixes resting corpse selection; it does not claim a new port of every
+intermediate source STUNNED/bounce pose or enemy collision response.

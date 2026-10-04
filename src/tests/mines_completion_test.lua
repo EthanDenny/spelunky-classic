@@ -26,8 +26,60 @@ local function fixture()
     game.world.game, game.tools.game, game.traps.game = game, game, game
     return game
 end
+local function assertBodySprite(game, body, name)
+    local expected = love.image.newImageData("original-game-reference/source/extracted/spelunky/Sprites/Enemies/"
+        .. (body.kind == "caveman" and "Caveman/" or "Shopkeeper/") .. name .. ".images/image 0.png")
+    local canvas = love.graphics.newCanvas(64, 64)
+    local previousCanvas = love.graphics.getCanvas()
+    love.graphics.push("all")
+    love.graphics.setCanvas(canvas)
+    love.graphics.clear(0, 0, 0, 0)
+    love.graphics.translate(32-math.floor(body.x), 40-math.floor(body.y))
+    body:draw(game.renderer)
+    love.graphics.setCanvas(previousCanvas)
+    love.graphics.pop()
+    local rendered = canvas:newImageData()
+    for y = 0, 63 do
+        for x = 0, 63 do
+            local r, g, b, a = rendered:getPixel(x, y)
+            local er, eg, eb, ea = 0, 0, 0, 0
+            if x >= 24 and x < 24+expected:getWidth() and y >= 24 and y < 24+expected:getHeight() then
+                local column = body.facing < 0 and x-24 or expected:getWidth()-1-(x-24)
+                er, eg, eb, ea = expected:getPixel(column, y-24)
+            end
+            assert(math.abs(a-ea) < 0.01 and (ea == 0 or
+                math.abs(r-er) < 0.01 and math.abs(g-eg) < 0.01 and math.abs(b-eb) < 0.01),
+                body.kind .. " must render the source " .. name .. " at its body anchor")
+        end
+    end
+end
+
 function Test.run()
     local cases = {
+        { "caveman and shopkeeper corpses lie flat after settling, including after a throw", function()
+            for _, example in ipairs({ { "caveman", "sCavemanDeadL", "sCavemanDHeldL", "sCavemanDieLL" },
+                { "shopkeeper", "sShopDieL", "sShopDHeldL", "sShopDieLL" } }) do
+                local game = fixture()
+                game.player.x = 400
+                local body = game:spawnEntity(example[1], 160, 80)
+                body:damage(100, game.player.x)
+                for _ = 1, 120 do game:simulationStepBody({}) end
+                assert(body.corpse and not body.alive and body.vx == 0 and body.vy == 0,
+                    "The killed actor must physically settle before checking its corpse pose")
+                assertBodySprite(game, body, example[2])
+                game.player.x, game.player.y = body.x, body.y-8
+                game:simulationStepBody({ down = true, attack = true })
+                assert(game.heldNpc == body and body.held, "Down plus ACTION must pick up the corpse")
+                assertBodySprite(game, body, example[3])
+                game:simulationStepBody({})
+                game:simulationStepBody({ attack = true })
+                assert(not body.held and (body.vx ~= 0 or body.vy ~= 0), "ACTION must throw the corpse")
+                assertBodySprite(game, body, example[4])
+                for _ = 1, 120 do game:simulationStepBody({}) end
+                assert(body.vx == 0 and body.vy == 0, "The thrown corpse must settle again")
+                assertBodySprite(game, body, example[2])
+            end
+        end },
         { "opened chests can be picked up and thrown without producing more loot", function()
             local game = fixture()
             local chest = game:spawnEntity("chest", 80, 104)

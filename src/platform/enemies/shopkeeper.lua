@@ -277,7 +277,9 @@ end
 
 function Shopkeeper.collisionSprite(body)
     local name = body.vx == 0 and "sShopLeft" or "sShopRunLeft"
-    if body.corpse then name = body.held and "sShopDHeldL" or "sShopDieLL"
+    if body.corpse then
+        name = body.held and "sShopDHeldL"
+            or body.vx == 0 and body.vy == 0 and "sShopDieL" or "sShopDieLL"
     elseif body.held then name = "sShopHeldL"
     elseif body.state == "throw" then name = "sShopThrowL"
     elseif body.state == "stunned" then
@@ -293,7 +295,7 @@ function Shopkeeper.draw(body)
     if not sprites then
         sprites = {}
         for name, count in pairs({ sShopLeft = 1, sShopRunLeft = 6, sShopThrowL = 7,
-            sShopStunL = 6, sShopFallL = 1, sShopBounceL = 1, sShopDieLL = 1, sShopDieLR = 1,
+            sShopStunL = 6, sShopFallL = 1, sShopBounceL = 1, sShopDieL = 1, sShopDieLL = 1, sShopDieLR = 1,
             sShopHeldL = 6, sShopDHeldL = 1 }) do
             sprites[name] = {}
             for frame = 0, count - 1 do

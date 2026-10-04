@@ -161,6 +161,23 @@ function Test.run()
                 "A solid thirty-two pixels below must prevent parachute deployment")
         end },
         { "climbing gloves hang on walls and use the normal hang jump", function()
+            -- Last human playtest: x=453/y=76 against the wall beside a ladder.
+            for _, gloves in ipairs({ false, true }) do
+                local wall = World.new(42, 34, 16)
+                wall:fill("solid", 27, 4, 1, 3)
+                wall:set("ladder", 28, 4)
+                wall:set("ladderTop", 28, 5)
+                local falling = Player.new(453, 76)
+                falling.state, falling.vx, falling.vy = Player.STATES.jumping, -2.4, 0.5
+                falling.equipment.gloves = gloves
+                falling:step(wall, { left = true })
+                assert((falling.state == Player.STATES.hanging) == gloves,
+                    "The recorded non-ledge wall must require climbing gloves")
+                if gloves then
+                    assert(falling.x == 453 and falling.y == 80,
+                        "The source glove grip snaps the recorded wall grab to y=80")
+                end
+            end
             local world = World.new(20, 20, 16)
             world:fill("solid", 5, 3, 1, 10)
             local player = Player.new(75, 104)

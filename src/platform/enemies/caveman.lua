@@ -163,7 +163,8 @@ function Caveman.collisionSprite(body)
         local frame = body.vx == 0 and 0 or math.floor(body.animation*(body.state == "attack" and 2 or 1)) % 4
         return name, frame, body.x-8, body.y-16, false
     end
-    local name = body.corpse and (body.held and "sCavemanDHeldL" or "sCavemanDieLL")
+    local name = body.corpse and (body.held and "sCavemanDHeldL"
+        or body.vx == 0 and body.vy == 0 and "sCavemanDeadL" or "sCavemanDieLL")
         or body.held and "sCavemanHeldL" or "sCavemanStunL"
     local frame = body.corpse and 0 or math.floor(body.animation) % 5
     return name, frame, body.x-8, body.y-16, false
