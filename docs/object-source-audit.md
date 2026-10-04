@@ -428,3 +428,25 @@ Verification uses extracted source and sprite assets plus the native LÖVE smoke
 suite. GameMaker 8 runner timing and arbitrary-angle mask rasterization have not
 been measured against the original executable. Bow projectile flight and its
 handoff remain a separate implementation outside this trap audit.
+
+### Opened chests and pot contact follow-up
+
+- The player pickup filter now admits opened `oChest` equivalents. Opening
+  changes the source chest sprite; it does not remove its pickup capability.
+  Up + ACTION throws an already opened held chest and cannot roll more loot.
+- `oJar` overrides the parent item Step. Its own enemy contact rectangle is
+  x/y ±3, with either velocity component strictly above two. The pot is
+  destroyed even against an invulnerable, stunned, or dead target. Cavemen and
+  shopkeepers receive a stun rather than health damage; an existing stun keeps
+  its counter and vertical motion. Damsels lose one HP, are released from the
+  player's hands, and enter their 120-tick thrown state.
+- Pot throw velocities, low-ceiling correction, mitt modifiers, and terrain
+  smash thresholds were checked against `scrUseItem`, `oJar.Step`, `moveTo`,
+  and the collision scripts. Terrain contact uses post-gravity velocity and a
+  strict threshold of three, so gentle drops and slow collisions can bounce.
+- Regression scenarios exercise actual ACTION input for chest pickup/throw,
+  pot wall throws and gentle drops, plus pot contact against live/stunned/dead
+  cavemen, a ghost, a spider, and a stunned damsel. Creature contact geometry
+  still uses the clone's movement rectangles rather than GameMaker sprite
+  bounds/nearest-instance selection; this follow-up does not claim exact
+  GameMaker event ordering or collision rasterization.

@@ -28,6 +28,57 @@ local function fixture()
 end
 function Test.run()
     local cases = {
+        { "opened chests can be picked up and thrown without producing more loot", function()
+            local game = fixture()
+            local chest = game:spawnEntity("chest", 80, 104)
+            assert(game:openContainer(chest))
+            local rewards = #game.level.entities
+            game:simulationStepBody({ down = true, attack = true })
+            assert(game.heldItem == chest and chest.held,
+                "Down plus ACTION must pick up an opened chest")
+            game:simulationStepBody({})
+            game:simulationStepBody({ up = true, attack = true })
+            assert(game.heldItem == nil and not chest.held and chest.vx > 0 and chest.vy < 0,
+                "Up plus ACTION must throw an opened chest")
+            assert(chest.opened and #game.level.entities == rewards,
+                "Carrying and throwing an opened chest cannot reroll its contents")
+        end },
+        { "pots smash on creature contact even when the target cannot take damage", function()
+            for _, example in ipairs({ { "caveman", false, 3 }, { "caveman", true, 3 },
+                { "caveman", "dead", -97 }, { "ghost", false, 1 },
+                { "spider", false, 0 }, { "damsel", true, 3 } }) do
+                local game = fixture()
+                game.player.x = 400
+                local target = game:spawnEntity(example[1], 160, 80)
+                if example[2] then target:damage(example[2] == "dead" and 100 or 0, target.x) end
+                target.timer = 1000
+                local jar = game:spawnEntity("jar", 152, 72)
+                jar.vx = 8
+                game:simulationStepBody({})
+                assert(jar.opened and jar.x == -1000,
+                    "A fast pot must smash against " .. example[1]
+                        .. (example[2] == "dead" and " corpse" or example[2] and " while stunned" or ""))
+                assert(target.hp == example[3], "Pot damage must follow the target's source rule")
+                if example[1] == "damsel" then
+                    assert(target.stunned == 120 and target.vy == -6,
+                        "A pot must restart the damsel's thrown state")
+                end
+            end
+        end },
+        { "pot throws smash on walls while gentle downward drops survive", function()
+            for _, downward in ipairs({ false, true }) do
+                local game = fixture()
+                if not downward then game.world:fill("solid", 6, 4, 1, 3) end
+                local jar = game:spawnEntity("jar", 80, 104)
+                game:simulationStepBody({ down = true, attack = true })
+                assert(game.heldItem == jar)
+                game:simulationStepBody({})
+                game:simulationStepBody({ down = downward, attack = true })
+                assert(jar.opened == not downward,
+                    "A wall throw must smash; a gentle downward drop must bounce")
+                assert(game.heldItem == nil and not jar.held)
+            end
+        end },
         { "free supplies collect on contact, paid stock does not", function()
             local game = fixture()
             for _, kind in ipairs({ "bomb_bag", "bomb_box", "rope_pile" }) do

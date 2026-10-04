@@ -172,7 +172,7 @@ local handlers = {
 
 function ItemActions.use(context, item, input)
     if context.player:isDead() or context.player:isStunned() then return false end
-    if item.definition.action == "open" and input.up then
+    if item.definition.action == "open" and not item.opened and input.up then
         if context.heldItem == item then
             context.heldItem = nil
             item.held = false

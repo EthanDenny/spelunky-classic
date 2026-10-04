@@ -554,7 +554,8 @@ function FullLevelPlaytest:pickupNearestItem()
         if bomb.alive then candidates[#candidates + 1] = bomb end
     end
     for _, item in ipairs(candidates) do
-        if not item.held and not item.opened and item:overlapsRectangle(left, top, right, bottom)
+        if item.alive and not item.held and (not item.opened or item.kind == "chest")
+            and item:overlapsRectangle(left, top, right, bottom)
             and not self.world:solidAtPoint(item.x, item.y) then
             local dx, dy = item.x - self.player.x, item.y - self.player.y
             local distance = dx * dx + dy * dy
