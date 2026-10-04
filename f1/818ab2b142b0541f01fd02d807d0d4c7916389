@@ -1,0 +1,38 @@
+src/tests/platform_player_test.lua
+  s_a149baf2181030::t_c4acd16d88395f 164-180
+docs/object-source-audit.md
+  s_a149baf2181030::t_4be7b6aa93b927 481-503
+src/platform/enemies/shopkeeper.lua
+  s_a149baf2181030::t_088d580f5d5bb3 280-281
+  s_a149baf2181030::t_39c9f76acc5a24 282
+  s_a149baf2181030::t_9104e039af0037 298
+src/tests/mines_completion_test.lua
+  s_06de4777c4b03f::t_a05f6d5b4128f5 81-82
+  s_a149baf2181030::t_c4acd16d88395f 29-56,59-80
+src/platform/enemies/caveman.lua
+  s_a149baf2181030::t_b30d50e8992ecf 166-167
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f1818ab2b142b0541f01fd02d807d0d4c7916389",
+  "prompts": {},
+  "sessions": {
+    "s_06de4777c4b03f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1074b-499c-7940-a6be-4cc7d7d8023b",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Ethan Denny <ethandenny@protonmail.com>"
+    },
+    "s_a149baf2181030": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0fdc3-ae05-7e41-a96b-bd7a333b41c3",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Ethan Denny <ethandenny@protonmail.com>"
+    }
+  }
+}
