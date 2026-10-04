@@ -3,6 +3,14 @@ local Player = require("src.platform.player")
 local RunState = require("src.game.run_state")
 local Test = {}
 
+local function terrain(level)
+    local cells = {}
+    for _, row in ipairs(level.tiles) do
+        for _, tile in ipairs(row) do cells[#cells+1] = tile.kind end
+    end
+    return table.concat(cells, ":")
+end
+
 local function start(app)
     app:showScreen("menu")
     app:keypressed("6", "6", false)
@@ -67,6 +75,7 @@ end
 function Test.run(app)
     local controls = app.controls
     local hardwareIsDown = love.keyboard.isDown
+    local randomState = love.math.getRandomState()
     local menuSelection = app.screens.menu.selectedIndex
     local width, height, flags = love.window.getMode()
     local mouseVisible = love.mouse.isVisible()
@@ -209,13 +218,25 @@ function Test.run(app)
         assert(game.player:isDead() and app.currentScreenName == "menu" and game.level == level,
             "Falling out of the level must kill the player rather than reroll the map")
 
+        love.math.setRandomSeed(721466261)
         game = start(app)
-        for _ = 1, 4 do useExit(app, game) end
+        -- The reported run repeated its terrain on 1-2, 1-3 and 1-4.
+        game:generateLevel(721466261)
+        local layouts = {}
+        for depth = 1, 4 do
+            local layout = terrain(game.level)
+            for previous, seen in ipairs(layouts) do
+                assert(layout ~= seen, "Full game repeated terrain from 1-"..previous.." on 1-"..depth)
+            end
+            layouts[#layouts+1] = layout
+            useExit(app, game)
+        end
         assert(game.completed and game.levelNumber == 4 and app.currentScreenName == "menu",
             "The current playable Mines run returns to the menu after the fourth completion summary")
         assert(not game.music.source:isPlaying(), "Completion must stop level music")
     end)
     love.keyboard.isDown = hardwareIsDown
+    love.math.setRandomState(randomState)
     if app.currentScreenName == "full_game" then app:showScreen("menu") end
     lab.levelNumber, lab.subtypeIndex, lab.run = labLevel, labSubtype, labRun
     app.controls = controls

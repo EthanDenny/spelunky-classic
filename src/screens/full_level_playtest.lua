@@ -166,6 +166,7 @@ function FullLevelPlaytest:configureProjectiles()
 end
 
 function FullLevelPlaytest:generateLevel(seed)
+    seed = seed or self.seed
     if self.run then
         if self.heldItem then self:captureHeldItem() end
         self:captureHeldNpc()
@@ -345,7 +346,7 @@ function FullLevelPlaytest:advanceLevel()
     self.run:finishLevel()
     self.levelNumber = self.levelNumber + 1
     self.subtypeIndex = 1
-    self:generateLevel(self.seed)
+    self:generateLevel()
 end
 
 FullLevelPlaytest.checkSpikes = Spikes.check

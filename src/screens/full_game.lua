@@ -31,7 +31,7 @@ function FullGame:enter()
     self.levelNumber, self.subtypeIndex = 1, 1
     self.run, self.heldItem, self.heldNpc, self.selectionError = nil, nil, nil, nil
     self.debugCollision = false
-    self:generateLevel(love.math.random(1, 2147483646))
+    self:generateLevel()
 end
 
 function FullGame:leave()
@@ -47,6 +47,7 @@ function FullGame:leave()
 end
 
 function FullGame:generateLevel(seed)
+    seed = seed or love.math.random(1, 2147483646)
     self.transition = nil
     self.levelStats = { loot = {}, kills = {}, money = 0 }
     FullLevel.generateLevel(self, seed)

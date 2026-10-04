@@ -501,3 +501,22 @@ It failed first for the caveman, then independently for the shopkeeper after
 repairing the caveman. The repaired working tree passes native smoke checks.
 This fixes resting corpse selection; it does not claim a new port of every
 intermediate source STUNNED/bounce pose or enemy collision response.
+
+## Full game level randomness (2026-10-04)
+
+Playtest `20261004T195102Z-638920` reused seed `721466261` across its Mines
+depths. The logged terrain on 1-2, 1-3 and 1-4 was identical: exit progression
+passed the previous seed into a newly seeded generator for each level.
+
+Continuation now requests generation without an explicit seed. Full game draws
+a fresh seed from the ongoing random stream on entry and each continuation;
+the laboratory retains its current seed for reproducible testing. Explicit
+seed generation remains deterministic. This follows the source's `rand.gml`
+and `scrLevelGen.gml`, which draw new random values on each level rather than
+restarting a previous seed; it does not establish GameMaker/Love seed parity.
+
+The existing Full game lifecycle test now starts from the reported seed and
+uses the real exit/intermission callbacks through all four Mines depths,
+checking terrain rather than depth labels or seed metadata. It reproduced
+the repeated 1-3 layout before the repair and passed afterward, along with
+the native smoke suite's deterministic generation and laboratory checks.
