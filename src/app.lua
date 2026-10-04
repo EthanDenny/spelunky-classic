@@ -108,6 +108,10 @@ function App:keypressed(key, scancode, isRepeat)
     end
     self.controls:keypressed(key, isRepeat)
     if key == "escape" then
+        if self.currentScreenName == "full_game" and self.currentScreen.transition then
+            self.currentScreen:keypressed(key, scancode, isRepeat)
+            return
+        end
         if self.currentScreenName == "menu" then
             love.event.quit()
         else

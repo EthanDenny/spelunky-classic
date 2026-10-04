@@ -2,6 +2,8 @@
 local FullLevel = require("src.screens.full_level_playtest")
 local Player = require("src.platform.player")
 local MinesMusic = require("src.audio.mines_music")
+local Transition = require("src.screens.level_transition")
+local Exit = require("src.platform.structures.exit")
 local FullGame = setmetatable({}, { __index = FullLevel })
 FullGame.__index = FullGame
 local STEP = 1/Player.TICK_RATE
@@ -34,6 +36,7 @@ end
 
 function FullGame:leave()
     if self.music then self.music:stop() end
+    self.transition = nil
     local previous = self.previousWindow
     if not previous then return end
     self.previousWindow = nil
@@ -44,16 +47,40 @@ function FullGame:leave()
 end
 
 function FullGame:generateLevel(seed)
+    self.transition = nil
+    self.levelStats = { loot = {}, kills = {}, money = 0 }
     FullLevel.generateLevel(self, seed)
     self.music = self.music or MinesMusic.new()
     self.music:start(self.app.controls.settings.musicVol)
 end
 
+function FullGame:recordLoot(kind, money)
+    local stats = self.levelStats
+    stats.loot[kind] = (stats.loot[kind] or 0)+1
+    stats.money = stats.money+money
+end
+
+function FullGame:recordKill(kind)
+    local kills = self.levelStats.kills
+    kills[kind] = (kills[kind] or 0)+1
+end
+
+function FullGame:advanceLevel()
+    Exit.prepare(self)
+    self.run:capturePlayer(self.player)
+    self.run.messages = {}
+    self.transition = Transition.new(self)
+    self.exiting = nil
+    self.music:stop()
+    self.app.controls:clearJumpEdges()
+end
+
 function FullGame:simulationStepBody(input)
+    if self.transition then self.transition:step(self) return end
     if not self.player:isDead() then FullLevel.simulationStepBody(self, input) end
     if self.player:isDead() then
         self.app:showScreen("menu")
-    elseif self.exiting or self.completed then
+    elseif self.transition or self.exiting or self.completed then
         self.music:stop()
     elseif self.levelNumber > 1 and self.levelTime > 120 then
         self.music:fade()
@@ -80,6 +107,16 @@ end
 
 function FullGame:keypressed(key, scancode, isRepeat)
     if isRepeat or self.player:isDead() then return end
+    if self.transition then
+        if (key == "escape" or self.app.controls:matches("attack", key))
+            and self.transition:pressAction() then
+            -- oDamselKiss.Room End awards one heart, including an early skip.
+            self.rescues = self.transition.rescued and 1 or 0
+            self.transition = nil
+            FullLevel.advanceLevel(self)
+        end
+        return
+    end
     if self.exiting then return end
     if key == "m" then self.music:toggle() end
     local controls = self.app.controls
@@ -102,6 +139,7 @@ end
 function FullGame:draw()
     local view = self:getViewport()
     love.graphics.clear(0, 0, 0, 1)
+    if self.transition then self.transition:draw(self, view) return end
     self:drawWorld(view)
     self:drawPlayerHUD(view)
     self:drawGameplayMessages(view)

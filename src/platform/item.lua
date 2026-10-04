@@ -40,6 +40,7 @@ function Item.collect(kind, run, player, game)
     if not pickup then return nil end
     if pickup.money then
         run:queueMoney(pickup.money)
+        if game and game.recordLoot then game:recordLoot(kind, pickup.money) end
         return
     end
     if pickup.equipment then

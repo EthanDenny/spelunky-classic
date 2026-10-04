@@ -10,6 +10,7 @@ function Definition.contact(game)
     local held = game.heldItem
     if held and held.kind == "gold_idol" then
         game.run:queueMoney(5000)
+        if game.recordLoot then game:recordLoot(held.kind, 5000) end
         held.alive, held.held, held.visible, held.opened = false, false, false, true
         game.heldItem = nil
         game.sounds:play("coin")

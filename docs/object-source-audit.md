@@ -450,3 +450,31 @@ handoff remain a separate implementation outside this trap audit.
   still uses the clone's movement rectangles rather than GameMaker sprite
   bounds/nearest-instance selection; this follow-up does not claim exact
   GameMaker event ordering or collision rasterization.
+
+## Full game level intermissions (2026-10-04)
+
+Full game now enters the Mines transition room after the 32-tick exit animation,
+before generating the next level. The lab retains its immediate advance.
+The room uses `rTransition1` placements and bundled sprites, the original small
+font and completion text, `oTransition`'s TIME/LOOT/KILLS/MONEY layout, counter
+order, 30-tick time reveals, three-tick icon tally, and 100-per-tick money count.
+ACTION or ESC (the source keyboard START input) hastens an unfinished tally; a
+fresh press after completion continues. Key repeats do not continue. Music and
+the live world/run clock remain stopped throughout the intermission.
+
+Successful money pickups, idol delivery and counted deaths feed per-level
+summary counters. Loot money is gross collection, independent of shopping costs.
+The dummy walks two pixels per tick, pauses for a rescued damsel's kiss, then
+enters the far door. `oDamselKiss.Room End` awards one heart on continuation,
+including a skip before the kiss. Run resources, equipment and carried items
+persist; summary counters reset for the next level.
+
+Coverage extends the existing Full game lifecycle test through the actual App
+keyboard callbacks and live gameplay collection/death/exit paths. The missing
+intermission assertion failed before implementation. Native smoke tests and a
+rendered 320x240 intermission passed afterward.
+
+Scope is the four playable Mines levels: the final summary returns to the menu.
+Jungle generation and boundary Tunnel Man donations remain unimplemented.
+The room's source brick surfaces are retained; randomized cave fringe decoration
+and dummy cape/jetpack/ball-chain accessory rendering are not reproduced here.

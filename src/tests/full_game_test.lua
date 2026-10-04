@@ -23,7 +23,7 @@ local function start(app)
     return game
 end
 
-local function useExit(app, game)
+local function useExit(app, game, inspect)
     local exit = game.level.exit
     game.player.x, game.player.y = exit.x*16+8, exit.y*16+8
     game.player.vx, game.player.vy, game.player.stunTimer = 0, 0, 0
@@ -37,6 +37,31 @@ local function useExit(app, game)
     assert(game.exiting == 0 and game.level == level and game.run == run,
         "Restart and reroll keys must stay disabled during the exit animation")
     for _ = 1, 32 do game:simulationStepBody({}) end
+    assert(game.transition and game.level == level and game.run == run,
+        "The exit must open an intermission before generating the next level")
+    assert(not game.music.source:isPlaying(), "Intermissions must remain silent")
+    local time, worldTime, bombs, ropes = run.time, game.world.time, run.bombs, run.ropes
+    app:keypressed("a", "a", false)
+    app:keypressed("s", "s", false)
+    app:keypressed("up", "up", false)
+    game:simulationStepBody({ right = true, attack = true })
+    assert(game.level == level and run.time == time and game.world.time == worldTime
+        and run.bombs == bombs and run.ropes == ropes,
+        "Intermissions must freeze gameplay and reject gameplay tools")
+    app:keypressed("escape", "escape", false)
+    assert(game.level == level and app.currentScreenName == "full_game",
+        "ESC must act as the source START key and hurry an unfinished tally without leaving Full game")
+    for _ = 1, 200 do
+        game:simulationStepBody({})
+        if game.transition:isReady() then break end
+    end
+    assert(game.transition:isReady(), "The completion tally must finish")
+    if inspect then inspect(game.transition) end
+    app:draw()
+    app:keypressed("x", "x", true)
+    assert(game.transition and game.level == level, "Key repeat cannot skip the intermission")
+    app:keypressed("x", "x", false)
+    assert(not game.transition, "A fresh ACTION must continue after the tally finishes")
 end
 
 function Test.run(app)
@@ -124,6 +149,51 @@ function Test.run(app)
         assert(not music:isPlaying(), "Returning to the menu must stop Full game music")
 
         game = start(app)
+        love.keyboard.isDown = function() return false end
+        for _ = 1, 20 do
+            app:update(1/30)
+            if game.player:isGroundState() then break end
+        end
+        local gold = game:spawnEntity("gold_chunk", game.player.x, game.player.y)
+        local snake = game:spawnEntity("snake", game.player.x+64, game.player.y+8)
+        snake:damage(1, game.player.x)
+        app:update(1/30)
+        assert(not gold.alive and snake.deathCounted,
+            "The summary fixture must collect treasure and count a kill through gameplay")
+        game.run:flushMoney()
+        game.run.money = game.run.money-50
+        local exit = game.level.exit
+        game.player.x, game.player.y = exit.x*16+8, exit.y*16+8
+        game.player.state, game.player.vx, game.player.vy = Player.STATES.standing, 0, 0
+        game.player.health = 3
+        local shotgun = game:spawnEntity("shotgun", game.player.x, game.player.y)
+        assert(shotgun:pickup(game.player, game.run), "The carried gun must be picked up")
+        game.heldItem = shotgun
+        local damsel = game:spawnEntity("damsel", game.player.x, game.player.y+8)
+        assert(damsel:pickup(game.player), "The damsel must be carried to the exit")
+        game.heldNpc = damsel
+        local oldRun = game.run
+        useExit(app, game, function(summary)
+            assert(summary.money == 100 and summary.moneyCount == 100 and summary.totalMoney == 50,
+                "The tally must show gross level loot separately from money after spending")
+            assert(#summary.loot == 2 and #summary.kills == 1 and summary.rescued,
+                "Collected gold, the rescued damsel, and the slain snake must populate the summary")
+            assert(game.player.health == 3, "Rescue healing must wait until the transition room ends")
+            local time = game.run.time
+            for _ = 1, 100 do game:simulationStepBody({}) end
+            assert(summary.kissed and game.run.time == time,
+                "The rescued damsel must kiss during the interlude without advancing the run clock")
+        end)
+        assert(game.run == oldRun and game.levelNumber == 2 and game.player.health == 4
+            and game.run.money == 50 and game.run.damsels == 1
+            and game.heldItem and game.heldItem.kind == "shotgun",
+            "Continuing must preserve the run and held item and award the rescue heart once")
+        assert(game.levelStats.money == 0 and next(game.levelStats.loot) == nil
+            and next(game.levelStats.kills) == nil, "The next level must begin a fresh tally")
+        app:showScreen("menu")
+        love.keyboard.isDown = hardwareIsDown
+
+        game = start(app)
         run, level = game.run, game.level
         game.tools:explode(game.player.x, game.player.y)
         app:update(1/30)
@@ -142,7 +212,7 @@ function Test.run(app)
         game = start(app)
         for _ = 1, 4 do useExit(app, game) end
         assert(game.completed and game.levelNumber == 4 and app.currentScreenName == "menu",
-            "The current playable Mines run returns to the menu after the fourth exit")
+            "The current playable Mines run returns to the menu after the fourth completion summary")
         assert(not game.music.source:isPlaying(), "Completion must stop level music")
     end)
     love.keyboard.isDown = hardwareIsDown

@@ -822,6 +822,7 @@ function FullLevelPlaytest:simulationStepBody(input)
             enemy.deathCounted = true
             if enemy.kind == "caveman" then self.sounds:play("caveman_die") end
             if enemy.countsAsKill ~= false then self.run.kills = self.run.kills + 1 end
+            if self.recordKill then self:recordKill(enemy.kind) end
             local blood = enemy.spec.deathBlood or 0
             if blood > 0 and not enemy.blastParticlesEmitted then self.effects:blood(enemy.x, enemy.spec.deathY and enemy.spec.deathY(enemy) or enemy.y-8, blood) end
             if enemy.spec.onDeath then enemy.spec.onDeath(enemy, self) end
