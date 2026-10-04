@@ -1,8 +1,8 @@
 -- Shared 30 Hz body and contact rules. Kind-specific AI, masks, damage
 -- reactions, and animations live in src/platform/enemies/<kind>.lua.
 local Types = require("src.platform.enemies.types")
-local PhysicalBody = require("src.platform.physical_body")
 
+local ActorBody = require("src.platform.actor_body")
 local Enemy = {}
 Enemy.__index = Enemy
 
@@ -14,12 +14,6 @@ Enemy.STATES = {
 }
 
 local loadedAssets
-
-local function sign(value)
-    if value < 0 then return -1 end
-    if value > 0 then return 1 end
-    return 0
-end
 
 local function newRandom(seed)
     local state = math.floor(seed or 1) % 2147483647
@@ -97,12 +91,7 @@ function Enemy:getVerticalBounds()
     return -16, 0
 end
 
-function Enemy:getBounds(x, y)
-    local halfWidth = self:getCollisionHalfWidth()
-    local topOffset, bottomOffset = self:getVerticalBounds()
-    return (x or self.x) - halfWidth, (y or self.y) + topOffset,
-        (x or self.x) + halfWidth, (y or self.y) + bottomOffset
-end
+Enemy.getBounds = ActorBody.bounds
 
 function Enemy:setState(state, timer)
     self.state = state
@@ -110,37 +99,11 @@ function Enemy:setState(state, timer)
 end
 
 function Enemy:moveHorizontal(world, amount)
-    local pixels = PhysicalBody.pixels(amount, world.time)
-    local direction = sign(pixels)
-    for _ = 1, math.abs(pixels) do
-        if world:collidesSolid(self, self.x + direction, self.y) then
-            self.xRemainder = 0
-            return true
-        end
-        self.x = self.x + direction
-    end
-    return false
+    return ActorBody.moveHorizontal(self, world, amount, true)
 end
 
 function Enemy:moveVertical(world, amount, usePlatforms)
-    local pixels = PhysicalBody.pixels(amount, world.time)
-    local direction = sign(pixels)
-    for _ = 1, math.abs(pixels) do
-        local nextY = self.y + direction
-        if world:collidesSolid(self, self.x, nextY) then
-            self.yRemainder = 0
-            return direction > 0 and "floor" or "ceiling"
-        end
-        if direction > 0 and usePlatforms then
-            local platformY = world:platformLanding(self, self.y, nextY)
-            if platformY then
-                self.y = platformY
-                self.yRemainder = 0
-                return "floor"
-            end
-        end
-        self.y = nextY
-    end
+    return ActorBody.moveVertical(self, world, amount, usePlatforms, true)
 end
 
 function Enemy:hasCeiling(world)
@@ -182,17 +145,8 @@ function Enemy:step(world, player)
     self:updateAnimation()
 end
 
-function Enemy:overlapsRectangle(left, top, right, bottom)
-    local myLeft, myTop, myRight, myBottom = self:getBounds()
-    return left < myRight and right > myLeft and top < myBottom and bottom > myTop
-end
-
-function Enemy:overlapsPlayer(player)
-    local halfWidth = player:getCollisionHalfWidth()
-    local topOffset, bottomOffset = player:getVerticalBounds()
-    return self:overlapsRectangle(player.x - halfWidth, player.y + topOffset,
-        player.x + halfWidth, player.y + bottomOffset)
-end
+Enemy.overlapsRectangle = ActorBody.overlapsRectangle
+Enemy.overlapsPlayer = ActorBody.overlapsPlayer
 
 function Enemy:damage(amount, sourceX, hit)
     if not self.alive or self.spec.canEnemyDamage
@@ -219,14 +173,7 @@ function Enemy:resolvePlayerContact(player, previousPlayerY)
     local _, enemyTop = self:getBounds()
     local previousBottom = previousPlayerY + playerBottom
     if player.vy > 0 and player.y < self.y and previousBottom <= enemyTop + 3 then
-        self:damage((math.floor((player.fallTimer or 0)/16)+1)
-            * (player.equipment.spike_shoes and 3 or 1), player.x)
-        player.vy = -6 - 0.2 * player.vy
-        player.fallTimer = 0
-        player.jumpTime = 10
-        player.jumpReleased = true
-        player:setState("jumping")
-        return "stomp"
+        return ActorBody.stomp(self, player, false, true)
     end
 
     -- oEnemy contact flashes and pushes horizontally, without a stun pose.

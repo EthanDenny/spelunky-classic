@@ -1,3 +1,4 @@
+local Simulation = require("src.platform.object_simulation")
 local ClassicSounds = require("src.audio.classic_sounds")
 local Enemy = require("src.platform.enemy")
 local FullLevelPlaytest = require("src.screens.full_level_playtest")
@@ -123,8 +124,7 @@ function MineItemScenarios.prepare(scenario, input)
     if not game then return end
     scenario.itemInput = input
     if not input.attack then return end
-    scenario.itemContainerToOpen = input.up and game:containerAtPlayer() or nil
-    if game.heldItem or scenario.itemContainerToOpen then input.suppressWhip = true end
+    scenario.itemContainerToOpen = Simulation.prepareAction(game, input, true) or nil
 end
 
 function MineItemScenarios.step(scenario, input)
@@ -174,18 +174,15 @@ function MineItemScenarios.step(scenario, input)
     end
     ItemActions.updateBow(game, input)
     ItemActions.updateMelee(game)
-    for _, current in ipairs(game.items) do
-        if not current.opened then
-            current:update(game.world, game.player)
-            game:processItemImpact(current)
-            if current.opened and (current.kind == "jar" or current.kind == "skull") then
-                scenario.event = current.kind == "jar" and "JAR SMASHED" or "SKULL SMASHED"
-                scenario.eventTick = scenario.tick
-            end
+    Simulation.stepItems(game, function(current)
+        game:processItemImpact(current)
+        if current.opened and (current.kind == "jar" or current.kind == "skull") then
+            scenario.event = current.kind == "jar" and "JAR SMASHED" or "SKULL SMASHED"
+            scenario.eventTick = scenario.tick
         end
-    end
+    end, true)
     ItemActions.recoverArrows(game)
-    for _, collectible in ipairs(game.collectibles) do collectible:update(game.world) end
+    Simulation.stepCollectibles(game)
     game.tools:update(game.player, game.enemies, game.items)
     game:checkCollectibles()
     for _, enemy in ipairs(game.enemies) do

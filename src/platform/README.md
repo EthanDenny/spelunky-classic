@@ -313,3 +313,30 @@ one additional particle, following the original collision and step events.
 The live giant spider starts as `oGiantSpiderHang`, then switches to its
 32×32 flip, idle, jump, crawl, and web-squirt sprites when triggered; its
 visual state is recorded in playtest logs for frame-by-frame diagnosis.
+
+## Shared mechanics without gameplay changes
+
+- `source_math.lua` owns fractional pixel pulses and rounding. Player/item
+  movement keeps ties-to-even rounding and its existing tick source; particles
+  and boulders keep their existing half-up rounding.
+- `actor_body.lua` shares actor bounds, overlap queries, pixel movement, and
+  the common stomp response. Enemy/Creature eligibility, remainder resets,
+  platforms, jump rearming, damage, and ground responses remain distinct.
+- `sprite_mask.lua` caches opaque pixels and intersects masks with rectangles.
+  Whip, melee, and object collision keep their own pose/metadata selection;
+  rotated object-mask rasterization remains in `sprite_collision.lua`.
+- `entity_body.lua` constructs and registers placed and released bodies. It
+  retains their different anchors, initial facing, hanging state, seeds, and
+  constructor priority; item-only spawning does not require an enemy seed.
+- `object_simulation.lua` shares item/treasure update phases, ACTION preparation,
+  and whip contact admission. Screens keep their own phase order and response
+  callbacks, including the item viewer's existing opened-item filter.
+- `body_contact.lua` shares speed gates and contact traversal. Pots, arrows,
+  and ordinary item bodies retain their eligibility and damage/destruction
+  rules. Bow/trap arrows share loose-arrow construction while keeping their
+  different handoff fields and flight paths.
+
+Validation compared deterministic native LÖVE viewer/game traces before and
+following these extractions, plus old/new fractional movement and sprite-mask
+queries. This refactor deliberately preserves existing differences between
+viewers and normal gameplay; source-parity corrections remain separate work.

@@ -6,7 +6,7 @@ local Player = require("src.platform.player")
 local Enemy = require("src.platform.enemy")
 local Item = require("src.platform.item")
 local ItemActions = require("src.platform.item_actions")
-local Treasure = require("src.platform.treasure")
+local EntityBody = require("src.platform.entity_body")
 local Effects = require("src.platform.effects")
 local FakeBones = require("src.platform.fake_bones")
 local DynamicTerrain = require("src.platform.dynamic_terrain")
@@ -14,13 +14,13 @@ local ToolSystem = require("src.platform.tool_system")
 local TrapSystem = require("src.platform.trap_system")
 local OriginalHUD = require("src.ui.original_hud")
 local OriginalMessages = require("src.ui.original_messages")
-local Creature = require("src.platform.creature")
 local ProjectileSystem = require("src.platform.projectile_system")
 local RunState = require("src.game.run_state")
 local Depth = require("src.render.classic_depth")
 local DepthQueue = require("src.render.depth_queue")
 local ClassicSounds = require("src.audio.classic_sounds")
 local PhysicalBody = require("src.platform.physical_body")
+local Contact = require("src.platform.body_contact")
 local Shop = require("src.platform.shop")
 local Shopkeeper = require("src.platform.enemies.shopkeeper")
 local Spikes = require("src.platform.traps.spikes")
@@ -28,6 +28,8 @@ local Exit = require("src.platform.structures.exit")
 local Kali = require("src.platform.kali")
 local TerrainDestruction = require("src.platform.terrain_destruction")
 local ItemContents = require("src.platform.item_contents")
+
+local Simulation = require("src.platform.object_simulation")
 
 local FullLevelPlaytest = {}
 FullLevelPlaytest.__index = FullLevelPlaytest
@@ -38,11 +40,6 @@ local FOOTER_HEIGHT = 40
 
 local MINES_DEPTHS = 4
 
-local DYNAMIC_ENEMIES = {
-    snake = true,
-    bat = true,
-    spider = true,
-}
 
 local COLORS = {
     background = { 0.035, 0.031, 0.027 },
@@ -261,37 +258,13 @@ function FullLevelPlaytest:buildSimulation()
             self.dynamicEntities[entity] = true
         elseif TrapSystem.isTrap(entity.kind) then
             self.dynamicEntities[entity] = true
-        elseif DYNAMIC_ENEMIES[entity.kind] then
-            local enemy = Enemy.new(entity.kind, entity.x * 16 + 8, entity.y * 16 + 16, {
-                seed = self.seed + index * 97,
-                hanging = entity.kind ~= "snake",
-            })
-            self.enemies[#self.enemies + 1] = enemy
-            self.dynamicEntities[entity] = true
-        elseif Creature.supports(entity.kind) then
-            local sprite = self.renderer.entitySprites[entity.kind]
-            local creature = Creature.new(entity, sprite and sprite.metadata, {
-                seed = self.seed + index * 97,
-                angry = entity.kind == "shopkeeper" and self.run.shopkeeperAnger > 0,
-            })
-            if creature.spec.facePlayerOnSpawn then
-                creature.spec.facePlayerOnSpawn(creature, self.player, entity.properties and entity.properties.facing)
-            end
-            self.enemies[#self.enemies + 1] = creature
-            self.dynamicEntities[entity] = true
-        elseif Item.isCarryable(entity.kind) then
-            local sprite = self.renderer.entitySprites[entity.kind]
-            local item = Item.new(entity, sprite and sprite.metadata)
-            self.items[#self.items + 1] = item
-            self.dynamicEntities[entity] = true
-        elseif Item.isCollectible(entity.kind) then
-            self.collectibles[#self.collectibles + 1] = Treasure.new(entity, false, self)
-            self.dynamicEntities[entity] = true
         elseif entity.kind == "fake_bones" then
             self.fakeBones[#self.fakeBones + 1] = FakeBones.new(entity)
             self.dynamicEntities[entity] = true
         elseif entity.kind == "spikes" then
             self.spikeEntities[#self.spikeEntities + 1] = entity
+        elseif EntityBody.create(self, entity, { placed = true, seed = self.seed+index*97 }) then
+            self.dynamicEntities[entity] = true
         end
     end
 
@@ -390,9 +363,7 @@ function FullLevelPlaytest:checkWhip()
     local left = self.player:getWhipHitbox()
     if not left then return end
     for _, enemy in ipairs(self:combatActors()) do
-        if enemy.alive and self.player:whipCanHit(enemy)
-            and self.player:whipOverlapsRectangle(enemy:getBounds()) then
-            self.player:markWhipHit(enemy)
+        if Simulation.whipContact(self.player, enemy) then
             local hit
             if enemy.kind == "shopkeeper" then hit = enemy:damage(0, self.player.x, { kind = "whip" })
             elseif enemy.spec and enemy.spec.melee then hit = enemy.spec.melee(enemy, self, 0)
@@ -583,35 +554,7 @@ function FullLevelPlaytest:spawnEntity(kind, x, y, properties)
     local entity = { kind = kind, x = x / 16, y = y / 16, properties = properties or {} }
     self.level.entities[#self.level.entities + 1] = entity
     self.dynamicEntities[entity] = true
-    if Item.isCarryable(kind) then
-        local sprite = self.renderer.entitySprites[kind]
-        local item = Item.new(entity, sprite and sprite.metadata)
-        item.x, item.y = x, y
-        self.items[#self.items + 1] = item
-        return item
-    elseif DYNAMIC_ENEMIES[kind] then
-        local enemy = Enemy.new(kind, x, y, {
-            seed = self.seed + #self.enemies,
-            hanging = false,
-        })
-        self.enemies[#self.enemies + 1] = enemy
-        return enemy
-    elseif Creature.supports(kind) then
-        local sprite = self.renderer.entitySprites[kind]
-        local creature = Creature.new(entity, sprite and sprite.metadata, { seed = self.seed + #self.enemies })
-        creature.x, creature.y = x, y
-        if creature.spec.facePlayerOnSpawn then
-            creature.spec.facePlayerOnSpawn(creature, self.player, entity.properties.facing)
-        end
-        self.enemies[#self.enemies + 1] = creature
-        return creature
-    elseif Item.isCollectible(kind) then
-        local collectible = Treasure.new(entity, true, self)
-        collectible.x, collectible.y = x, y
-        collectible:syncEntity()
-        self.collectibles[#self.collectibles + 1] = collectible
-        return collectible
-    end
+    return EntityBody.create(self, entity, { x = x, y = y })
 end
 
 function FullLevelPlaytest:openNearbyContainer()
@@ -676,25 +619,24 @@ end
 
 function FullLevelPlaytest:resolveItemEnemyContact(item)
     local speed = item.definition.hitSpeed or 2
-    if item.held or item.opened or item.skipEnemyHitOnce
-        or (math.abs(item.vx) <= speed and math.abs(item.vy) <= speed) then return end
+    if item.held or item.opened or item.skipEnemyHitOnce or not Contact.moving(item, speed) then return end
     local reach = item.definition.flight == "fragile" and 3 or 2
-    for _, enemy in ipairs(self:combatActors()) do
-        if enemy.alive and (not enemy.stunned or enemy.stunned == 0)
-            and enemy:overlapsRectangle(item.x - reach, item.y - reach,
-                item.x + reach, item.y + reach) and PhysicalBody.strikeEnemy(item, enemy) then
+    Contact.scan(item, self:combatActors(), reach, function(enemy)
+        return enemy.alive and (not enemy.stunned or enemy.stunned == 0)
+    end, function(enemy)
+        if PhysicalBody.strikeEnemy(item, enemy) then
             self.effects:blood(enemy.x, enemy.y-8, 1)
             if item.definition.breakOnImpact then
                 item.justHit = true
                 self:processItemImpact(item)
-                break
+                return true
             elseif item.definition.consumeOnEnemyHit then
                 item.opened = true
                 item.x, item.y = -1000, -1000
-                break
+                return true
             end
         end
-    end
+    end)
 end
 
 function FullLevelPlaytest:resolveItemPlayerContact(item)
@@ -762,8 +704,8 @@ function FullLevelPlaytest:simulationStepBody(input)
         self.exiting = self.exiting+1
         self.world.time = self.world.time+1
         for _, enemy in ipairs(self.enemies) do enemy:step(self.world, self.player, self) end
-        for _, item in ipairs(self.items) do item:update(self.world, self.player) end
-        for _, treasure in ipairs(self.collectibles) do treasure:update(self.world, self.player) end
+        Simulation.stepItems(self)
+        Simulation.stepCollectibles(self, self.player)
         self.projectiles:update(self:combatActors(), self.player, self.items)
         self.tools:update(self.player, self:combatActors(), self.items)
         self:updateTraps()
@@ -774,7 +716,7 @@ function FullLevelPlaytest:simulationStepBody(input)
     end
     if self.player:isDead() then
         for _, enemy in ipairs(self.enemies) do enemy:step(self.world, self.player, self) end
-        for _, item in ipairs(self.items) do item:update(self.world, self.player) end
+        Simulation.stepItems(self)
         self.effects:burning(self.player)
         self.effects:update(self.world)
         self.tools:update(self.player, self:combatActors(), self.items)
@@ -790,8 +732,7 @@ function FullLevelPlaytest:simulationStepBody(input)
 
     local actionPressed = input.attack and not self.actionHeld
     self.actionHeld = input.attack
-    local containerToOpen = actionPressed and input.up and self:containerAtPlayer()
-    if self.heldItem or self.heldNpc or containerToOpen then input.suppressWhip = true end
+    local containerToOpen = Simulation.prepareAction(self, input, actionPressed, true)
     local previousY = self.player.y
     local previousHealth = self.player.health
     local previousState = self.player.state
@@ -896,14 +837,13 @@ function FullLevelPlaytest:simulationStepBody(input)
         self.sounds:play("hurt")
         self:dropHeldItemFromHurt()
     end
-    for _, item in ipairs(self.items) do
-        item:update(self.world, self.player)
+    Simulation.stepItems(self, function(item)
         self:processItemImpact(item)
         -- oItem's enemy collision has no safe-period gate.
         self:resolveItemEnemyContact(item)
         self:resolveItemPlayerContact(item)
         item.skipEnemyHitOnce = false
-    end
+    end)
     Kali.updateChains(self)
     ItemActions.recoverArrows(self)
     for _, collectible in ipairs(self.collectibles) do

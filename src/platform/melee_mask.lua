@@ -1,26 +1,11 @@
 -- Classic's oMachetePre/oMattockPre and oSlash/oMattockHit use PRECISE,
 -- per-frame sprite masks. Keep hit testing aligned with the drawn image.
 local MeleeMask = {}
-local masks = {}
+local Mask = require("src.platform.sprite_mask")
 
 local function mask(name, frame)
-    local key = name .. ":" .. frame
-    if masks[key] then return masks[key] end
-    local path = "original-game-reference/source/extracted/spelunky/"
-        .. "Sprites/Items/Weapons/" .. name .. ".images/image " .. frame .. ".png"
-    local image = love.image.newImageData(path)
-    local width, height = image:getDimensions()
-    local rows = {}
-    for y = 0, height - 1 do
-        local row = {}
-        for x = 0, width - 1 do
-            local _, _, _, alpha = image:getPixel(x, y)
-            row[x] = alpha > 0
-        end
-        rows[y] = row
-    end
-    masks[key] = { width = width, height = height, rows = rows }
-    return masks[key]
+    return Mask.load("original-game-reference/source/extracted/spelunky/"
+        .. "Sprites/Items/Weapons/" .. name .. ".images/image " .. frame .. ".png")
 end
 
 function MeleeMask.pose(player, spec, phase, age)
@@ -45,19 +30,7 @@ function MeleeMask.pose(player, spec, phase, age)
 end
 
 function MeleeMask.overlaps(name, frame, x, y, left, top, right, bottom)
-    local sprite = mask(name, frame)
-    local x0 = math.max(0, math.floor(left - x))
-    local y0 = math.max(0, math.floor(top - y))
-    local x1 = math.min(sprite.width - 1, math.ceil(right - x) - 1)
-    local y1 = math.min(sprite.height - 1, math.ceil(bottom - y) - 1)
-    for row = y0, y1 do
-        for column = x0, x1 do
-            if sprite.rows[row][column] and x + column < right
-                and x + column + 1 > left and y + row < bottom
-                and y + row + 1 > top then return true end
-        end
-    end
-    return false
+    return Mask.overlaps(mask(name, frame), x, y, left, top, right, bottom)
 end
 
 return MeleeMask

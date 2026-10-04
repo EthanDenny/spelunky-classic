@@ -6,15 +6,7 @@ local Types = require("src.platform.effects.types")
 
 local images
 
-local function bloodPixels(velocity, time)
-    local magnitude = math.abs(velocity)
-    local pixels = math.floor(magnitude)
-    local fraction = magnitude - pixels
-    if fraction > 0 and time % math.floor(1 / fraction + 0.5) == 0 then
-        pixels = pixels + 1
-    end
-    return velocity < 0 and -pixels or pixels
-end
+local bloodPixels = require("src.platform.source_math").halfUpPixels
 
 local function bloodBlocked(world, x, y)
     return world:solidRect(x - 4, y - 4, x + 4, y + 4)

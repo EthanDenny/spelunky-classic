@@ -34,26 +34,10 @@ function WhipMask.bounds(name, x, y)
     return x + mask.left, y + mask.top, x + mask.right, y + mask.bottom
 end
 
+local Mask = require("src.platform.sprite_mask")
 function WhipMask.overlaps(name, x, y, left, top, right, bottom)
-    local mask = assert(masks[name], "Unknown whip sprite: " .. tostring(name))
-    if x + mask.left >= right or x + mask.right <= left
-        or y + mask.top >= bottom or y + mask.bottom <= top then
-        return false
-    end
-    for row = mask.top, mask.bottom - 1 do
-        local pixelY = y + row
-        if pixelY < bottom and pixelY + 1 > top then
-            local bits = mask.rows[row]
-            for column = mask.left, mask.right - 1 do
-                local pixelX = x + column
-                if pixelX < right and pixelX + 1 > left
-                    and math.floor(bits / 2 ^ column) % 2 == 1 then
-                    return true
-                end
-            end
-        end
-    end
-    return false
+    return Mask.overlaps(assert(masks[name], "Unknown whip sprite: " .. tostring(name)),
+        x, y, left, top, right, bottom)
 end
 
 return WhipMask

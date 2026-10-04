@@ -1,3 +1,4 @@
+local Contact = require("src.platform.body_contact")
 local Traits = require("src.platform.item_traits")
 
 local PhysicalBody = require("src.platform.physical_body")
@@ -6,14 +7,19 @@ local Definition = Traits.carry({ stickOnWall = 6, gravity = 0.2, consumeOnEnemy
 
 Definition.depth = 100
 
-local function materializeArrow(projectile, items, x, y, velocityFactor)
+local function materializeArrow(projectile, items, x, y, velocityFactor, retainFlight)
     if not items then return end
     local arrow = require("src.platform.item").new({ kind = "arrow", x = x / 16, y = y / 16 })
     arrow.vx, arrow.vy = projectile.vx * (velocityFactor or 1), projectile.vy
-    arrow.facing = projectile.vx < 0 and -1 or 1
-    arrow.arrowAngle = math.atan2(projectile.vy, projectile.vx)
-    arrow.safeTimer = 10
-    arrow.skipEnemyHitOnce = velocityFactor ~= nil
+    if retainFlight then
+        arrow.gravity, arrow.stuck = projectile.gravity, projectile.stuck
+        arrow.facing, arrow.arrowAngle = projectile.facing, projectile.arrowAngle
+    else
+        arrow.facing = projectile.vx < 0 and -1 or 1
+        arrow.arrowAngle = math.atan2(projectile.vy, projectile.vx)
+        arrow.safeTimer = 10
+        arrow.skipEnemyHitOnce = velocityFactor ~= nil
+    end
     items[#items + 1] = arrow
 end
 
@@ -43,29 +49,27 @@ function Definition.updateTrapProjectile(self, projectile, player, enemies, item
     Definition.updateLoose(projectile)
     PhysicalBody.stopInWeb(self.world, projectile)
     if Definition.hitPlayer(projectile, player, self.game) then return end
-    if math.abs(projectile.vx) > 2 or math.abs(projectile.vy) > 2 then
+    if Contact.moving(projectile, 2) then
         local Sensor = require("src.platform.traps.arrow_trap_sensor")
-        for _, enemy in ipairs(enemies or {}) do
-            if enemy.alive and enemy.kind ~= "ghost" and not (enemy.invincible and enemy.invincible > 0)
-                and Sensor.overlaps(enemy, player, projectile.x-2, projectile.y-2,
-                    projectile.x+3, projectile.y+3, true) then
-                if PhysicalBody.strikeEnemy(projectile, enemy) and self.game then
-                    self.game.effects:blood(enemy.x, enemy.y-8, 1)
-                end
-                projectile.alive = false
-                return
+        Contact.scan(projectile, enemies, 2, function(enemy)
+            return enemy.alive and enemy.kind ~= "ghost" and not (enemy.invincible and enemy.invincible > 0)
+        end, function(enemy)
+            if PhysicalBody.strikeEnemy(projectile, enemy) and self.game then
+                self.game.effects:blood(enemy.x, enemy.y-8, 1)
             end
-        end
+            projectile.alive = false
+            return true
+        end, function(body, enemy, reach)
+            return Sensor.overlaps(enemy, player, body.x-reach, body.y-reach,
+                body.x+reach+1, body.y+reach+1, true)
+        end)
+        if not projectile.alive then return end
     end
     if items and (projectile.vx ~= oldVx or PhysicalBody.probe(self.world, projectile, "x", -1)
         or PhysicalBody.probe(self.world, projectile, "x", 1)
         or PhysicalBody.probe(self.world, projectile, "y", 1)
         or self.world:webRect(projectile.x-4, projectile.y-4, projectile.x+4, projectile.y+4)) then
-        local arrow = require("src.platform.item").new({ kind = "arrow",
-            x = projectile.x/16, y = projectile.y/16 })
-        arrow.vx, arrow.vy, arrow.gravity = projectile.vx, projectile.vy, projectile.gravity
-        arrow.stuck, arrow.facing, arrow.arrowAngle = projectile.stuck, projectile.facing, projectile.arrowAngle
-        items[#items+1] = arrow
+        materializeArrow(projectile, items, projectile.x, projectile.y, nil, true)
         projectile.alive = false
     end
 end

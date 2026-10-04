@@ -6,13 +6,8 @@ local function sign(value)
     return 0
 end
 
-local function round(value)
-    local integer = math.floor(value)
-    if value - integer == 0.5 then
-        return integer % 2 == 0 and integer or integer + 1
-    end
-    return math.floor(value + 0.5)
-end
+local SourceMath = require("src.platform.source_math")
+local round = SourceMath.roundEven
 
 local function bounds(body)
     local halfWidth = body.getCollisionHalfWidth and body:getCollisionHalfWidth()
@@ -23,16 +18,7 @@ local function bounds(body)
 end
 
 -- moveTo pulses fractional velocity using oGame.time, with GM8 rounding.
-function PhysicalBody.pixels(amount, time)
-    local magnitude = math.abs(amount)
-    local pixels = math.floor(magnitude)
-    local fraction = magnitude - pixels
-    if fraction ~= 0 then
-        local period = round(1 / fraction)
-        if period ~= 0 and (time or 0) % period == 0 then pixels = pixels + 1 end
-    end
-    return pixels * sign(amount)
-end
+PhysicalBody.pixels = SourceMath.pixels
 
 function PhysicalBody.probe(world, body, axis, direction, distance, topInset)
     local halfWidth, top, bottom = bounds(body)

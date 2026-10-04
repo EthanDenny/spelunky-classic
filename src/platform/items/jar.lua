@@ -1,3 +1,4 @@
+local Contact = require("src.platform.body_contact")
 local Traits = require("src.platform.item_traits")
 
 local jarLoot = {
@@ -55,14 +56,13 @@ function Definition.updateLoose(item, world)
     if not context then return end
     -- oJar overrides its parent Step, including the parent enemy collision.
     item.skipEnemyHitOnce = true
-    if item.opened or (math.abs(item.vx) <= 2 and math.abs(item.vy) <= 2) then return end
-    for _, enemy in ipairs(context:combatActors()) do
-        if (enemy.alive or enemy.corpse)
-            and enemy:overlapsRectangle(item.x-3, item.y-3, item.x+3, item.y+3) then
-            hitCreature(item, enemy, context)
-            break
-        end
-    end
+    if item.opened or not Contact.moving(item, 2) then return end
+    Contact.scan(item, context:combatActors(), 3, function(enemy)
+        return enemy.alive or enemy.corpse
+    end, function(enemy)
+        hitCreature(item, enemy, context)
+        return true
+    end)
 end
 
 return Definition

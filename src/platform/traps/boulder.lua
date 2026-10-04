@@ -13,15 +13,9 @@ function Boulder.spawn(self, trap)
     self.boulders[#self.boulders + 1] = boulder
 end
 
+local SourceMath = require("src.platform.source_math")
 local function boulderPixels(velocity, time)
-    local magnitude = math.abs(velocity)
-    local pixels = math.floor(magnitude)
-    local fractional = magnitude - pixels
-    if fractional > 0 then
-        local period = math.floor(1 / fractional + 0.5)
-        if period > 0 and time % period == 0 then pixels = pixels + 1 end
-    end
-    return pixels, velocity < 0 and -1 or 1
+    return math.abs(SourceMath.halfUpPixels(velocity, time)), velocity < 0 and -1 or 1
 end
 
 local function slowBoulder(boulder)

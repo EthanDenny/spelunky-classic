@@ -4,14 +4,9 @@ local Types = require("src.platform.enemies.types")
 local Holdable = require("src.platform.holdable")
 local PhysicalBody = require("src.platform.physical_body")
 
+local ActorBody = require("src.platform.actor_body")
 local Creature = {}
 Creature.__index = Creature
-
-local function sign(value)
-    if value < 0 then return -1 end
-    if value > 0 then return 1 end
-    return 0
-end
 
 function Creature.supports(kind)
     return Types[kind] and Types[kind].creatureConfig ~= nil or false
@@ -82,45 +77,22 @@ function Creature:getVerticalBounds()
 end
 
 function Creature:getBounds()
-    local half = self:getCollisionHalfWidth()
-    local top, bottom = self:getVerticalBounds()
-    return self.x - half, self.y + top, self.x + half, self.y + bottom
+    return ActorBody.bounds(self)
 end
 
-function Creature:overlapsRectangle(left, top, right, bottom)
-    local a, b, c, d = self:getBounds()
-    return left < c and right > a and top < d and bottom > b
-end
-
-function Creature:overlapsPlayer(player)
-    local half = player:getCollisionHalfWidth()
-    local top, bottom = player:getVerticalBounds()
-    return self:overlapsRectangle(player.x - half, player.y + top,
-        player.x + half, player.y + bottom)
-end
+Creature.overlapsRectangle = ActorBody.overlapsRectangle
+Creature.overlapsPlayer = ActorBody.overlapsPlayer
 
 function Creature:setState(state, timer)
     self.state, self.timer = state, timer or 0
 end
 
 function Creature:moveHorizontal(world, amount)
-    local direction = sign(amount)
-    for _ = 1, math.abs(PhysicalBody.pixels(amount, world.time)) do
-        if world:collidesSolid(self, self.x + direction, self.y) then return true end
-        self.x = self.x + direction
-    end
-    return false
+    return ActorBody.moveHorizontal(self, world, amount)
 end
 
 function Creature:moveVertical(world, amount)
-    local direction = sign(amount)
-    for _ = 1, math.abs(PhysicalBody.pixels(amount, world.time)) do
-        local nextY = self.y + direction
-        if world:collidesSolid(self, self.x, nextY) then
-            return direction > 0 and "floor" or "ceiling"
-        end
-        self.y = nextY
-    end
+    return ActorBody.moveVertical(self, world, amount)
 end
 
 function Creature:groundPhysics(world, gravity, terminalVelocity)
@@ -257,13 +229,7 @@ function Creature:resolvePlayerContact(player, previousY, context)
     local _, playerBottom = player:getVerticalBounds()
     local _, enemyTop = self:getBounds()
     if player.vy > 0 and previousY + playerBottom <= enemyTop + 3 then
-        local damage = (math.floor((player.fallTimer or 0)/16)+1)
-            * (player.equipment and player.equipment.spike_shoes and 3 or 1)
-        self:damage(damage, player.x)
-        player.vy = self.spec.sacrifice and -6 or -6-0.2*player.vy
-        player.fallTimer = 0
-        player:setState("jumping")
-        return "stomp"
+        return ActorBody.stomp(self, player, self.spec.sacrifice)
     end
     if self.spec.contactPlayer then return self.spec.contactPlayer(self, player) end
     return player:hurt(self.x, 1, self.kind, nil, "enemy_contact") and "hurt" or "invincible"

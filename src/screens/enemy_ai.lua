@@ -1,3 +1,4 @@
+local Simulation = require("src.platform.object_simulation")
 local Effects = require("src.platform.effects")
 local Enemy = require("src.platform.enemy")
 local Creature = require("src.platform.creature")
@@ -911,10 +912,7 @@ function EnemyAI:stepScenario(scenario)
             scenario.eventTick = scenario.tick
         end
         if player then
-            local left = player:getWhipHitbox()
-            if left and player:whipCanHit(enemy)
-                and player:whipOverlapsRectangle(enemy:getBounds()) then
-                player:markWhipHit(enemy)
+            if Simulation.whipContact(player, enemy) then
                 enemy:damage(1, player.x)
                 if enemy.kind ~= "skeleton" then
                     scenario.effects:blood(enemy.x, enemy.y - 8, 1)

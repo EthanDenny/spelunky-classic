@@ -1,5 +1,6 @@
 -- Read the bundled GameMaker sprite masks independently of movement bounds.
 local Collision = {}
+local Mask = require("src.platform.sprite_mask")
 local root = "original-game-reference/source/extracted/spelunky/Sprites"
 local paths, sprites = nil, {}
 
@@ -35,21 +36,7 @@ end
 local function mask(sprite, frame)
     local index = math.floor(frame or 0) % #sprite.frames + 1
     if sprite.masks[index] then return sprite.masks[index] end
-    local image = love.image.newImageData(sprite.frames[index])
-    local width, height = image:getDimensions()
-    local result = { left = width, top = height, right = 0, bottom = 0, rows = {} }
-    for y = 0, height-1 do
-        local row = {}
-        for x = 0, width-1 do
-            local _, _, _, alpha = image:getPixel(x, y)
-            if alpha > 0 then
-                row[x] = true
-                result.left, result.top = math.min(result.left, x), math.min(result.top, y)
-                result.right, result.bottom = math.max(result.right, x+1), math.max(result.bottom, y+1)
-            end
-        end
-        result.rows[y] = row
-    end
+    local result = Mask.load(sprite.frames[index])
     sprite.masks[index] = result
     return result
 end
@@ -75,22 +62,8 @@ function Collision.overlaps(name, frame, x, y, mirrored, left, top, right, botto
         end
         return boundsOnly and x0 < right and x1 > left and y0 < bottom and y1 > top or false
     end
-    -- These collision rectangles use exclusive right/bottom edges throughout.
-    local x0 = mirrored and x+spec.originX-pixels.right or x-spec.originX+pixels.left
-    local x1 = mirrored and x+spec.originX-pixels.left or x-spec.originX+pixels.right
-    local y0, y1 = y-spec.originY+pixels.top, y-spec.originY+pixels.bottom
-    if x0 >= right or x1 <= left or y0 >= bottom or y1 <= top then return false end
-    if boundsOnly or not spec.precise then return true end
-    for row = pixels.top, pixels.bottom-1 do
-        local py = y-spec.originY+row
-        if py < bottom and py+1 > top then
-            for column = pixels.left, pixels.right-1 do
-                local px = mirrored and x+spec.originX-column-1 or x-spec.originX+column
-                if pixels.rows[row][column] and px < right and px+1 > left then return true end
-            end
-        end
-    end
-    return false
+    return Mask.overlaps(pixels, mirrored and x+spec.originX or x-spec.originX,
+        y-spec.originY, left, top, right, bottom, mirrored, boundsOnly or not spec.precise)
 end
 
 return Collision

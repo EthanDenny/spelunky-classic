@@ -36,14 +36,8 @@ local function approximatelyZero(value)
     return math.abs(value) < 0.1
 end
 
-local function gameMakerRound(value)
-    local integer = math.floor(value)
-    local fraction = value - integer
-    if fraction == 0.5 then
-        return integer % 2 == 0 and integer or integer + 1
-    end
-    return math.floor(value + 0.5)
-end
+local SourceMath = require("src.platform.source_math")
+local gameMakerRound = SourceMath.roundEven
 
 function Player.new(x, y)
     return setmetatable({
@@ -452,16 +446,7 @@ function Player:rememberInput(input)
 end
 
 function Player:quantizedPixels(distance)
-    local magnitude = math.abs(distance)
-    local pixels = math.floor(magnitude)
-    local fraction = magnitude - pixels
-    if fraction ~= 0 then
-        local period = gameMakerRound(1 / fraction)
-        if period ~= 0 and self.tick % period == 0 then
-            pixels = pixels + 1
-        end
-    end
-    return pixels * sign(distance)
+    return SourceMath.pixels(distance, self.tick)
 end
 
 function Player:consumeVerticalPixels(distance)
