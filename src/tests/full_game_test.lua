@@ -41,6 +41,7 @@ end
 
 function Test.run(app)
     local controls = app.controls
+    local hardwareIsDown = love.keyboard.isDown
     local menuSelection = app.screens.menu.selectedIndex
     local width, height, flags = love.window.getMode()
     local mouseVisible = love.mouse.isVisible()
@@ -66,6 +67,24 @@ function Test.run(app)
             "Testing keys must not reroll, reset, skip a level, select a type or show colliders")
         assert(lab.levelNumber == 4 and lab.subtypeIndex == 3 and lab.run.money == 9999,
             "Starting a Full game must preserve the separate lab session")
+        -- Full game's keyboard filter must still allow the shared jump callback
+        -- path to deliver a tap completed before the next simulation tick.
+        love.keyboard.isDown = function() return false end
+        for _ = 1, 20 do
+            app:update(1/30)
+            if game.player:isGroundState() and game.player.vy == 0 then break end
+        end
+        assert(game.player:isGroundState() and game.player.vy == 0,
+            "The generated entrance must settle before testing a ground jump")
+        app:keypressed("z", "z", false)
+        app:keyreleased("z", "z")
+        app:update(1/30)
+        -- Some entrance seeds have a low ceiling; the launch impulse proves
+        -- delivery without assuming four pixels of unobstructed headroom.
+        assert(game.player.vy == -4 and game.player.state == Player.STATES.falling,
+            "Full game must receive a short jump tap through its shared input path")
+        love.keyboard.isDown = hardwareIsDown
+
         -- A configured gameplay binding still works when it uses a lab shortcut key.
         app.controls = Controls.fromContents("38\n40\n37\n39\n90\n88\n67\n16\n78\n83\n70\n80", nil)
         app:keypressed("n", "n", false)
@@ -126,6 +145,7 @@ function Test.run(app)
             "The current playable Mines run returns to the menu after the fourth exit")
         assert(not game.music.source:isPlaying(), "Completion must stop level music")
     end)
+    love.keyboard.isDown = hardwareIsDown
     if app.currentScreenName == "full_game" then app:showScreen("menu") end
     lab.levelNumber, lab.subtypeIndex, lab.run = labLevel, labSubtype, labRun
     app.controls = controls

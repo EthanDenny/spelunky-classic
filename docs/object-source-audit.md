@@ -357,3 +357,36 @@ source-text, replacement/expiry, ghost/feeling timing, locked/pot silence, shop
 transactions/greetings, and damsel-devouring checks pass. The rendering check
 compares the entire 320×240 camera against independently positioned original
 font sprites, detecting wrong placement, colour, font, or added backgrounds.
+
+
+### Jump input and ledge support follow-up (2026-10-03)
+
+The source reads held/pressed/released inputs first, probes collisions, changes
+unsupported ground states to `FALLING`, then evaluates ground jumping, and finally
+moves the player. The clone follows this order. Source references:
+`characterStepEvent` lines 38–40, 243–265 and 339–374, `platformCharacterIs`,
+`isCollisionBottom`, `calculateCollisionBounds`, and the three `checkJump` scripts.
+
+The ledge checks agree with the source's rounded inclusive collision line:
+10-pixel walking and 16-pixel running masks, including the last supporting pixel
+and the first unsupported position on both sides of a ledge. Running fixtures
+reach the wider mask through ordinary player movement. Existing tests retain
+Classic's variable jump height, initial -4 velocity and five-step 18-pixel rise.
+
+The input adapter previously sampled only held keys on each 30 Hz tick. It lost a
+complete tap, or a release/repress of an already held key, between ticks. App key
+callbacks now preserve jump press/release flags separately from held state and
+consume them exactly once on the next simulation tick. Tool-direction snapshots
+do not consume those flags. Menu changes, simulation rebuilds, and focus loss
+clear pending flags. Gameplay eligibility remains governed by the existing player
+rules; an ineligible press is consumed rather than saved for landing.
+
+Regression evidence: the real App-callback short-tap test fails before the input
+fix and passes afterward. Coverage exercises catch-up ticks, airborne cape presses,
+repeat suppression, remapping, menu/reset/focus cleanup and the Full game loop in
+exclusive fullscreen. The Full game fixture first lets the generated entrance
+spawn settle naturally; its initial spawn is not necessarily supported.
+
+This verifies the clone's callback delivery and the source's collision/state
+contracts. Sub-tick keyboard handling by the original GameMaker 8 executable has
+not been measured; these checks do not claim timing parity with that runner.

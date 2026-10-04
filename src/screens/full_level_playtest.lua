@@ -200,6 +200,7 @@ function FullLevelPlaytest:generateSelectedLevel(startSeed, freshRun)
 end
 
 function FullLevelPlaytest:buildSimulation()
+    self.app.controls:clearJumpEdges()
     self.world = GeneratedWorld.fromLevel(self.level)
     local spawnX, spawnY = GeneratedWorld.spawnPoint(self.level)
     self.player = Player.new(spawnX, spawnY)
@@ -346,8 +347,8 @@ function FullLevelPlaytest:enter()
     end
 end
 
-function FullLevelPlaytest:getInput()
-    return self.app.controls:playerInput()
+function FullLevelPlaytest:getInput(consumeJumpEdges)
+    return self.app.controls:playerInput(consumeJumpEdges)
 end
 
 FullLevelPlaytest.isNearExit = Exit.isNear
@@ -964,7 +965,7 @@ function FullLevelPlaytest:fallOutOfLevel()
 end
 
 function FullLevelPlaytest:simulationStep()
-    local input = self:getInput()
+    local input = self:getInput(true)
     local log = self.app.playtestLog
     local before = log and log.capture(self)
     if log then log:tickStart(self.screenName, input, before) end

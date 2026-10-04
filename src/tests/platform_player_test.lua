@@ -31,6 +31,29 @@ function Test.run()
     -- Independent Classic 1.1 contracts, exercised through a simulation step.
     -- Report every mismatch so a source audit can establish the pre-fix failures.
     local sourceCases = {
+        { "jump support follows the original ledge collision line", function()
+            for _, speed in ipairs({ 0, 4 }) do
+                local half = speed == 0 and 5 or 8
+                for _, side in ipairs({ -1, 1 }) do
+                    for _, offset in ipairs({ -0.51, -0.49, 0.49, 0.51 }) do
+                        local world = flatWorld()
+                        local player = groundedPlayer(world, 72)
+                        if speed >= 4 then
+                            repeatStep(player, world, { left = side < 0, right = side > 0,
+                                sprint = true }, 8)
+                        end
+                        world.solid = {}
+                        world:fill("solid", 4, 10, 1, 4)
+                        local supported = offset < 0
+                        local x = side == 1 and 80+half-0.5+offset or 64-half+0.5-offset
+                        player.x = x
+                        player:step(world, { jump = true })
+                        assert((player.vy < 0) == supported,
+                            "The last rounded supporting pixel permits a jump; the first clear pixel does not")
+                    end
+                end
+            end
+        end },
         { "spring shoes affect ground jumps only", function()
             local world = flatWorld()
             local player = groundedPlayer(world)

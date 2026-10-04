@@ -62,6 +62,7 @@ function PlatformingEngine:loadAssets()
 end
 
 function PlatformingEngine:resetCourse()
+    self.app.controls:clearJumpEdges()
     self.world = World.makeTestCourse()
     self.player = Player.new(5 * 16 + 8, 18 * 16 - 8)
     self.player.state = Player.STATES.standing
@@ -86,8 +87,8 @@ function PlatformingEngine:enter()
     end
 end
 
-function PlatformingEngine:getInput()
-    return self.app.controls:playerInput()
+function PlatformingEngine:getInput(consumeJumpEdges)
+    return self.app.controls:playerInput(consumeJumpEdges)
 end
 
 function PlatformingEngine:simulationStep(input)
@@ -127,7 +128,7 @@ end
 function PlatformingEngine:update(dt)
     self.accumulator = math.min(self.accumulator + dt, STEP * 5)
     while self.accumulator >= STEP do
-        self:simulationStep(self:getInput())
+        self:simulationStep(self:getInput(true))
         self.accumulator = self.accumulator - STEP
         if self.player.y > self.world.height * self.world.tileSize + 32 then
             self:resetCourse()

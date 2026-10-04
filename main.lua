@@ -271,6 +271,7 @@ function love.quit()
 end
 
 function love.focus(focused)
+    if app then app:focus(focused) end
     if playtestLog then playtestLog:record("focus", { focused = focused }) end
 end
 

@@ -62,6 +62,108 @@ function Test.run(app)
     love.keyboard.isDown = hardwareIsDown
     assert(ok, err)
 
+    -- Real App callbacks must deliver taps that end before the next 30 Hz step.
+    local previousScreen = app.currentScreenName
+    app.controls = original
+    app:showScreen("platforming_engine")
+    local held = {}
+    local function jumpTap(key)
+        held[key] = true
+        app:keypressed(key, key, false)
+        held[key] = nil
+        app:keyreleased(key, key)
+    end
+    local function resetJump()
+        room:resetCourse()
+        held = {}
+    end
+    ok, err = pcall(function()
+        love.keyboard.isDown = function(...)
+            for index = 1, select("#", ...) do
+                if held[select(index, ...)] then return true end
+            end
+            return false
+        end
+        resetJump()
+        app:update(1/60)
+        local y = room.player.y
+        jumpTap("z")
+        app:update(1/60)
+        assert(room.player.y == y-4 and room.player.vy == -4,
+            "A press/release between fixed ticks must still launch a short jump")
+        app:update(1/30)
+        assert(math.abs(room.player.vy+3) < 0.000001,
+            "The released tap must use full gravity on the next tick")
+
+        resetJump()
+        jumpTap("z")
+        app:keypressed("a", "a", false)
+        app:update(2/30)
+        assert(room.player.vy == -3,
+            "A bomb's held-input read must not consume jump edges; catch-up ticks consume them only once")
+
+        resetJump()
+        held.z = true
+        app:keypressed("z", "z", false)
+        app:update(1/30)
+        held.z = nil
+        app:keyreleased("z", "z")
+        held.z = true
+        app:keypressed("z", "z", false)
+        room.player.equipment.cape = true
+        app:update(1/30)
+        assert(room.player.capeOpen,
+            "Release and repress between ticks must reach airborne cape controls even if the key remains held")
+        room.player.capeOpen = false
+        app:keypressed("z", "z", true)
+        app:update(1/30)
+        assert(not room.player.capeOpen, "OS key repeat must not create another jump press")
+
+        resetJump()
+        room.player.y = room.player.y-32
+        room.player.state = "falling"
+        jumpTap("z")
+        app:update(1/30)
+        assert(room.player.vy > 0, "A queued input event does not permit a midair ground jump")
+        room.player.y, room.player.vy = 18*16-8, 0
+        room.player.state = "standing"
+        app:update(1/30)
+        assert(room.player.vy == 0, "An ineligible tap must not wait for a later landing")
+
+        resetJump()
+        jumpTap("z")
+        app:showScreen("menu")
+        app:showScreen("platforming_engine")
+        app:update(1/30)
+        assert(room.player.vy == 0, "Menu navigation must discard pending gameplay jump events")
+
+        resetJump()
+        jumpTap("z")
+        room:resetCourse()
+        app:update(1/30)
+        assert(room.player.vy == 0, "Resetting a course must discard pending jump events")
+
+        resetJump()
+        jumpTap("z")
+        love.focus(false)
+        app:update(1/30)
+        assert(room.player.vy == 0, "Losing focus must discard pending jump events")
+        love.focus(true)
+
+        app.controls = ClassicControls.fromContents("38\n40\n37\n39\n32", nil)
+        resetJump()
+        jumpTap("z")
+        app:update(1/30)
+        assert(room.player.vy == 0, "The old jump binding must stop delivering events after a remap")
+        jumpTap("space")
+        app:update(1/30)
+        assert(room.player.vy == -4, "The remapped jump key must preserve short taps")
+    end)
+    love.keyboard.isDown = hardwareIsDown
+    app.controls = active
+    app:showScreen(previousScreen)
+    assert(ok, err)
+
     room:resetCourse()
     app.controls = remapped
     local remaining = room.ropes

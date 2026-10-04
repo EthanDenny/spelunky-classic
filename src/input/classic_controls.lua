@@ -107,6 +107,21 @@ function ClassicControls:held(action)
         "Unknown Classic control: " .. tostring(action)))))
 end
 
+-- GameMaker separates checkJump from checkJumpPressed/checkJumpReleased.
+-- Preserve LÖVE callbacks until one fixed tick consumes them, independently
+-- of the key's current held state. This is not a landing or ledge grace timer.
+function ClassicControls:keypressed(key, isRepeat)
+    if not isRepeat and self:matches("jump", key) then self.jumpPressed = true end
+end
+
+function ClassicControls:keyreleased(key)
+    if self:matches("jump", key) then self.jumpReleased = true end
+end
+
+function ClassicControls:clearJumpEdges()
+    self.jumpPressed, self.jumpReleased = false, false
+end
+
 function ClassicControls:label(action)
     local code = assert(self.keys[action], "Unknown Classic control: " .. tostring(action))
     if code == 16 then return "SHIFT" end
@@ -118,8 +133,8 @@ function ClassicControls:label(action)
     return string.upper(loveKeys(code)[1])
 end
 
-function ClassicControls:playerInput()
-    return {
+function ClassicControls:playerInput(consumeJumpEdges)
+    local input = {
         left = self:held("left"), right = self:held("right"),
         up = self:held("up"), down = self:held("down"),
         jump = self:held("jump"), sprint = self:held("run"),
@@ -127,6 +142,11 @@ function ClassicControls:playerInput()
         pay = self:held("pay"),
         downToRun = self.settings.downToRun,
     }
+    if consumeJumpEdges then
+        input.jumpPressed, input.jumpReleased = not not self.jumpPressed, not not self.jumpReleased
+        self:clearJumpEdges()
+    end
+    return input
 end
 
 return ClassicControls

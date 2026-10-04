@@ -68,6 +68,7 @@ function App:showScreen(name)
         self.currentScreen:leave(name)
     end
 
+    self.controls:clearJumpEdges()
     self.currentScreen = nextScreen
     self.currentScreenName = name
 
@@ -105,6 +106,7 @@ function App:keypressed(key, scancode, isRepeat)
             return
         end
     end
+    self.controls:keypressed(key, isRepeat)
     if key == "escape" then
         if self.currentScreenName == "menu" then
             love.event.quit()
@@ -130,10 +132,15 @@ function App:mousemoved(x, y, dx, dy)
 end
 
 function App:keyreleased(key, scancode)
+    self.controls:keyreleased(key)
     if self.playtestLog then
         self.playtestLog:record("key_release", { screen = self.currentScreenName,
             key = key, scancode = scancode })
     end
+end
+
+function App:focus(focused)
+    if not focused then self.controls:clearJumpEdges() end
 end
 
 function App:mousepressed(x, y, button)
