@@ -1,0 +1,29 @@
+src/platform/item_actions.lua
+  s_a149baf2181030::t_124322efc92b97 175
+docs/object-source-audit.md
+  s_a149baf2181030::t_64d8b365fc2c6f 431-452
+src/platform/items/jar.lua
+  s_a149baf2181030::t_124322efc92b97 20-21,23-50,66-67
+  s_a149baf2181030::t_64d8b365fc2c6f 22,51-65
+src/tests/mines_completion_test.lua
+  s_a149baf2181030::t_82ba0b58efe56c 31-47,50-52,54-59,61-81
+  s_a149baf2181030::t_64d8b365fc2c6f 48-49,53,60
+src/screens/full_level_playtest.lua
+  s_a149baf2181030::t_d35fb5eb523a02 557-558
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "c6d7634f93ff4afeb913dc033e4ed1d4995e77b5",
+  "prompts": {},
+  "sessions": {
+    "s_a149baf2181030": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0fdc3-ae05-7e41-a96b-bd7a333b41c3",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Ethan Denny <ethandenny@protonmail.com>"
+    }
+  }
+}
