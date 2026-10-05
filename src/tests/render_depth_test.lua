@@ -26,7 +26,8 @@ local function assertDarkLighting(app)
     for _, row in ipairs(game.level.tiles) do
         for x in ipairs(row) do row[x] = { kind = "empty" } end
     end
-    for _, scale in ipairs({ 1, 2 }) do
+    local logicalMask
+    for _, scale in ipairs({ 1, 2, 3 }) do
         local view = { x = 7, y = 9, width = 320*scale, height = 240*scale,
             scale = scale, logicalWidth = 320, logicalHeight = 240 }
         local canvas = love.graphics.newCanvas(view.width+14, view.height+18)
@@ -54,6 +55,23 @@ local function assertDarkLighting(app)
             assert(r == 0 and g == 0 and b == 0, "Terrain outside light circles must be black")
         end
         local dark = render(true)
+        if scale == 1 then
+            logicalMask = dark
+        else
+            for y = 0, 239 do
+                for x = 0, 319 do
+                    local er, eg, eb = logicalMask:getPixel(7+x, 9+y)
+                    for dy = 0, scale-1 do
+                        for dx = 0, scale-1 do
+                            local r, g, b = dark:getPixel(view.x+x*scale+dx, view.y+y*scale+dy)
+                            assert(math.abs(r-er) < 0.01 and math.abs(g-eg) < 0.01
+                                and math.abs(b-eb) < 0.01,
+                                "Dark light boundaries must enlarge whole 320x240 pixels at every scale")
+                        end
+                    end
+                end
+            end
+        end
         -- oScreen: radius 96-64*0.9 = 38.4, centered on the player.
         lit(dark, 160, 120, 0.1)
         lit(dark, 197, 120, 0.1)

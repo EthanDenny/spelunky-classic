@@ -575,3 +575,25 @@ generation across 48 seeds, crate opening through gameplay input, independent
 sprite-bound distances, and rendered trap/red-lamp pixels at 1x and 2x. Exact
 GameMaker RNG sequences and iteration order remain outside this repair; later
 areas' emitters are not implemented.
+
+
+## Dark-mask pixel grid (2026-10-05)
+
+`oScreen.Create` allocates `darkSurf` and `screen` at 320x240. Begin Step
+draws the light circles into that surface, multiplies the world, then enlarges
+the completed screen. Drawing the stencil directly at display resolution
+made the clone's light edges smoother than the source pixel grid.
+
+The mask now renders into a reusable 320x240 canvas with multisampling
+disabled, using 24 segments (the [documented GameMaker circle default](https://manual.gamemaker.io/lts/en/GameMaker_Language/GML_Reference/Drawing/Basic_Forms/draw_set_circle_precision.htm)),
+then scales with nearest-neighbor filtering. Camera and shake transforms feed
+the logical mask coordinates; the composite remains aligned to the viewport.
+The rendered regression compares every pixel block at 2x and 3x against the
+1x result, while retaining the independent radius, tint and clipping checks.
+It fails against the display-resolution stencil and passes with the canvas.
+
+The radius formula remains `96-64*darkness`: 38.4 game pixels in unlit space,
+growing to 96 near lamps or the entrance flare crate. The crate additionally
+emits its own radius-96 circle. The broad entrance illumination is present in
+the source; no smaller arbitrary radius was substituted. Exact legacy
+Direct3D edge-pixel coverage has not been compared to an executable capture.

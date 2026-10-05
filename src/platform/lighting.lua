@@ -1,5 +1,6 @@
 local Lighting = {}
 local Collision = require("src.platform.sprite_collision")
+local mask
 
 local function gap(a, b)
     local dx = math.max(0, a[1]-b[3], b[1]-a[3])
@@ -75,52 +76,66 @@ local function tint(game, darkness)
     return red, green, blue
 end
 
--- oScreen.Begin Step multiplies the world by a black mask with blue-tinted
--- circles. Distance changes the player's radius and tint, not the whole screen.
+-- oScreen.Begin Step draws darkSurf at 320x240 before enlarging screen.
+-- Rasterize the source's 24-segment circles on that grid, then scale whole pixels.
 function Lighting.draw(game, viewport)
     if not game.level.dark or game.player:isDead() then return end
     local darkness = Lighting.darkness(game)
+    if not mask or mask:getWidth() ~= viewport.logicalWidth
+        or mask:getHeight() ~= viewport.logicalHeight then
+        if mask then mask:release() end
+        mask = love.graphics.newCanvas(viewport.logicalWidth, viewport.logicalHeight,
+            { dpiscale = 1, msaa = 0 })
+        mask:setFilter("nearest", "nearest")
+    end
+    local screenX, screenY = love.graphics.transformPoint(0, 0)
+    local offsetX = (screenX-viewport.x)/viewport.scale
+    local offsetY = (screenY-viewport.y)/viewport.scale
+    local function circle(x, y, radius)
+        love.graphics.circle("fill", x+offsetX, y+offsetY, radius, 24)
+    end
     love.graphics.push("all")
-    love.graphics.stencil(function()
-        love.graphics.circle("fill", game.player.x, game.player.y, 96-64*darkness)
-        for _, entity in ipairs(game.level.entities) do
-            if (entity.kind == "lamp" or entity.kind == "lamp_red") and not entity.destroyed then
-                love.graphics.circle("fill", entity.x*16+8, entity.y*16+8, 96)
-            elseif not entity.destroyed and (entity.kind == "arrow_trap_left_lit"
-                or entity.kind == "arrow_trap_right_lit") then
-                love.graphics.circle("fill", entity.x*16+8, entity.y*16+8, 32)
-            end
+    love.graphics.setCanvas(mask)
+    love.graphics.origin()
+    love.graphics.setScissor()
+    love.graphics.setStencilTest()
+    love.graphics.setShader()
+    love.graphics.setBlendMode("replace", "premultiplied")
+    love.graphics.clear(0, 0, 0, 1)
+    love.graphics.setColor(tint(game, darkness))
+    circle(game.player.x, game.player.y, 96-64*darkness)
+    for _, entity in ipairs(game.level.entities) do
+        if (entity.kind == "lamp" or entity.kind == "lamp_red") and not entity.destroyed then
+            circle(entity.x*16+8, entity.y*16+8, 96)
+        elseif not entity.destroyed and (entity.kind == "arrow_trap_left_lit"
+            or entity.kind == "arrow_trap_right_lit") then
+            circle(entity.x*16+8, entity.y*16+8, 32)
         end
-        for _, item in ipairs(game.items) do
-            if item.alive and not item.opened and item.definition.lightRadius then
-                love.graphics.circle("fill", item.x, item.y+(item.kind == "lamp_item" and -4 or 0), 96)
-            end
+    end
+    for _, item in ipairs(game.items) do
+        if item.alive and not item.opened and item.definition.lightRadius then
+            circle(item.x, item.y+(item.kind == "lamp_item" and -4 or 0), 96)
         end
-        for _, explosion in ipairs(game.tools.explosions) do
-            if explosion.alive then love.graphics.circle("fill", explosion.x, explosion.y, 96) end
+    end
+    for _, explosion in ipairs(game.tools.explosions) do
+        if explosion.alive then circle(explosion.x, explosion.y, 96) end
+    end
+    for _, treasure in ipairs(game.collectibles) do
+        if treasure.alive and treasure.kind == "scarab" then circle(treasure.x, treasure.y, 16) end
+    end
+    for _, enemy in ipairs(game.enemies) do
+        if enemy.alive and enemy.kind == "ghost" then
+            -- Creature coordinates are eight right and sixteen below the source origin.
+            circle(enemy.x+8, enemy.y, 64)
         end
-        for _, treasure in ipairs(game.collectibles) do
-            if treasure.alive and treasure.kind == "scarab" then
-                love.graphics.circle("fill", treasure.x, treasure.y, 16)
-            end
-        end
-        for _, enemy in ipairs(game.enemies) do
-            if enemy.alive and enemy.kind == "ghost" then
-                -- Creature coordinates are eight right and sixteen below the source origin.
-                love.graphics.circle("fill", enemy.x+8, enemy.y, 64)
-            end
-        end
-    end, "replace", 1)
-    love.graphics.setStencilTest("equal", 0)
-    love.graphics.setColor(0, 0, 0, 1)
-    love.graphics.rectangle("fill", game.cameraX, game.cameraY,
-        viewport.logicalWidth, viewport.logicalHeight)
-    love.graphics.setStencilTest("equal", 1)
+    end
+    love.graphics.pop()
+
+    love.graphics.push("all")
+    love.graphics.origin()
+    love.graphics.setColor(1, 1, 1, 1)
     love.graphics.setBlendMode("multiply", "premultiplied")
-    local red, green, blue = tint(game, darkness)
-    love.graphics.setColor(red, green, blue, 1)
-    love.graphics.rectangle("fill", game.cameraX, game.cameraY,
-        viewport.logicalWidth, viewport.logicalHeight)
+    love.graphics.draw(mask, viewport.x, viewport.y, 0, viewport.scale, viewport.scale)
     love.graphics.pop()
 end
 return Lighting
