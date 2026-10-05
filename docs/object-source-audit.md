@@ -57,7 +57,7 @@ Source links below point to object metadata; the executable GML is in the adjace
 | [bomb_bag.lua](../src/platform/pickups/bomb_bag.lua) | [oBombBag](../original-game-reference/source/extracted/spelunky/Objects/Collectibles/oBombBag.xml) | $2500; +3 bombs; light; bounds (6,-2,6). | D/I/C. |
 | [bomb_box.lua](../src/platform/pickups/bomb_box.lua) | [oBombBox](../original-game-reference/source/extracted/spelunky/Objects/Collectibles/oBombBox.xml) | $10000; +12 bombs; bounds (6,-2,8). Fixed heavy carry and throw behavior. | D/I/C. |
 | [rope_pile.lua](../src/platform/pickups/rope_pile.lua) | [oRopePile](../original-game-reference/source/extracted/spelunky/Objects/Collectibles/oRopePile.xml) | $2500; +3 ropes; light; bounds (6,-5,5). | D/I/C. |
-| [spectacles.lua](../src/platform/pickups/spectacles.lua) | [oSpectacles](../original-game-reference/source/extracted/spelunky/Objects/Collectibles/oSpectacles.xml) | $8000; 6px mask; acquired flag and larger dark-level visibility radius. | D/I; source primarily exposes embedded items through depth; that behavior is absent. |
+| [spectacles.lua](../src/platform/pickups/spectacles.lua) | [oSpectacles](../original-game-reference/source/extracted/spelunky/Objects/Collectibles/oSpectacles.xml) | $8000; 6px mask; acquired flag and buried-object draw depth; spectacles do not enlarge the light circle. | D/I; source primarily exposes embedded items through depth; that behavior is absent. |
 | [compass.lua](../src/platform/pickups/compass.lua) | [oCompass](../original-game-reference/source/extracted/spelunky/Objects/Collectibles/oCompass.xml) | $3000; 6px mask; flag enables source directional compass sprites in HUD. | D/I; HUD placement is the clone viewport adaptation, without original-runtime comparison. |
 | [parachute.lua](../src/platform/pickups/parachute.lua) | [oParaPickup](../original-game-reference/source/extracted/spelunky/Objects/Collectibles/oParaPickup.xml) | oParaPickup, not deployed oParachute; $2000; 6px mask; triggers after fallTimer >14 and consumes equipment. | D/I; deployed parachute is a player flag rather than the separate source object and collision lifecycle. |
 | [paste.lua](../src/platform/pickups/paste.lua) | [oPaste](../original-game-reference/source/extracted/spelunky/Objects/Collectibles/oPaste.xml) | $3000; bounds (6,-2,6); acquired flag makes bombs sticky. | D/I; see bomb attachment/chain-explosion gaps. |
@@ -128,7 +128,7 @@ Source links below point to object metadata; the executable GML is in the adjace
 | [exit.lua](../src/platform/structures/exit.lua) | [oExit](../original-game-reference/source/extracted/spelunky/Objects/Blocks/oExit.xml) | Source sprite and depth 9000; exit used for progression. | Source collision_point detection replaced by a near rectangle; exit animations/delayed transitions and automatic held-object handling differ. |
 | [kali_head.lua](../src/platform/structures/kali_head.lua) | [oKaliHead](../original-game-reference/source/extracted/spelunky/Objects/Blocks/oKaliHead.xml) | Source three variants and depth 997; one-tick alarm opens the hole and launches six spiders with source velocities and thump. | Spawned spiders retain the inherited movement/event-order gaps listed above. |
 | [bones.lua](../src/platform/structures/bones.lua) | [oBones](../original-game-reference/source/extracted/spelunky/Objects/Collectibles/oBones.xml) | Source sprite and depth 900; inert bones do not awaken. | Source gravity 0.2 and one-pixel support correction are absent; current entity is static. |
-| [lamp.lua](../src/platform/structures/lamp.lua) | [oLamp](../original-game-reference/source/extracted/spelunky/Objects/Blocks/oLamp.xml) | Source sprite and depth 201; contributes to dark-level lighting. | Source image_speed 0.5 flicker and falling oLampItem on support destruction are absent. |
+| [lamp.lua](../src/platform/structures/lamp.lua) | [oLamp](../original-game-reference/source/extracted/spelunky/Objects/Blocks/oLamp.xml) | Source sprite and depth 201; contributes to dark-level lighting. | Flicker at image speed 0.5 and fallen white/red lamp items are implemented; see the 2026-10-05 follow-up. |
 | [sacrifice_altar.lua](../src/platform/structures/sacrifice_altar.lua) | [oSacAltarLeft](../original-game-reference/source/extracted/spelunky/Objects/Blocks/oSacAltarLeft.xml), [oSacAltarRight](../original-game-reference/source/extracted/spelunky/Objects/Blocks/oSacAltarRight.xml) | Two solid cells at depth 110; either-half support collapse; twenty-tick sacrifice countdown; favor/gifts; one defilement penalty of -16 and global altar removal; escalating spiders, ball/chain, darkness/ghost; tan debris. | Collapse uses grid support/viewport tests rather than original sprite masks; general particle lifetime/ordering remains approximate. See the Kali follow-up below. |
 | [altar_left.lua](../src/platform/structures/altar_left.lua) | [oAltarLeft](../original-game-reference/source/extracted/spelunky/Objects/Blocks/oAltarLeft.xml) | Source sprite, solid cell, depth 110. | S; tan rubble destruction event missing. |
 | [altar_right.lua](../src/platform/structures/altar_right.lua) | [oAltarRight](../original-game-reference/source/extracted/spelunky/Objects/Blocks/oAltarRight.xml) | Source sprite, solid cell, depth 110. | S; tan rubble destruction event missing. |
@@ -263,7 +263,7 @@ New individual object modules:
 | [heart.lua](../src/platform/effects/heart.lua) | `oHeart` (sprite `sSmoochHeart`) | Thirty-tick rising healing effect |
 | [burn.lua](../src/platform/effects/burn.lua) | `oBurn` | Animated rising burning wisps with terrain cleanup |
 
-The original source comments out both the F flare action and initial dark-level flare creation. The flare object is supported when spawned; no active player flare action was invented. Spectacles affect buried-object depth, not a larger circular darkness radius. Scarabs emit small light circles without changing the player's distance-derived darkness. Bullets ignore ordinary enemy invincibility in the source, but rescuing damsels let bullets pass through. The source dice really do choose random faces on fast ticks.
+The original source comments out the F flare action and direct initial flare creation. Its entrance flare crate creation in `scrEntityGen` is active and is now implemented. The flare object is supported when spawned; no active player flare action was invented. Spectacles affect buried-object depth, not a larger circular darkness radius. Scarabs emit small light circles without changing the player's distance-derived darkness. Bullets ignore ordinary enemy invincibility in the source, but rescuing damsels let bullets pass through. The source dice really do choose random faces on fast ticks.
 
 The [Mines completion tests](../src/tests/mines_completion_test.lua) cover 21 behavior scenarios through real owners and simulation ticks. All 21 fail against an isolated pre-change checkout for the missing behaviors or systems and pass after implementation. Existing supply, rope, explosion, web, loot, and Kali transition tests were updated where the source disproved their old expectations. The live [render-order regression](../src/tests/render_depth_test.lua) exercises actual flare/lamp/diamond/ghost/effect submissions, spectacles occlusion and player exit rendering. The full `love . --smoke-test` suite and `git diff --check` pass.
 
@@ -298,16 +298,16 @@ The review follows object inheritance as well as child events: XML metadata alon
 
 ### Checked without changing the source-backed contract
 
-Kali sacrifice values, the twenty-first eligible tick, gift branch order and thresholds, ownership scan, anger recovery, punishment escalation, ball/chain rules, teleport attachment and exit persistence align with the inspected events/scripts. The Damsel living/dead credit quirk remains intentional. Held actor depths 0/51 are correct because player End Step overrides enemy Step. Supplies, cash delays, hidden-item selection, rope fallback, bomb attachment, timed Ghost spawning, gem conversion and exit transition branches retain their checked contracts. Player flare actions and initial dark-level flare creation remain commented out in the source. The correct healing object name is `oHeart`; `sSmoochHeart` is its sprite.
+Kali sacrifice values, the twenty-first eligible tick, gift branch order and thresholds, ownership scan, anger recovery, punishment escalation, ball/chain rules, teleport attachment and exit persistence align with the inspected events/scripts. The Damsel living/dead credit quirk remains intentional. Held actor depths 0/51 are correct because player End Step overrides enemy Step. Supplies, cash delays, hidden-item selection, rope fallback, bomb attachment, timed Ghost spawning, gem conversion and exit transition branches retain their checked contracts. The player F flare action and direct initial flare creation remain commented out; entrance flare crate generation is active. The correct healing object name is `oHeart`; `sSmoochHeart` is its sprite.
 
 ### Remaining source differences and limits
 
 | Area | Remaining difference / verification limit |
 |---|---|
 | Enemy AI | Fine Step ordering and state timing remain adapted. For example, snakes start with a different timer/velocity; caveman sight uses an immediate ray rather than an `oEnemySight` actor. Small-enemy steering, stunned movement and giant-spider state/animation timing are not exact source implementations. |
-| Dark Mines generation | `MinesVariants.apply` performs post-generation placement with its own random stream. Source `scrEntityGen` chooses giant spider/lamp/scarab/bat/spider during placement, with different branch order and start-room/bottom restrictions. Exact spawn distributions and seed parity are not established. |
+| Dark Mines generation | The 2026-10-05 repair chooses darkness before enemy placement and uses the source giant spider/lamp/scarab/bat/spider branches and ceiling restrictions. Exact GameMaker RNG seed and instance-iteration parity are not established. |
 | Solid Destroy inheritance | `World:remove` still applies shop-wall, spike and cave-lip cleanup broadly. Source children such as blocks, push blocks, altar halves, signs and arrow traps override Destroy without inheriting all `oSolid` consequences; explosions separately remove unsupported spikes/lips. Lamp drops already respect child inheritance. Direct non-explosion destruction therefore still needs an inheritance-aware cleanup pass. |
-| Lamp animation | Static lamp rendering still omits the source's flicker at image speed 0.5. |
+| Lamp animation | Source white/red flicker is implemented as of 2026-10-05. |
 | Engine lifecycle | Pixel masks, collision/Step/End Step ordering, equal-depth ties, population caps, global instance activation and every native animation alarm remain unverified against the original executable. Offscreen alarm repairs cover the inspected active-region case, not universal deactivation parity. Scarab Destroy's use of `other` also leaves exact runtime spark positions unverified. |
 | Scope | The initial table's unresolved details not explicitly superseded here remain open, including visual-only skull fallback behavior and non-Mines environments. Functional coverage does not establish complete source equivalence. |
 
@@ -538,9 +538,40 @@ emit radius-96 circles; scarabs emit radius 16 and ghosts radius 64, with source
 origin offsets translated into the clone's body coordinates. Spectacles do not
 enlarge the circle. The mask is skipped when the player is dead, and the HUD
 and gameplay messages remain outside it. Unsupported later-area emitters and
-red lamp color overrides are outside this Mines repair.
+red lamp color overrides were outside that repair and are implemented in the follow-up below.
 
 The rendered regression exercises the live world drawing path at 1x and 2x
 scale against independent color and boundary expectations, covering player
 radius/tint, lamp offsets, live/dead light sources and viewport clipping. It
 fails on the committed uniform rectangle and passes with the restored mask.
+
+
+## Dark Mines generation and light sources (2026-10-05)
+
+The earlier mask repair was incomplete. `scrEntityGen` actively creates an
+entrance flare crate; the commented direct-flare creation in `scrInitLevel`
+does not disable that crate. Dark arrow traps use lit sprites, and lamps and
+scarabs belong in the ceiling enemy-selection branches rather than a separate
+placement pass. Darkness is now selected after room contents and before enemy
+placement, preserving the normal once-per-Mines rule. Full game's temporary
+override forces only 1-1 dark and explicitly keeps 1-2 through 1-4 normal.
+
+The entrance crate is a heavy carryable light and Up + ACTION releases three
+flares with the source launch velocities. White/red hanging lamps, fallen
+lamps, lit traps, crates and flares use their original animation frames and
+speeds. Dropped lamps retain their source origin `(8,12)`, including the held
+white-lamp offset. Support destruction releases the appropriate lamp color.
+
+Light distance follows `instance_nearest` by origin, then
+`distance_to_object` between current sprite bounding boxes. Lit arrow traps
+add 48 to that distance and emit radius-32 circles. Explosion frames may make
+darkness negative and expand the player circle; only the upper 0.9 clamp is
+applied. Shotgun flashes contribute to the player's light distance. Hanging
+red lamps inherit the white lamp light circle and distance behavior; dropped
+red lamps only override the mask tint. Both use the source red RGB formula.
+
+Regression coverage exercises real four-level Full game progression, dark
+generation across 48 seeds, crate opening through gameplay input, independent
+sprite-bound distances, and rendered trap/red-lamp pixels at 1x and 2x. Exact
+GameMaker RNG sequences and iteration order remain outside this repair; later
+areas' emitters are not implemented.

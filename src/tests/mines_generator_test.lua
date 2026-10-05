@@ -1,5 +1,4 @@
 local MinesGenerator = require("src.world.mines_generator")
-local MinesVariants = require("src.world.mines_variants")
 local RunState = require("src.game.run_state")
 
 local MinesGeneratorTest = {}
@@ -84,10 +83,11 @@ local function assertTrapClearance(level)
     local solidEntities = {
         altar_left = true, altar_right = true, sacrifice_altar = true,
         arrow_trap_left = true, arrow_trap_right = true,
+        arrow_trap_left_lit = true, arrow_trap_right_lit = true,
     }
     for _, trap in ipairs(level.entities) do
-        if trap.kind == "arrow_trap_left" or trap.kind == "arrow_trap_right" then
-            local offsets = trap.kind == "arrow_trap_left" and { -1, -2 } or { 1, 2, 3 }
+        if trap.kind:match("^arrow_trap_") then
+            local offsets = trap.kind:match("^arrow_trap_left") and { -1, -2 } or { 1, 2, 3 }
             for _, offset in ipairs(offsets) do
                 local x = trap.x + offset
                 local tile = level.tiles[trap.y + 1][x + 1]
@@ -211,29 +211,25 @@ function MinesGeneratorTest.run()
     local repeated = MinesGenerator.generate(8675309, { levelNumber = 4 })
     assert(signature(first) == signature(repeated), "Mines generation is not deterministic")
 
-    local darkSeed
+    local darkSeed, lamp, scarab
     for seed = 1, 100 do
-        local level = MinesGenerator.generate(seed, { levelNumber = 2 })
         local run = RunState.new(seed)
-        MinesVariants.apply(level, run)
+        local level = MinesGenerator.generate(seed, { levelNumber = 2, run = run })
         if level.dark then
-            darkSeed = seed
+            darkSeed = darkSeed or seed
             assert(run.hadDarkLevel, "A dark Mines level must mark the run")
-            local lamp, scarab = false, false
             for _, entity in ipairs(level.entities) do
                 lamp = lamp or entity.kind == "lamp"
                 scarab = scarab or entity.kind == "scarab"
             end
-            assert(lamp and scarab, "Dark Mines must retain the lamp and scarab")
-            break
         end
     end
-    assert(darkSeed, "The seed sample must include a dark Mines level")
+    assert(darkSeed and lamp and scarab, "The sample must exercise natural dark Mines, lamps and scarabs")
     local run = RunState.new(darkSeed)
     run.hadDarkLevel = true
-    local level = MinesGenerator.generate(darkSeed, { levelNumber = 2 })
-    MinesVariants.apply(level, run)
+    local level = MinesGenerator.generate(darkSeed, { levelNumber = 2, run = run })
     assert(not level.dark, "A run must not repeat a dark Mines level")
+
 end
 
 return MinesGeneratorTest

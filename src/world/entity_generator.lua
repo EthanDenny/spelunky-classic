@@ -4,6 +4,8 @@ local ShopStock = require("src.platform.shop_stock")
 local Tiles = require("src.platform.tiles.types")
 local Objects = require("src.platform.objects")
 local ItemDefinitions = require("src.platform.item_definitions")
+local SpriteCollision = require("src.platform.sprite_collision")
+local SpriteData = require("src.world.original_entity_sprites")
 
 local function getTile(level, x, y)
     if x < 0 or x >= level.width or y < 0 or y >= level.height then return nil end
@@ -158,9 +160,22 @@ local function treasureGen(level, rng, x, y, bonesBonus)
     end
 end
 
+local ceilingEnemies = { bat = true, spider = true, giant_spider = true,
+    snake = true, caveman = true, shopkeeper = true, scarab = true }
+local function enemyAt(level, x, y)
+    for _, entity in ipairs(level.entities) do
+        if ceilingEnemies[entity.kind] then
+            local sprite = SpriteData[entity.kind].sourceSprite
+            if SpriteCollision.overlaps(sprite, 0, entity.x*16, entity.y*16, false,
+                x*16, y*16, x*16+1, y*16+1, true) then return true end
+        end
+    end
+    return false
+end
+
 local function canHangBelow(level, x, y)
     return y < level.height - 4 and not isSolid(level, x, y + 1)
-        and not isSolid(level, x, y + 2)
+        and not isSolid(level, x, y + 2) and not enemyAt(level, x, y + 1)
 end
 
 local function canStandAbove(level, x, y)
@@ -169,7 +184,7 @@ local function canStandAbove(level, x, y)
 end
 
 local function populateMines(level, rng, x, y, state)
-    if not inStartRoom(level, x, y) then
+    if not inStartRoom(level, x, y - 1) then
         if canHangBelow(level, x, y) then
             if state.generateGiantSpider and not state.giantSpider
                 and not isSolid(level, x + 1, y + 1) and not isSolid(level, x + 1, y + 2)
@@ -178,6 +193,8 @@ local function populateMines(level, rng, x, y, state)
                 addEntity(level, "web", x, y + 2)
                 addEntity(level, "web", x + 1, y + 2)
                 state.giantSpider = true
+            elseif level.dark and rng:integer(1, 60) == 1 then addEntity(level, "lamp", x, y + 1)
+            elseif level.dark and rng:integer(1, 40) == 1 then addEntity(level, "scarab", x, y + 1)
             elseif rng:integer(1, 60) == 1 then addEntity(level, "bat", x, y + 1)
             elseif rng:integer(1, 80) == 1 then addEntity(level, "spider", x, y + 1) end
         end
@@ -197,10 +214,10 @@ local function placeMinesTrap(level, rng, x, y)
 
     if isSolid(level, x + 1, y) and not isSolid(level, x - 1, y)
         and not isSolid(level, x - 2, y) then
-        addEntity(level, "arrow_trap_left", x, y)
+        addEntity(level, level.dark and "arrow_trap_left_lit" or "arrow_trap_left", x, y)
     elseif isSolid(level, x - 1, y) and not isSolid(level, x + 1, y)
         and not isSolid(level, x + 2, y) and not isSolid(level, x + 3, y) then
-        addEntity(level, "arrow_trap_right", x, y)
+        addEntity(level, level.dark and "arrow_trap_right_lit" or "arrow_trap_right", x, y)
     else
         return
     end
@@ -240,8 +257,9 @@ local function addProgressionItems(level, rng)
     end
 end
 
+EntityGenerator.resolveRooms = resolveEmbeddedEntities
+
 function EntityGenerator.populate(level, rng)
-    resolveEmbeddedEntities(level, rng)
     -- Preserve the random draw made before Mines enemy placement by the
     -- original mixed-area generator, so existing seeds keep their layout.
     rng:integer(1, 4)
@@ -252,7 +270,7 @@ function EntityGenerator.populate(level, rng)
 
     for y = 1, level.height - 1 do
         for x = 0, level.width - 1 do
-            if isSolid(level, x, y) and not inShop(level, x, y) then
+            if y > 1 and isSolid(level, x, y) and not inShop(level, x, y) then
                 local tile = getTile(level, x, y)
                 if not (tile.properties and tile.properties.altar) then
                     treasureGen(level, rng, x, y, 0)
@@ -272,6 +290,12 @@ function EntityGenerator.populate(level, rng)
     end
 
     if level.entrance then
+        if level.dark then
+            local x, y = level.entrance.x, level.entrance.y
+            local offset = not isSolid(level, x - 1, y) and -1
+                or not isSolid(level, x + 1, y) and 1 or 0
+            addEntity(level, "flare_crate", x + offset + 0.5, y + 0.5)
+        end
         addEntity(level, "player", level.entrance.x + 0.5, level.entrance.y + 0.5,
             { atEntrance = true })
     end

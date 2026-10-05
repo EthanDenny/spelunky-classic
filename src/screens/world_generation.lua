@@ -78,7 +78,7 @@ function WorldGeneration:loadAssets()
         if definition.sprite then
             local spec = definition.sprite
             self.entitySprites[kind] = { image = Assets.image(spec.group, spec.name),
-                metadata = { originX = spec.size / 2, originY = spec.size / 2,
+                metadata = { originX = spec.originX or spec.size / 2, originY = spec.originY or spec.size / 2,
                     width = spec.size, height = spec.size } }
         end
         if definition.leftSprite then
@@ -329,7 +329,7 @@ function WorldGeneration:drawTile(tile, x, y)
     end
 end
 
-function WorldGeneration:drawEntity(entity)
+function WorldGeneration:drawEntity(entity, tick)
     love.graphics.setColor(1, 1, 1, 1)
     local fallbackX = entity.x * 16
     local fallbackY = entity.y * 16
@@ -343,7 +343,8 @@ function WorldGeneration:drawEntity(entity)
         local y = entity.y * 16 - metadata.originY
         love.graphics.setColor(1, 1, 1,
             definition and definition.alpha and definition.alpha(entity) or 1)
-        love.graphics.draw(sprite.image, math.floor(x), math.floor(y))
+        local image = definition and definition.entityImage and definition.entityImage(entity, tick) or sprite.image
+        love.graphics.draw(image, math.floor(x), math.floor(y))
         love.graphics.setColor(1, 1, 1, 1)
     elseif definition and definition.draw then
         definition.draw(self, entity)

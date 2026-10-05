@@ -41,6 +41,17 @@ local function mask(sprite, frame)
     return result
 end
 
+function Collision.bounds(name, frame, x, y, mirrored)
+    local spec = sprite(name)
+    local pixels = mask(spec, frame)
+    if mirrored then
+        return x+spec.originX-pixels.right, y-spec.originY+pixels.top,
+            x+spec.originX-pixels.left-1, y-spec.originY+pixels.bottom-1
+    end
+    return x-spec.originX+pixels.left, y-spec.originY+pixels.top,
+        x-spec.originX+pixels.right-1, y-spec.originY+pixels.bottom-1
+end
+
 function Collision.overlaps(name, frame, x, y, mirrored, left, top, right, bottom, boundsOnly, angle)
     local spec = sprite(name)
     local pixels = mask(spec, frame)

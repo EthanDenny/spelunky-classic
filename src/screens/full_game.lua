@@ -11,7 +11,7 @@ local STEP = 1/Player.TICK_RATE
 function FullGame.new(app)
     local game = setmetatable(FullLevel.new(app), FullGame)
     game.screenName = "full_game"
-    game.forceDarkLevels = true -- Temporary lighting playtest; false restores normal dark-level odds.
+    game.darkTestLevel = 1 -- Temporary lighting playtest; nil restores normal dark-level odds.
     return game
 end
 
@@ -49,6 +49,7 @@ end
 
 function FullGame:generateLevel(seed)
     seed = seed or love.math.random(1, 2147483646)
+    self.forceDarkLevels = self.darkTestLevel and self.levelNumber == self.darkTestLevel
     self.transition = nil
     self.levelStats = { loot = {}, kills = {}, money = 0 }
     FullLevel.generateLevel(self, seed)

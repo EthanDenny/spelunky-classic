@@ -1,5 +1,7 @@
 return {
+    flare_crate = require("src.platform.items.flare_crate"),
     lamp_item = require("src.platform.items.lamp_item"),
+    lamp_red_item = require("src.platform.items.lamp_red_item"),
     flare = require("src.platform.items.flare"),
     arrow = require("src.platform.items.arrow"),
     rock = require("src.platform.items.rock"),

@@ -1,5 +1,4 @@
 local MinesGenerator = require("src.world.mines_generator")
-local MinesVariants = require("src.world.mines_variants")
 local MinesLevelSelection = require("src.world.mines_level_selection")
 local GeneratedWorld = require("src.platform.generated_world")
 local Player = require("src.platform.player")
@@ -173,8 +172,8 @@ function FullLevelPlaytest:generateLevel(seed)
     end
     self.seed = seed
     self.run = self.run or RunState.new(seed)
-    self.level = MinesGenerator.generate(seed, { levelNumber = self.levelNumber })
-    MinesVariants.apply(self.level, self.run, self.forceDarkLevels)
+    self.level = MinesGenerator.generate(seed, { levelNumber = self.levelNumber,
+        run = self.run, forceDark = self.forceDarkLevels })
     self.level.selectedSubtype = MinesLevelSelection.choices[self.subtypeIndex].key
     self:buildSimulation()
 end
@@ -1046,7 +1045,7 @@ function FullLevelPlaytest:drawWorld(viewport)
             if entity.kind == "spikes" and entity.bloody then
                 Spikes.drawBloody(entity)
             else
-                self.renderer:drawEntity(entity)
+                self.renderer:drawEntity(entity, self.world.time)
             end
         end,
     })

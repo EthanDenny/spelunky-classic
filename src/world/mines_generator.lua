@@ -1,5 +1,7 @@
 local Templates = require("src.world.mines_templates")
 local EntityGenerator = require("src.world.entity_generator")
+local MinesVariants = require("src.world.mines_variants")
+local RunState = require("src.game.run_state")
 
 local Tiles = require("src.platform.tiles.types")
 
@@ -441,7 +443,7 @@ local function generateSymbol(level, rng, symbol, x, y, roomX, roomY, shopType)
     elseif symbol == "b" then
         setTile(level, x, y, { kind = "smooth_brick", shopWall = true })
     elseif symbol == "l" then
-        addEntity(level, "lamp", x, y)
+        addEntity(level, shopType == "Kissing" and "lamp_red" or "lamp", x, y)
     elseif symbol == "K" then
         addEntity(level, "shopkeeper", x, y, { shopType = shopType })
     elseif symbol == "k" then
@@ -582,6 +584,8 @@ function MinesGenerator.generate(seed, options)
     addShopToPath(level, rng)
     generateRooms(level, rng)
     applyWallSprites(level, rng)
+    EntityGenerator.resolveRooms(level, rng)
+    MinesVariants.apply(level, options.run or RunState.new(seed), rng, options.forceDark)
     EntityGenerator.populate(level, rng)
 
     return level

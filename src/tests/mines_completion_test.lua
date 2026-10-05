@@ -56,6 +56,21 @@ end
 
 function Test.run()
     local cases = {
+        { "Up and Action opens the glowing flare crate into three live flares", function()
+            local game = fixture()
+            local crate = game:spawnEntity("flare_crate", game.player.x, game.player.y)
+            assert(require("src.platform.lighting").darkness(game) == 0,
+                "The entrance flare crate must brighten the player's light")
+            game:simulationStepBody({ up = true, attack = true })
+            local count = 0
+            for _, item in ipairs(game.items) do
+                if item.kind == "flare" then
+                    count = count+1
+                    assert(item.alive and item.vy < 0 and math.abs(item.vx) <= 3)
+                end
+            end
+            assert(crate.opened and count == 3, "Source flare crates release exactly three scattered flares")
+        end },
         { "caveman and shopkeeper corpses lie flat after settling, including after a throw", function()
             for _, example in ipairs({ { "caveman", "sCavemanDeadL", "sCavemanDHeldL", "sCavemanDieLL" },
                 { "shopkeeper", "sShopDieL", "sShopDHeldL", "sShopDieLL" } }) do
@@ -653,13 +668,19 @@ function Test.run()
             local Lighting = require("src.platform.lighting")
             game.level.entities = { { kind = "lamp", x = 5, y = 6 } }
             game.player.x, game.player.y = 80, 96
+            game.player.spriteName, game.player.animationFrame = "sStandLeft", 0
             assert(Lighting.darkness(game) == 0)
+            game.level.entities[1].x = 8
+            -- sStandLeft bounds x=74..85; sLamp bounds x=130..141.
+            assert(math.abs(Lighting.darkness(game)-45/160) < 0.001,
+                "Light distance must use source sprite edges, not object centers")
             game.level.entities = {}
             game.tools.explosions = {
                 { x = 100, y = 96, age = 10, alive = true },
                 { x = 120, y = 96, age = 3, alive = true },
             }
-            assert(math.abs(Lighting.darkness(game)-0.625) < 0.001)
+            -- Frame 8's source bbox overlaps the player's; its fade adds 80px.
+            assert(math.abs(Lighting.darkness(game)-0.5) < 0.001)
         end },
         { "giant spiders retain front-hit cooldowns and inherited back-whip damage", function()
             local game = fixture()

@@ -1,5 +1,4 @@
 local MinesGenerator = require("src.world.mines_generator")
-local MinesVariants = require("src.world.mines_variants")
 local RunState = require("src.game.run_state")
 
 local Selection = {}
@@ -50,8 +49,7 @@ function Selection.find(startSeed, depth, key)
         "Mines level type " .. key .. " is unavailable at depth " .. depth)
     local seed = startSeed
     for _ = 1, MAX_ATTEMPTS do
-        local level = MinesGenerator.generate(seed, { levelNumber = depth })
-        MinesVariants.apply(level, RunState.new(seed))
+        local level = MinesGenerator.generate(seed, { levelNumber = depth, run = RunState.new(seed) })
         if Selection.matches(level, key) then return seed, level end
         seed = Selection.nextSeed(seed)
     end

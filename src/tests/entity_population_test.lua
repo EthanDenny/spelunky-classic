@@ -53,6 +53,37 @@ end
 
 function Test.run()
     assertAltarDoesNotFaceArrowTrap()
+    local lamps, scarabs, litTraps = 0, 0, 0
+    for seed = 1, 48 do
+        local level = MinesGenerator.generate(seed, { levelNumber = 1, forceDark = true })
+        assert(level.dark, "The lighting playtest must be able to generate dark 1-1")
+        local world = require("src.platform.generated_world").fromLevel(level)
+        local entrance, crate = level.entrance
+        for _, entity in ipairs(level.entities) do
+            if entity.kind == "flare_crate" then
+                assert(not crate, "Dark levels get one entrance flare crate")
+                crate = entity
+            elseif entity.kind == "lamp" or entity.kind == "scarab" then
+                local parentY = entity.y-1
+                local roomX, roomY = math.floor((entity.x-1)/10), math.floor((parentY-2)/8)
+                assert(level.symbols[entity.y+1][entity.x+1] == "l" or parentY > 1 and parentY < level.height-4
+                    and (roomX ~= level.startRoomX or roomY ~= level.startRoomY),
+                    "Dark ceiling spawns must obey the source top, bottom and entrance-room exclusions")
+                if entity.kind == "lamp" then lamps = lamps+1 else scarabs = scarabs+1 end
+            elseif entity.kind == "arrow_trap_left_lit" or entity.kind == "arrow_trap_right_lit" then
+                litTraps = litTraps+1
+            else
+                assert(entity.kind ~= "arrow_trap_left" and entity.kind ~= "arrow_trap_right",
+                    "Dark Mines must generate lit arrow traps")
+            end
+        end
+        local x, y = entrance.x*16, entrance.y*16
+        local offset = not world:solidAtPoint(x-16, y) and -16
+            or not world:solidAtPoint(x+16, y) and 16 or 0
+        assert(crate and crate.x*16 == x+offset+8 and crate.y*16 == y+8,
+            "The flare crate uses the first clear entrance side, falling back to the entrance itself")
+    end
+    assert(lamps > 0 and scarabs > 0 and litTraps > 0, "Dark fixtures must exercise all dark Mines spawns")
     local foundShopkeeper = false
     for depth = 1, 4 do
         local foundEnemy = false

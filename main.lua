@@ -164,9 +164,11 @@ local function runSmokeTest()
             "The Mines exit must not advance into an unimplemented area")
         fullLevel.run = require("src.game.run_state").new(2)
         fullLevel.levelNumber = 2
+        fullLevel.forceDarkLevels = true
         fullLevel:generateLevel(2)
         assert(fullLevel.level.dark, "The dark Mines sample must still generate")
         fullLevel:draw()
+        fullLevel.forceDarkLevels = nil
         fullLevel.levelNumber = 1
         fullLevel:generateLevel(8675309)
     end

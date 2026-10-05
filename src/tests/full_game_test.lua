@@ -224,8 +224,15 @@ function Test.run(app)
         game:generateLevel(721466261)
         local layouts = {}
         for depth = 1, 4 do
-            assert(game.level.dark == (depth > 1),
-                "The Full game lighting playtest must force every eligible depth dark, including consecutive levels")
+            assert(game.level.dark == (depth == 1),
+                "The Full game lighting playtest must force only 1-1 dark")
+            if depth == 1 then
+                local crate
+                for _, item in ipairs(game.items) do
+                    if item.kind == "flare_crate" then crate = item break end
+                end
+                assert(crate, "A dark level must provide the source's glowing flare crate at the entrance")
+            end
             local layout = terrain(game.level)
             for previous, seen in ipairs(layouts) do
                 assert(layout ~= seen, "Full game repeated terrain from 1-"..previous.." on 1-"..depth)

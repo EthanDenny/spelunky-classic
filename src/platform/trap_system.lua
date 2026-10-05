@@ -120,7 +120,7 @@ function TrapSystem:submit(queue)
                     self.renderer:drawEntity({
                         kind = current.kind, x = current.x / 16, y = current.y / 16,
                         properties = current.entity.properties or {},
-                    })
+                    }, self.world.time)
                 end
             end)
         end

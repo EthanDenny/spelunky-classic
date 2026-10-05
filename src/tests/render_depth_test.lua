@@ -2,7 +2,6 @@ local Depth = require("src.render.classic_depth")
 local DepthQueue = require("src.render.depth_queue")
 local Enemy = require("src.platform.enemy")
 local MinesGenerator = require("src.world.mines_generator")
-local MinesVariants = require("src.world.mines_variants")
 local RunState = require("src.game.run_state")
 local Item = require("src.platform.item")
 local Player = require("src.platform.player")
@@ -72,7 +71,27 @@ local function assertDarkLighting(app)
         local r, g, b = dark:getPixel(0, 0)
         assert(math.abs(r-0.3) < 0.01 and math.abs(g-0.4) < 0.01 and math.abs(b-0.5) < 0.01,
             "Darkness must stay inside the scaled camera viewport")
+        game.level.entities = { { kind = "arrow_trap_left_lit", x = 15, y = 18.75 } }
+        dark = render(true)
+        lit(dark, 8, 98, 0.1) -- source trap circle: center +8,+8, radius 32
+        black(dark, 8, 92)
+        game.level.entities = { { kind = "lamp_red", x = 25, y = 18.75 } }
+        dark = render(true)
+        r, g, b = pixel(dark, 125, 120)
+        assert(math.abs(r-0.6) < 0.01 and math.abs(g-0.4*24/255) < 0.01
+            and math.abs(b-0.2*24/255) < 0.01, "Nearby hanging red lamps must tint the source light mask red")
+        r, g, b = pixel(dark, 160, 30)
+        assert(math.abs(r-0.6) < 0.01 and math.abs(g-0.4*24/255) < 0.01
+            and math.abs(b-0.2*24/255) < 0.01, "Hanging red lamps must retain the full 96-pixel circle")
         game.level.entities = {}
+        local redLamp = game:spawnEntity("lamp_red_item", 400, 300)
+        dark = render(true)
+        r, g, b = pixel(dark, 125, 120)
+        assert(math.abs(r-0.6) < 0.01 and math.abs(g-0.4*24/255) < 0.01
+            and math.abs(b-0.2*24/255) < 0.01, "Dropped red lamps must tint the player's existing light circle")
+        black(dark, 200, 120) -- oLampRedItem does not inherit oLampItem's extra circle
+        redLamp.alive = false
+        game.items = {}
         for _, source in ipairs({
             { "lamp_item", 240, 304, 0, 26, 22 },
             { "flare", 240, 300, 0, 26, 22 },
@@ -141,7 +160,6 @@ function Test.run(app)
     for seed = 1, 8 do
         for levelNumber = 1, 4 do
             local level = MinesGenerator.generate(seed * 1297, { levelNumber = levelNumber })
-            MinesVariants.apply(level, RunState.new(seed))
             for _, row in ipairs(level.tiles) do
                 for _, tile in ipairs(row) do Depth.tile(tile.kind) end
             end
