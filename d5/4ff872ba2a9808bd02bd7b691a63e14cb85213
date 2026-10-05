@@ -1,0 +1,116 @@
+src/platform/trap_system.lua
+  s_a149baf2181030::t_82b9e5c1d6286a 123
+src/platform/traps/types.lua
+  s_a149baf2181030::t_82b9e5c1d6286a 2-3
+src/world/entity_generator.lua
+  s_a149baf2181030::t_82b9e5c1d6286a 197
+  s_a149baf2181030::t_63d6e8b79025ee 7-8,163-175,178
+  s_a149baf2181030::t_1f7d2a81b82872 187,196,217,220,260-261,273,293-294
+  s_a149baf2181030::t_c43710d88db29a 295-297
+  s_bb280f3ce710e7::t_d176fbd55eda80 298
+src/world/original_entity_sprites.lua
+  s_a149baf2181030::t_c4f5c909b114cc 3
+  s_a149baf2181030::t_82b9e5c1d6286a 4-6
+src/platform/sprite_collision.lua
+  s_a149baf2181030::t_e62c92cae7c6d4 44-54
+src/platform/terrain_destruction.lua
+  s_a149baf2181030::t_c4f5c909b114cc 14,17
+docs/object-source-audit.md
+  s_a149baf2181030::t_9c47e1b556cf75 60,131,266,301,308,310,541,547-577
+src/world/mines_generator.lua
+  s_a149baf2181030::t_1f7d2a81b82872 3-4,588
+  s_a149baf2181030::t_c4f5c909b114cc 446
+  s_a149baf2181030::t_8a3ccd13b85920 587
+src/platform/structures/lamp.lua
+  s_a149baf2181030::t_8a4f4db5254746 2
+  s_a149baf2181030::t_82b9e5c1d6286a 3-4
+src/platform/items/lamp_red_item.lua
+  s_a149baf2181030::t_c4f5c909b114cc 1-9
+src/screens/full_game.lua
+  s_a149baf2181030::t_1f7d2a81b82872 14,52
+src/tests/entity_population_test.lua
+  s_a149baf2181030::t_b499b73a88faeb 56-68,70-86
+  s_a149baf2181030::t_d66dd054360d0d 69
+src/tests/full_game_test.lua
+  s_a149baf2181030::t_774084264eb2e8 227-235
+src/tests/mines_completion_test.lua
+  s_a149baf2181030::t_0ba9fda03523c2 59-73,673-676
+  s_a149baf2181030::t_d66dd054360d0d 671
+  s_a149baf2181030::t_1f8468679df88e 682-683
+src/platform/items/lamp_item.lua
+  s_a149baf2181030::t_e62c92cae7c6d4 6-14
+  s_a149baf2181030::t_de70bf8da86f24 1-2,5
+src/platform/items/flare.lua
+  s_a149baf2181030::t_e62c92cae7c6d4 6,13,15-18
+  s_a149baf2181030::t_6ea34f53b10384 14
+src/tests/mines_generator_test.lua
+  s_a149baf2181030::t_0b70df9cb28cc7 214,217,219,227,230,232
+  s_a149baf2181030::t_63d6e8b79025ee 86,89-90
+src/tests/render_depth_test.lua
+  s_a149baf2181030::t_2e5eb37b90aff5 74-82,87-94
+  s_a149baf2181030::t_11c45eeb4e177a 83-85
+src/screens/world_generation.lua
+  s_a149baf2181030::t_8a4f4db5254746 346
+  s_a149baf2181030::t_82b9e5c1d6286a 332,347
+  s_a149baf2181030::t_de70bf8da86f24 81
+src/world/mines_level_selection.lua
+  s_a149baf2181030::t_1f7d2a81b82872 52
+src/platform/traps/arrow_trap_left_lit.lua
+  s_a149baf2181030::t_8a4f4db5254746 2
+  s_a149baf2181030::t_82b9e5c1d6286a 1,3-5
+src/platform/traps/arrow_trap_right_lit.lua
+  s_a149baf2181030::t_82b9e5c1d6286a 1,3-5
+  s_a149baf2181030::t_8a4f4db5254746 2
+src/platform/items/types.lua
+  s_a149baf2181030::t_82b9e5c1d6286a 2
+  s_a149baf2181030::t_c4f5c909b114cc 4
+src/platform/items/flare_crate.lua
+  s_a149baf2181030::t_8a4f4db5254746 26
+  s_a149baf2181030::t_0b70df9cb28cc7 2
+  s_a149baf2181030::t_e62c92cae7c6d4 27-28
+  s_a149baf2181030::t_82b9e5c1d6286a 1,3-25,29-32
+main.lua
+  s_a149baf2181030::t_2e5eb37b90aff5 167,171
+README.md
+  s_a149baf2181030::t_9c47e1b556cf75 9
+src/platform/object_assets.lua
+  s_a149baf2181030::t_82b9e5c1d6286a 2,12-19
+  s_a149baf2181030::t_227a5189f416a1 20-21
+src/world/mines_variants.lua
+  s_a149baf2181030::t_158e303f51d4fd 3-10,12
+src/platform/lighting.lua
+  s_a149baf2181030::t_6ea34f53b10384 2-9,11-20,23,26-30,33-35,39-41,44-52,89-91,95
+  s_a149baf2181030::t_b7cd9ec08a46cb 24-25,54-71,73-75,87,120-121
+  s_a149baf2181030::t_7b32ac800e4cf7 53
+src/platform/structures/types.lua
+  s_a149baf2181030::t_c4f5c909b114cc 7
+src/platform/structures/lamp_red.lua
+  s_a149baf2181030::t_8a4f4db5254746 2
+  s_a149baf2181030::t_c4f5c909b114cc 1,3-5
+src/screens/full_level_playtest.lua
+  s_a149baf2181030::t_c136fca82ea4c2 175-176,1048
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d54ff872ba2a9808bd02bd7b691a63e14cb85213",
+  "prompts": {},
+  "sessions": {
+    "s_a149baf2181030": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0fdc3-ae05-7e41-a96b-bd7a333b41c3",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Ethan Denny <ethandenny@protonmail.com>"
+    },
+    "s_bb280f3ce710e7": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a10d41-1ebb-7931-b5f7-326d4b9120b1",
+        "model": "unknown"
+      },
+      "human_author": "Ethan Denny <ethandenny@protonmail.com>"
+    }
+  }
+}
