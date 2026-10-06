@@ -368,6 +368,43 @@ function World:destroyTerrain(centerX, centerY, radius, overlaps)
     return destroyed
 end
 
+function World:destroySolidAtSprite(name, frame, x, y)
+    if not self:solidAtPoint(x, y) then
+        y = y+9
+        if not self:solidAtPoint(x, y) then return {} end
+    end
+    local Collision = require("src.platform.sprite_collision")
+    local left, top, right, bottom = Collision.bounds(name, frame, x, y, false)
+    local function destroy(x0, y0, x1, y1)
+        local consumed = false
+        return self:destroyTerrain((x0+x1)/2, (y0+y1)/2, 0, function(l, t, r, b)
+            if not consumed and l == x0 and t == y0 and r == x1 and b == y1 then
+                consumed = true
+                return true
+            end
+            return false
+        end)
+    end
+    for row = math.floor(top/self.tileSize), math.floor(bottom/self.tileSize) do
+        for column = math.floor(left/self.tileSize), math.floor(right/self.tileSize) do
+            local x0, y0 = column*self.tileSize, row*self.tileSize
+            if self:has("solid", column, row) and Collision.overlaps(name, frame, x, y, false,
+                x0, y0, x0+self.tileSize, y0+self.tileSize) then
+                if self:isProtectedCell(column, row) then return {} end
+                return destroy(x0, y0, x0+self.tileSize, y0+self.tileSize)
+            end
+        end
+    end
+    for _, block in ipairs(self.dynamicSolids) do
+        if block.alive ~= false and Collision.overlaps(name, frame, x, y, false,
+            block.x, block.y, block.x+block.width, block.y+block.height) then
+            if block.properties and block.properties.invincible then return {} end
+            return destroy(block.x, block.y, block.x+block.width, block.y+block.height)
+        end
+    end
+    return {}
+end
+
 function World:collidesSolid(player, x, y)
     local halfWidth = player:getCollisionHalfWidth()
     local topOffset, bottomOffset = player:getVerticalBounds()

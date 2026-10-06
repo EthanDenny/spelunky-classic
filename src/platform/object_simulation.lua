@@ -8,8 +8,9 @@ function Simulation.prepareAction(game, input, pressed, includeNpc)
 end
 
 function Simulation.whipContact(player, enemy)
-    if not player:getWhipHitbox() or not enemy.alive or not player:whipCanHit(enemy)
-        or not player:whipOverlapsRectangle(enemy:getBounds()) then return false end
+    local name, x, y = player:getWhipSprite()
+    if not name or not (enemy.alive or enemy.corpse) or enemy.kind == "ghost" or not player:whipCanHit(enemy)
+        or not require("src.platform.whip_mask").touching(name, x, y, enemy) then return false end
     player:markWhipHit(enemy)
     return true
 end

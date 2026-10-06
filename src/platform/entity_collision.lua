@@ -68,19 +68,24 @@ function EntityCollision.origin(target)
     return target.x, target.y
 end
 
-function EntityCollision.touching(a, b, player)
-    local al, at, ar, ab = EntityCollision.bounds(a, player)
-    local bl, bt, br, bb = EntityCollision.bounds(b, player)
+function EntityCollision.touchingMask(target, player, al, at, ar, ab, contains)
+    local bl, bt, br, bb = EntityCollision.bounds(target, player)
     local left, top = math.max(al, bl), math.max(at, bt)
     local right, bottom = math.min(ar, br), math.min(ab, bb)
     if left >= right or top >= bottom then return false end
     for y = math.floor(top), math.ceil(bottom)-1 do
         for x = math.floor(left), math.ceil(right)-1 do
-            if EntityCollision.overlaps(a, player, x, y, x+1, y+1)
-                and EntityCollision.overlaps(b, player, x, y, x+1, y+1) then return true end
+            if contains(x, y) and EntityCollision.overlaps(target, player, x, y, x+1, y+1) then return true end
         end
     end
     return false
+end
+
+function EntityCollision.touching(a, b, player)
+    local left, top, right, bottom = EntityCollision.bounds(a, player)
+    return EntityCollision.touchingMask(b, player, left, top, right, bottom, function(x, y)
+        return EntityCollision.overlaps(a, player, x, y, x+1, y+1)
+    end)
 end
 
 function EntityCollision.distance(a, b, player)

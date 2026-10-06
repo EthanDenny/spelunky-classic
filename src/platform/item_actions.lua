@@ -35,10 +35,7 @@ local function useMelee(context, item)
 end
 
 local function meleeOverlaps(name, frame, x, y, target)
-    local half = target:getCollisionHalfWidth()
-    local top, bottom = target:getVerticalBounds()
-    return MeleeMask.overlaps(name, frame, x, y,
-        target.x - half, target.y + top, target.x + half, target.y + bottom)
+    return MeleeMask.touching(name, frame, x, y, target)
 end
 
 function ItemActions.updateMelee(context)
@@ -83,12 +80,13 @@ function ItemActions.updateMelee(context)
     if name then
         local hits = context.meleeHits[phase]
         for _, enemy in ipairs(context.combatActors and context:combatActors() or context.enemies or {}) do
-            if enemy.alive and not hits[enemy]
+            if (enemy.alive or enemy.corpse) and enemy.kind ~= "ghost" and not hits[enemy]
                 and meleeOverlaps(name, spriteFrame, x, y, enemy) then
                 hits[enemy] = true
                 if enemy.kind == "shopkeeper" then
                     enemy:damage(spec.keeperWhipDamage or 0, player.x, { kind = "whip" })
-                elseif enemy.spec and enemy.spec.melee then enemy.spec.melee(enemy, context, spec.damage)
+                elseif enemy.spec and enemy.spec.melee then
+                    enemy.spec.melee(enemy, context, spec.strike == "slash" and spec.damage or 0)
                 else
                     if enemy:damage(spec.damage, player.x, { kind = "whip", weapon = item.kind, phase = phase })
                         and not (enemy.spec and enemy.spec.bloodless) then
@@ -130,8 +128,8 @@ function ItemActions.updateMelee(context)
         and context.meleeStrikeAge >= strikeDuration then
         local x = player.x + (player.meleeFacing or player.facing) * 16
         local y = player.y
-        if not context.world:solidAtPoint(x, y) then y = y + 9 end
-        local destroyed = context.world:destroyTerrain(x, y, 0)
+        local name = (player.meleeFacing or player.facing) < 0 and "sMattockHitL" or "sMattockHitR"
+        local destroyed = context.world:destroySolidAtSprite(name, 2, x, y)
         if #destroyed > 0 then context.world:cleanExplosionTerrain(destroyed) end
         if not context.world.game then
             for _, cell in ipairs(destroyed) do

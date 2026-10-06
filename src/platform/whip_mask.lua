@@ -40,4 +40,12 @@ function WhipMask.overlaps(name, x, y, left, top, right, bottom)
         x, y, left, top, right, bottom)
 end
 
+function WhipMask.touching(name, x, y, target)
+    local pixels = assert(masks[name], "Unknown whip sprite: " .. tostring(name))
+    return require("src.platform.entity_collision").touchingMask(target, nil,
+        x+pixels.left, y+pixels.top, x+pixels.right, y+pixels.bottom, function(px, py)
+            return Mask.overlaps(pixels, x, y, px, py, px+1, py+1)
+        end)
+end
+
 return WhipMask

@@ -11,7 +11,7 @@ function Treasure.new(entity, released, game)
     local definition = ItemDefinitions[entity.kind]
     local pickup = assert(definition and definition.pickup, "Unknown treasure: " .. entity.kind)
     assert(pickup.money, "Non-treasure entity: " .. entity.kind)
-    return setmetatable({
+    local body = setmetatable({
         entity = entity,
         kind = entity.kind,
         properties = entity.properties or {},
@@ -28,7 +28,10 @@ function Treasure.new(entity, released, game)
         dropThroughTimer = 0,
         xRemainder = 0,
         yRemainder = 0,
+        animation = 0,
     }, Treasure)
+    if definition.initializeTreasure then definition.initializeTreasure(body) end
+    return body
 end
 
 function Treasure:getCollisionHalfWidth()
@@ -65,6 +68,8 @@ end
 
 function Treasure:update(world, player)
     if not self.alive then return end
+    self.animation = self.animation+(self.definition.animationSpeed or 0)
+    self.entity.animation = self.animation
     if self.pickupDelay > 0 then self.pickupDelay = self.pickupDelay - 1 end
     local Activity = require("src.platform.activity")
     if self.hp then

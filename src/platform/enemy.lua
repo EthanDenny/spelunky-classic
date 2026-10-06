@@ -158,7 +158,7 @@ Enemy.overlapsPlayer = ActorBody.overlapsPlayer
 
 function Enemy:damage(amount, sourceX, hit)
     if not self.alive or self.spec.canEnemyDamage
-        and not self.spec.canEnemyDamage(self) and (not hit or (hit.kind ~= "bullet" and hit.kind ~= "explosion")) then return false end
+        and not self.spec.canEnemyDamage(self, hit) and (not hit or (hit.kind ~= "bullet" and hit.kind ~= "explosion")) then return false end
     self.hp = self.hp - (amount or 1)
     if self.hp <= 0 then
         self.alive = false

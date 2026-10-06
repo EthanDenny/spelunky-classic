@@ -8,12 +8,28 @@ Definition.bloodless = true
 Definition.deathBlood = 0
 Definition.treasureAnchor = { 8, 8 }
 Definition.treasureBounds = { 4, -4, 4 }
+Definition.animationSpeed = 0.5
+local function random(body, minimum, maximum)
+    if body.game then return body.game.effects.random:random(minimum, maximum) end
+    return love.math.random(minimum, maximum)
+end
+
+function Definition.initializeTreasure(body)
+    body.counter = random(body, 10, 30)
+end
+
+function Definition.collisionSprite(body)
+    return "sScarab", body.animation, body.x-8, body.y-8, false
+end
+
+function Definition.entityImage(entity)
+    return require("src.platform.object_assets").frame("Items/Treasures", "sScarab", 3, entity.animation or 0)
+end
+
 function Definition.updateTreasure(body, world, player)
     local Physics = require("src.platform.physical_body")
-    body.counter = body.counter or love.math.random(10, 30)
-    local vx, vy = body.vx, body.vy
-    if Physics.move(world, body, "x", vx) then body.vx = -vx end
-    if Physics.move(world, body, "y", vy) then body.vy = -vy end
+    Physics.move(world, body, "x", body.vx)
+    Physics.move(world, body, "y", body.vy)
     if world:solidAtPoint(body.x, body.y) then
         body:damage(999)
         return
@@ -23,15 +39,19 @@ function Definition.updateTreasure(body, world, player)
         return math.abs(value) < 1 and 0 or value
     end
     body.vx, body.vy = slow(body.vx), slow(body.vy)
-    if body.vx == 0 and body.vy == 0 then body.counter = body.counter - 1 end
-    if body.counter <= 0 and math.abs(body.vx) < 1 and math.abs(body.vy) < 1 then
-        local angle = love.math.random() * math.pi * 2
+    if body.vx == 0 and body.vy == 0 and body.counter > 0 then body.counter = body.counter - 1 end
+    if body.counter == 0 and body.vx < 1 and body.vy < 1 then
+        local angle
         if player and (player.x-body.x)^2 + (player.y-body.y)^2 < 64^2 then
             angle = math.atan2(body.y-player.y, body.x-player.x)
-        end
+        else angle = -math.rad(random(body, 0, 360)) end
         body.vx, body.vy = math.cos(angle)*4, math.sin(angle)*4
-        body.counter = love.math.random(10, 30)
+        body.counter = random(body, 10, 30)
     end
+    if Physics.probe(world, body, "x", 1) and body.vx > 0 then body.vx = -body.vx end
+    if Physics.probe(world, body, "x", -1) and body.vx < 0 then body.vx = -body.vx end
+    if Physics.probe(world, body, "y", -1) and body.vy < 0 then body.vy = -body.vy end
+    if Physics.probe(world, body, "y", 1) and body.vy > 0 then body.vy = -body.vy end
 end
 
 function Definition.onCollected(body, game)

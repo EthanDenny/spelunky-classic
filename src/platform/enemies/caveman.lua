@@ -106,11 +106,12 @@ function Caveman.animationFps(self, animation, name)
 end
 
 function Caveman.canDamage(body, hit)
-    return not hit or hit.kind ~= "whip" or body.stunned <= 0
+    return not hit or hit.kind ~= "whip" or hit.weapon == "machete"
+        or body.alive and body.stunned <= 0
 end
 
-function Caveman.canEnemyDamage(self)
-    return self.state ~= self.STATES.stunned
+function Caveman.canEnemyDamage(self, hit)
+    return hit and hit.weapon == "machete" or self.state ~= self.STATES.stunned
 end
 
 function Caveman.onSurviveDamage(self, sourceX, hit)

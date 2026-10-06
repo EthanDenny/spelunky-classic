@@ -785,8 +785,8 @@ function Test.run()
             game:checkWhip()
             assert(body.alive and body.hp == 2 and body.stunned > 0 and game.run.kills == 0)
             assert(#game.effects.particles == 1 and game.effects.particles[1].kind == "blood")
-            assert(not body:damage(2, game.player.x, { kind = "whip", weapon = "machete", phase = "front" })
-                and body.hp == 2, "Machete whip collisions retain the caveman's stunned immunity")
+            assert(body:damage(2, game.player.x, { kind = "whip", weapon = "machete", phase = "front" })
+                and body.hp == 0, "The source's Machete exception bypasses caveman stunned immunity")
         end },
         { "giant spider wall response follows its source Step event", function()
             local game = fixture()
@@ -1000,6 +1000,52 @@ function Test.run()
             local left = game:spawnEntity("skeleton", 40, 104)
             local right = game:spawnEntity("skeleton", 120, 104)
             assert(left.facing == 1 and right.facing == -1)
+        end },
+        { "a mattock destroys one solid instance when solids overlap", function()
+            local game = fixture()
+            game.player.x = 88
+            game.world:set("solid", 6, 6)
+            local block = game.world:addDynamicSolid({ kind = "push_block", x = 96, y = 96 })
+            local mattock = game:spawnEntity("mattock", 88, 104)
+            mattock:pickup(game.player, game.run)
+            game.heldItem = mattock
+            game:simulationStepBody({ attack = true })
+            for _ = 1, 65 do
+                game:simulationStepBody({})
+                if not game.world:has("solid", 6, 6) or not block.alive then break end
+            end
+            assert(game.world:has("solid", 6, 6) ~= block.alive,
+                "The Animation end instance_place selection destroys one matching solid: "
+                    .. tostring(game.world:has("solid", 6, 6)) .. ", " .. tostring(block.alive)
+                    .. ", " .. tostring(game.player.x) .. ", " .. tostring(game.player.y))
+        end },
+        { "the machete cuts a caveman corpse while an ordinary whip leaves it alone", function()
+            local game = fixture()
+            local corpse = game:spawnEntity("caveman", 96, 104)
+            corpse:damage(100)
+            corpse.vx, corpse.vy = 0, 0
+            game.player.whipping, game.player.animationFrame, game.player.facing = true, 5, 1
+            game:checkWhip()
+            assert(corpse.hp == -97, "An ordinary whip cannot damage DEAD cavemen")
+            local machete = game:spawnEntity("machete", 80, 104)
+            machete:pickup(game.player, game.run)
+            game.heldItem, game.meleeItem = machete, machete
+            game.player.attackKind = "machete"
+            game.meleeHits = { back = {}, front = {} }
+            for _ = 1, 3 do require("src.platform.item_actions").updateMelee(game) end
+            assert(corpse.corpse and corpse.hp == -99,
+                "The Machete exception still damages a dead caveman")
+        end },
+        { "scarabs turn a new hop away from an adjacent wall immediately", function()
+            local game = fixture()
+            game.world:set("solid", 6, 4)
+            game.player.x, game.player.y = 60, 72
+            local scarab = game:spawnEntity("scarab", 92, 72)
+            scarab.counter = 1
+            scarab:update(game.world, game.player)
+            assert(scarab.x == 92 and scarab.vx == -4 and scarab.vy == 0
+                and scarab.counter >= 10 and scarab.counter <= 30,
+                "The source's wall checks run after choosing a new fleeing velocity")
         end },
         { "scarabs emit collection sparks and participate in combat", function()
             local game = fixture()

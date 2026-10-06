@@ -33,4 +33,12 @@ function MeleeMask.overlaps(name, frame, x, y, left, top, right, bottom)
     return Mask.overlaps(mask(name, frame), x, y, left, top, right, bottom)
 end
 
+function MeleeMask.touching(name, frame, x, y, target)
+    local pixels = mask(name, frame)
+    return require("src.platform.entity_collision").touchingMask(target, nil,
+        x+pixels.left, y+pixels.top, x+pixels.right, y+pixels.bottom, function(px, py)
+            return Mask.overlaps(pixels, x, y, px, py, px+1, py+1)
+        end)
+end
+
 return MeleeMask

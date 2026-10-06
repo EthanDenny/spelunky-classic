@@ -390,10 +390,8 @@ function FullLevelPlaytest:checkWhip()
     for _, item in ipairs(self.items) do
         if not item.held and not item.opened and item.definition.container
             and item.definition.container.effect == "jar" then
-            local half = item:getCollisionHalfWidth()
-            local itemTop, itemBottom = item:getVerticalBounds()
-            if self.player:whipOverlapsRectangle(item.x - half, item.y + itemTop,
-                item.x + half, item.y + itemBottom) then
+            local name, x, y = self.player:getWhipSprite()
+            if name and require("src.platform.whip_mask").touching(name, x, y, item) then
                 self:openContainer(item)
             end
         end
