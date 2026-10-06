@@ -1,0 +1,125 @@
+src/tests/mines_level_selection_test.lua
+  s_7bb69fe9472571::t_d79804ec9b5fbe 34-70,107
+src/platform/tools/bomb.lua
+  s_06de4777c4b03f::t_f3f80e978a46de 1,8-17,107
+src/platform/README.md
+  s_06de4777c4b03f::t_f56825d6cbe74e 140-151
+  s_e5781921c77e0d::t_e8b00b127f1dae 192-194
+src/platform/enemies/caveman.lua
+  s_06de4777c4b03f::t_f56825d6cbe74e 151-152
+  s_06de4777c4b03f::t_8948d1327415ec 1,145,150
+src/screens/full_level_playtest.lua
+  s_a149baf2181030::t_dcb4fb649a5c34 817
+src/tests/entity_population_test.lua
+  s_7bb69fe9472571::t_a40c8874c658ff 62-66
+  s_7bb69fe9472571::t_59983fdf6f97bf 54-61,67-89,92
+  s_2f4dedd0d93569::t_66e8d669621227 125,133,141-147,152-156,163-164
+src/platform/tools/rope.lua
+  s_06de4777c4b03f::t_f3f80e978a46de 1,5-9,28,109-110
+src/tests/playtest_feedback_test.lua
+  s_06de4777c4b03f::t_3bc868233dd8c3 1,167
+src/screens/mine_item_scenarios.lua
+  s_e5781921c77e0d::t_e8b00b127f1dae 152,154
+src/game/run_state.lua
+  s_7bb69fe9472571::t_95b65364cab505 49
+src/platform/enemies/shopkeeper.lua
+  s_06de4777c4b03f::t_8948d1327415ec 11-12,43,247-248
+  s_06de4777c4b03f::t_f3f80e978a46de 249
+src/platform/item_traits.lua
+  s_06de4777c4b03f::t_8948d1327415ec 3,8-13,18
+src/tests/mines_completion_test.lua
+  s_06de4777c4b03f::t_a05f6d5b4128f5 100,103-104,107-110,112-116,118
+  s_a149baf2181030::t_c4acd16d88395f 29,98
+  s_06de4777c4b03f::t_c498df899c3c39 99,101-102,105-106,111,117
+  s_2f4dedd0d93569::t_565e9517682f0a 119
+src/tests/shop_behaviour_test.lua
+  s_06de4777c4b03f::t_3bc868233dd8c3 1,162,524
+src/platform/enemies/damsel.lua
+  s_06de4777c4b03f::t_8948d1327415ec 2,24,27-28,97
+  s_06de4777c4b03f::t_f56825d6cbe74e 98
+src/world/entity_generator.lua
+  s_7bb69fe9472571::t_95b65364cab505 227-228,236,244-248,254-256,263-266
+  s_bb280f3ce710e7::t_ab9dea7f9856eb 273,293
+src/tests/mine_item_scenarios_test.lua
+  s_e5781921c77e0d::t_29c06b6b317ef9 47
+  s_e5781921c77e0d::t_e8b00b127f1dae 51-56
+src/platform/creature.lua
+  s_06de4777c4b03f::t_8948d1327415ec 196,209
+src/platform/item_body.lua
+  s_06de4777c4b03f::t_f3f80e978a46de 15-17
+  s_a149baf2181030::t_dcb4fb649a5c34 5,13,18-26,28-38,40
+  s_06de4777c4b03f::t_c498df899c3c39 11
+  s_06de4777c4b03f::t_8948d1327415ec 1-4,6-10,12,14,27,39,41-48,51,53,55-57
+  s_06de4777c4b03f::t_f56825d6cbe74e 49-50,52,54
+src/tests/platform_item_test.lua
+  s_06de4777c4b03f::t_3bc868233dd8c3 1,226,229,232,241,247
+src/world/mines_generator.lua
+  s_7bb69fe9472571::t_95b65364cab505 590
+  s_04b1b2fe0be0ea::t_97d8eb90246778 457
+src/platform/item.lua
+  s_06de4777c4b03f::t_8948d1327415ec 150,162
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f8a3ad6f67d7d7dd1328636c78f1605829b1ca43",
+  "prompts": {},
+  "sessions": {
+    "s_04b1b2fe0be0ea": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1074b-10d2-7f03-9bd6-ab67dfb8f664",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Ethan Denny <ethandenny@protonmail.com>"
+    },
+    "s_06de4777c4b03f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1074b-499c-7940-a6be-4cc7d7d8023b",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Ethan Denny <ethandenny@protonmail.com>"
+    },
+    "s_2f4dedd0d93569": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a10d28-6940-7e90-ae69-d83dbdcea599",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Ethan Denny <ethandenny@protonmail.com>"
+    },
+    "s_7bb69fe9472571": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0fe2a-4d3d-7ba2-a0cf-246d601e3fec",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Ethan Denny <ethandenny@protonmail.com>"
+    },
+    "s_a149baf2181030": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0fdc3-ae05-7e41-a96b-bd7a333b41c3",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Ethan Denny <ethandenny@protonmail.com>"
+    },
+    "s_bb280f3ce710e7": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a10d41-1ebb-7931-b5f7-326d4b9120b1",
+        "model": "unknown"
+      },
+      "human_author": "Ethan Denny <ethandenny@protonmail.com>"
+    },
+    "s_e5781921c77e0d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0fe2a-65b7-74c1-86b4-c1c2030f1f30",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Ethan Denny <ethandenny@protonmail.com>"
+    }
+  }
+}
