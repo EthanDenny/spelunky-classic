@@ -153,7 +153,7 @@ function Test.run(app)
     local collisionGame = FullLevelPlaytest.new(app)
     collisionGame.world = World.new(16, 12, 16)
     collisionGame.level = { entities = {} }
-    collisionGame.renderer = app.screens.world_generation
+    collisionGame.renderer = app.renderer
     collisionGame.seed = 29
     collisionGame.items = {}
     collisionGame.collectibles = {}

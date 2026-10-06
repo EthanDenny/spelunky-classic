@@ -37,11 +37,10 @@ function App:load()
     self.fonts.menu, self.fontFallbacks.menu = newUIFont(25)
     self.fonts.title, self.fontFallbacks.title = newUIFont(40)
 
+    self.renderer = require("src.render.mines_renderer").new()
     self.screens = {
         menu = require("src.screens.menu").new(self),
         animation_viewer = require("src.screens.animation_viewer").new(self),
-        world_generation = require("src.screens.world_generation").new(self),
-        platforming_engine = require("src.screens.platforming_engine").new(self),
         enemy_ai = require("src.screens.enemy_ai").new(self),
         full_level_playtest = require("src.screens.full_level_playtest").new(self),
         full_game = require("src.screens.full_game").new(self),
@@ -54,8 +53,7 @@ function App:preload()
     -- GameMaker displays its splash while resources are loaded. Keep the
     -- frameless splash alive while the prototype's shared assets are warmed.
     self.screens.animation_viewer:loadPage(1)
-    self.screens.world_generation:loadAssets()
-    self.screens.platforming_engine:loadAssets()
+    self.renderer:loadAssets()
     self.screens.enemy_ai:loadAssets()
     self.screens.full_level_playtest:loadAssets()
 end

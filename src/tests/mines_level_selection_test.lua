@@ -68,40 +68,58 @@ local function assertProgressionPair(playtest)
     end
 end
 
+local function assertMapPreview(app)
+    app:showScreen("full_level_playtest")
+    local game = app.currentScreen
+    game.levelNumber, game.subtypeIndex = 1, 1
+    game:generateSelectedLevel(8675309, true)
+    local level, player, tick = game.level, game.player, game.world.time
+    local x, y, bombs, ropes = player.x, player.y, game.run.bombs, game.run.ropes
+    app:keypressed("tab", "tab", false)
+    app:update(1)
+    assert(game.world.time == tick and player.x == x and player.y == y,
+        "The whole-map preview must pause the live level")
+    for _, key in ipairs({ "a", "s", "x", "z", "up" }) do
+        app:keypressed(key, key, false)
+        app:keyreleased(key, key)
+    end
+    assert(game.run.bombs == bombs and game.run.ropes == ropes and not game.exiting,
+        "Preview controls must not spend tools or enter exits")
+    local width, height = love.graphics.getDimensions()
+    local canvas = love.graphics.newCanvas(width, height)
+    local function capture()
+        love.graphics.push("all")
+        love.graphics.setCanvas(canvas)
+        app:draw()
+        love.graphics.pop()
+        return canvas:newImageData()
+    end
+    local plain = capture()
+    app:keypressed("f2", "f2", false)
+    local path = capture()
+    local changed = 0
+    for py = 64, height-41, 4 do
+        for px = 0, width-1, 4 do
+            local r, g, b = plain:getPixel(px, py)
+            local pr, pg, pb = path:getPixel(px, py)
+            if math.abs(r-pr)+math.abs(g-pg)+math.abs(b-pb) > 0.03 then changed = changed+1 end
+        end
+    end
+    assert(changed > 100, "Room-path colors must render over the whole-map preview")
+    canvas:release()
+    app:keypressed("n", "n", false)
+    assert(game.seed ~= level.seed, "Next seed must generate a new map while previewing")
+    local nextTick = game.world.time
+    app:update(1)
+    assert(game.world.time == nextTick, "Generating a map must preserve the paused preview")
+    app:keypressed("tab", "tab", false)
+    app:update(1/30)
+    assert(game.world.time > nextTick, "Closing the map must resume live gameplay")
+    app:keypressed("f2", "f2", false)
+end
+
 function Test.run(app)
-    local preview = app.screens.world_generation
-    preview:loadAssets()
-    preview.subtypeSelector:select(1)
-    preview.levelNumber = 1
-    assert(preview:generate(8675309))
-    preview:draw()
-    local layout = preview:getLayout()
-    local itemHeight = layout.subtype.height / #preview.subtypeSelector.items
-    local function clickSubtype(index)
-        preview:mousepressed(layout.subtype.x + 10,
-            layout.subtype.y + (index - 0.5) * itemHeight, 1)
-    end
-
-    clickSubtype(2)
-    assertSelectedLevel(preview.level, "standard")
-    clickSubtype(3)
-    assertSelectedLevel(preview.level, "idol")
-    local idolSeed = preview.seed
-    preview:keypressed("r", "r", false)
-    assert(preview.seed ~= idolSeed, "Generate must find the next matching seed")
-    assertSelectedLevel(preview.level, "idol")
-    clickSubtype(4)
-    assert(preview.levelNumber == 2, "Kali rooms require Mines 1-2 or later")
-    assertSelectedLevel(preview.level, "altar")
-    for _, subtype in ipairs({ "snake_pit", "shop", "dark" }) do
-        preview:keypressed("right", "right", false)
-        assertSelectedLevel(preview.level, subtype)
-    end
-    preview:draw()
-    preview:changeLevelNumber(-1)
-    assert(preview.levelNumber == 1 and preview.level.selectedSubtype == "random",
-        "An unavailable type must clear when previewing Mines 1-1")
-
+    assertMapPreview(app)
     local playtest = app.screens.full_level_playtest
     playtest:loadAssets()
     assertProgressionPair(playtest)
@@ -126,10 +144,6 @@ function Test.run(app)
     assert(playtest.levelNumber == 3 and playtest.level.selectedSubtype == "random",
         "Normal exit progression must leave the test-only type filter")
 
-    preview.subtypeSelector:select(1)
-    preview.levelNumber = 1
-    preview.level = nil
-    preview.seed = nil
     playtest.subtypeIndex = 1
     playtest.levelNumber = 1
     playtest.run = nil

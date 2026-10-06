@@ -45,7 +45,6 @@ local function runSmokeTest()
     require("src.tests.mines_completion_test").run()
     require("src.tests.platform_player_test").run()
     require("src.tests.platform_item_test").run()
-    require("src.tests.platforming_engine_test").run(app)
     require("src.tests.enemy_ai_test").run(app)
     require("src.tests.mine_item_scenarios_test").run(app)
     require("src.tests.bomb_scenarios_test").run(app)
@@ -63,8 +62,6 @@ local function runSmokeTest()
     local screenNames = {
         "menu",
         "animation_viewer",
-        "world_generation",
-        "platforming_engine",
         "enemy_ai",
         "full_level_playtest",
     }
@@ -85,23 +82,6 @@ local function runSmokeTest()
     animationViewer:keypressed("f", "f", false)
     assert(animationViewer.facing == "right", "Animation facing toggle failed")
     animationViewer:keypressed("f", "f", false)
-
-    local worldGeneration = app.screens.world_generation
-    for levelType = 1, #worldGeneration.selector.items do
-        worldGeneration.selector:select(levelType)
-        local depths = worldGeneration.selector:getSelected().depthCount
-        for depth = 1, depths do
-            worldGeneration.levelNumber = depth
-            worldGeneration:generate(8675309 + depth)
-            worldGeneration:draw()
-        end
-    end
-    worldGeneration.selector:select(1)
-    worldGeneration.levelNumber = 4
-    worldGeneration:generate(8675309)
-    worldGeneration.showRoomPath = true
-    worldGeneration:draw()
-    worldGeneration.showRoomPath = false
 
     local fullLevel = app.screens.full_level_playtest
     assert(fullLevel.world and fullLevel.player, "Full level playtest did not build its simulation")
@@ -172,13 +152,13 @@ local function runSmokeTest()
         fullLevel.levelNumber = 1
         fullLevel:generateLevel(8675309)
     end
-    assert(app.screens.menu.items[5].screen == "full_level_playtest",
-        "Full level playtest must be the fifth menu section")
+    assert(app.screens.menu.items[3].screen == "full_level_playtest",
+        "Full level playtest must be the third menu section")
 
     app:showScreen("menu")
     app:keypressed("down", "down", false)
     app:keypressed("return", "return", false)
-    assert(app.currentScreenName == "world_generation", "Menu activation failed")
+    assert(app.currentScreenName == "enemy_ai", "Menu activation failed")
 
     app:keypressed("escape", "escape", false)
     assert(app.currentScreenName == "menu", "Back navigation failed")

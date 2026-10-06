@@ -200,7 +200,7 @@ function Test.run(app)
     local giant = Creature.new({ kind = "giant_spider", x = 8, y = 5, properties = {} },
         { width = 32, height = 16, originX = 0, originY = 0 }, { seed = 17 })
     local observer = Player.new(giant.x, giant.y + 48)
-    local renderer = app.screens.world_generation
+    local renderer = app.renderer
     renderer:loadAssets()
     local images = {}
     local originalDraw = love.graphics.draw

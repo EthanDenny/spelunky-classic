@@ -17,8 +17,6 @@ function Menu.new(app)
         selectedIndex = 1,
         items = {
             { label = "Animation Viewer", screen = "animation_viewer" },
-            { label = "World Generation", screen = "world_generation" },
-            { label = "Platforming Engine", screen = "platforming_engine" },
             { label = "Scenario Tests", screen = "enemy_ai" },
             { label = "Full Level Playtest", screen = "full_level_playtest" },
             { label = "Full game", screen = "full_game" },

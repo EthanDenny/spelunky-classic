@@ -336,7 +336,7 @@ function Test.run(app)
             assert(scenario.runs > 1, "Every skeleton scenario must repeat automatically")
         end
 
-        assert(app.screens.menu.items[4].label == "Scenario Tests",
+        assert(app.screens.menu.items[2].label == "Scenario Tests",
             "The menu must identify the expanded scenario viewer by its new name")
         viewer:setPage(7)
         assert(#viewer.scenarios == 9, "Rope throws, enemy impacts, and ledge drops must have visible scenarios")

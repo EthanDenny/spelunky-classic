@@ -13,8 +13,8 @@ end
 
 local function start(app)
     app:showScreen("menu")
-    app:keypressed("6", "6", false)
-    assert(app.currentScreenName == "full_game", "Menu option 6 must launch Full game")
+    app:keypressed("4", "4", false)
+    assert(app.currentScreenName == "full_game", "Menu option 4 must launch Full game")
     local game = app.currentScreen
     assert(game.music and game.music.source:isPlaying() and game.music.source:isLooping(),
         "Full game must play looping Mines music on entry")
@@ -93,11 +93,12 @@ function Test.run(app)
             "Fullscreen must preserve Classic's 320x240 camera on an integer pixel grid")
         assert(view.x >= 0 and view.y >= 0 and view.x+view.width <= love.graphics.getWidth()
             and view.y+view.height <= love.graphics.getHeight(), "The game viewport must fit the display")
-        for _, key in ipairs({ "r", "n", "-", "=", "[", "]", "b" }) do
+        for _, key in ipairs({ "r", "n", "-", "=", "[", "]", "b", "tab", "f2" }) do
             app:keypressed(key, key, false)
         end
         assert(game.run == run and game.level == level and game.seed == seed
-            and game.levelNumber == 1 and not game.debugCollision,
+            and game.levelNumber == 1 and not game.debugCollision
+            and not game.mapPreview and not game.showRoomPath,
             "Testing keys must not reroll, reset, skip a level, select a type or show colliders")
         assert(lab.levelNumber == 4 and lab.subtypeIndex == 3 and lab.run.money == 9999,
             "Starting a Full game must preserve the separate lab session")

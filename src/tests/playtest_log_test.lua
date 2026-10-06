@@ -8,14 +8,10 @@ function Test.run(app)
     local log = assert(PlaytestLog.start(), "A playtest must open its persistent log")
     local ok, err = pcall(function()
         app.playtestLog = log
-        app:showScreen("platforming_engine")
-        app.screens.platforming_engine:resetCourse()
-        app:update(1 / 30)
-        app:showScreen("world_generation")
-        app:update(1 / 60)
         app:showScreen("enemy_ai")
         app:update(1 / 30)
         app:showScreen("full_level_playtest")
+        app.currentScreen:generateSelectedLevel(8675309, true)
         app:update(1 / 30)
         app:keypressed("f9", "f9", false)
         log:close()
@@ -29,7 +25,7 @@ function Test.run(app)
             and contents:find('"type":"tick"', 1, true)
             and contents:find('"type":"bookmark"', 1, true),
             "A real screen must persist its initial world, live ticks, and bug marker")
-        for _, screen in ipairs({ "platforming_engine", "enemy_ai", "full_level_playtest" }) do
+        for _, screen in ipairs({ "enemy_ai", "full_level_playtest" }) do
             local foundTick = false
             for line in contents:gmatch("[^\n]+") do
                 if line:find('"type":"tick"', 1, true)
@@ -54,7 +50,7 @@ function Test.run(app)
     end)
     log:close()
     app.playtestLog = nil
-    for _, screen in ipairs({ "platforming_engine", "enemy_ai", "full_level_playtest" }) do
+    for _, screen in ipairs({ "enemy_ai", "full_level_playtest" }) do
         local simulation = app.screens[screen]
         if simulation.world then simulation.world.playtestLog = nil end
         if simulation.player then simulation.player.playtestLog = nil end

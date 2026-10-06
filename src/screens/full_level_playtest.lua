@@ -17,6 +17,7 @@ local ProjectileSystem = require("src.platform.projectile_system")
 local RunState = require("src.game.run_state")
 local Depth = require("src.render.classic_depth")
 local DepthQueue = require("src.render.depth_queue")
+local LevelPreview = require("src.render.level_preview")
 local ClassicSounds = require("src.audio.classic_sounds")
 local Shop = require("src.platform.shop")
 local Shopkeeper = require("src.platform.enemies.shopkeeper")
@@ -74,6 +75,8 @@ function FullLevelPlaytest.new(app)
         cameraX = 0,
         cameraY = 0,
         debugCollision = false,
+        mapPreview = false,
+        showRoomPath = false,
         deathTimer = 0,
         exitReady = false,
         hitSound = nil,
@@ -101,7 +104,7 @@ function FullLevelPlaytest.new(app)
 end
 
 function FullLevelPlaytest:loadAssets()
-    self.renderer = self.renderer or self.app.screens.world_generation
+    self.renderer = self.renderer or self.app.renderer
     self.renderer:loadAssets()
     Enemy.loadAssets()
     self.hitSound = self.hitSound
@@ -173,6 +176,9 @@ function FullLevelPlaytest:generateLevel(seed)
     self.level = MinesGenerator.generate(seed, { levelNumber = self.levelNumber,
         run = self.run, forceDark = self.forceDarkLevels })
     self.level.selectedSubtype = MinesLevelSelection.choices[self.subtypeIndex].key
+    if self.app.playtestLog then
+        self.app.playtestLog:generatedLevel(self.screenName, self.level, self.levelNumber)
+    end
     self:buildSimulation()
 end
 
@@ -888,6 +894,7 @@ function FullLevelPlaytest:simulationStep()
 end
 
 function FullLevelPlaytest:update(dt)
+    if self.mapPreview then return end
     self.accumulator = math.min(self.accumulator + dt, STEP * 5)
     while self.accumulator >= STEP do
         self:simulationStep()
@@ -914,6 +921,17 @@ end
 function FullLevelPlaytest:keypressed(key, _, isRepeat)
     if isRepeat then return end
     local controls = self.app.controls
+    if self.screenName == "full_level_playtest" and key == "tab" then
+        self.mapPreview = not self.mapPreview
+        self.accumulator = 0
+        controls:clearJumpEdges()
+        return
+    elseif self.screenName == "full_level_playtest" and key == "f2" then
+        self.showRoomPath = not self.showRoomPath
+        return
+    end
+    if self.mapPreview and key ~= "r" and key ~= "n" and key ~= "-"
+        and key ~= "=" and key ~= "[" and key ~= "]" and key ~= "b" then return end
     if (self.exiting or self.completed) and key ~= "r" and key ~= "n" then return end
     if controls:matches("pay", key) then
         self.payQueued = true
@@ -1088,6 +1106,7 @@ function FullLevelPlaytest:drawWorld(viewport)
     if self.effects then self.effects:submit(queue) end
     queue:draw()
     require("src.platform.lighting").draw(self, viewport)
+    if self.showRoomPath then LevelPreview.drawRoomPath(self.level, self.app.fonts.small) end
     if self.debugCollision then
         self:drawDebugBounds(self.player, { 0.2, 1, 0.35, 0.9 })
         for _, enemy in ipairs(self.enemies) do
@@ -1146,9 +1165,13 @@ function FullLevelPlaytest:draw()
     local width, height = love.graphics.getDimensions()
     local viewport = self:getViewport()
     love.graphics.clear(COLORS.background)
-    self:drawWorld(viewport)
-    self:drawPlayerHUD(viewport)
-    self:drawGameplayMessages(viewport)
+    if self.mapPreview then
+        LevelPreview.draw(self.renderer, self.level, viewport, self.showRoomPath, self.app.fonts.small)
+    else
+        self:drawWorld(viewport)
+        self:drawPlayerHUD(viewport)
+        self:drawGameplayMessages(viewport)
+    end
 
     love.graphics.setColor(COLORS.panel)
     love.graphics.rectangle("fill", 0, 0, width, HEADER_HEIGHT)
@@ -1159,7 +1182,7 @@ function FullLevelPlaytest:draw()
 
     love.graphics.setFont(self.app.fonts.menu)
     love.graphics.setColor(COLORS.text)
-    love.graphics.print("FULL LEVEL PLAYTEST", 18, 10)
+    love.graphics.print(self.mapPreview and "LEVEL MAP (PAUSED)" or "FULL LEVEL PLAYTEST", 18, 10)
     love.graphics.setFont(self.app.fonts.small)
     love.graphics.setColor(COLORS.muted)
     love.graphics.print("MINES  " .. self:levelLabel()
@@ -1175,7 +1198,7 @@ function FullLevelPlaytest:draw()
     local controls = self.app.controls
     love.graphics.printf(
         string.format("%s/%s MOVE   %s RUN   %s JUMP   %s ACTION/PICK UP   %s BOMB   %s ROPE   %s PAY   %s/%s CLIMB\n"
-            .. "R RESET   N NEXT SEED   -/= DEPTH   [/] TYPE   B COLLIDERS   ESC BACK",
+            .. "R RESET   N NEXT SEED   -/= DEPTH   [/] TYPE   B COLLIDERS   TAB MAP/PLAY   F2 ROOM PATH   ESC BACK",
             controls:label("left"), controls:label("right"), controls:label("run"),
             controls:label("jump"), controls:label("attack"), controls:label("bomb"),
             controls:label("rope"), controls:label("pay"), controls:label("up"), controls:label("down")),

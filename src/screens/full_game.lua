@@ -32,6 +32,7 @@ function FullGame:enter()
     self.levelNumber, self.subtypeIndex = 1, 1
     self.run, self.heldItem, self.heldNpc, self.selectionError = nil, nil, nil, nil
     self.debugCollision = false
+    self.mapPreview, self.showRoomPath = false, false
     self:generateLevel()
 end
 

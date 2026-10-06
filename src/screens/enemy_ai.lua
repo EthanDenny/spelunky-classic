@@ -710,7 +710,7 @@ function EnemyAI:loadAssets()
     self.sounds.explosion = love.audio.newSource("original-game-reference/sound/explosion.wav", "static")
     Enemy.loadAssets()
     Effects.loadAssets()
-    self.itemRenderer = self.app.screens.world_generation
+    self.itemRenderer = self.app.renderer
     self.itemRenderer:loadAssets()
 end
 

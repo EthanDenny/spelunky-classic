@@ -135,11 +135,8 @@ function PlaytestLog.capture(screen)
         elapsed = screen.elapsed,
         scrollY = screen.scrollY,
         showRoomPath = screen.showRoomPath,
+        mapPreview = screen.mapPreview,
     }
-    if screen.selector then
-        local selected = screen.selector:getSelected()
-        result.selectedArea = selected and selected.key
-    end
     if player then
         result.player = copyFields(player, PLAYER_FIELDS)
         result.player.equipment = copyFlags(player.equipment)

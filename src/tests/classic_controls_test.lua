@@ -42,9 +42,28 @@ function Test.run(app)
         and active.settings.downToRun == loaded.settings.downToRun,
         "The app must use the actual files selected at startup")
 
-    local room = app.screens.platforming_engine
+    local room = app.screens.full_level_playtest
     room:enter()
-    room:resetCourse()
+    local groundY
+    local function resetRoom()
+        room.levelNumber, room.subtypeIndex = 1, 1
+        room:generateSelectedLevel(8675309, true)
+        room.enemies, room.items, room.collectibles, room.fakeBones = {}, {}, {}, {}
+        room.traps.traps = {}
+        for y = 4, room.world.height-2 do
+            for x = 2, room.world.width-3 do
+                local px, py = x*16+8, y*16-8
+                if room.world:solidAtPoint(px, py+8)
+                    and not room.world:overlaps("solid", px-8, py-48, px+8, py+8) then
+                    room.player.x, room.player.y = px, py
+                    groundY = py
+                    return
+                end
+            end
+        end
+        error("The generated level needs a clear grounded input fixture")
+    end
+    resetRoom()
     app.controls = original
     local hardwareIsDown = love.keyboard.isDown
     local ok, err = pcall(function()
@@ -65,7 +84,7 @@ function Test.run(app)
     -- Real App callbacks must deliver taps that end before the next 30 Hz step.
     local previousScreen = app.currentScreenName
     app.controls = original
-    app:showScreen("platforming_engine")
+    app:showScreen("full_level_playtest")
     local held = {}
     local function jumpTap(key)
         held[key] = true
@@ -74,7 +93,7 @@ function Test.run(app)
         app:keyreleased(key, key)
     end
     local function resetJump()
-        room:resetCourse()
+        resetRoom()
         held = {}
     end
     ok, err = pcall(function()
@@ -125,7 +144,7 @@ function Test.run(app)
         jumpTap("z")
         app:update(1/30)
         assert(room.player.vy > 0, "A queued input event does not permit a midair ground jump")
-        room.player.y, room.player.vy = 18*16-8, 0
+        room.player.y, room.player.vy = groundY, 0
         room.player.state = "standing"
         app:update(1/30)
         assert(room.player.vy == 0, "An ineligible tap must not wait for a later landing")
@@ -133,15 +152,15 @@ function Test.run(app)
         resetJump()
         jumpTap("z")
         app:showScreen("menu")
-        app:showScreen("platforming_engine")
+        app:showScreen("full_level_playtest")
+        assert(not room:getInput(true).jumpPressed, "Menu navigation must discard pending gameplay jump events")
         app:update(1/30)
-        assert(room.player.vy == 0, "Menu navigation must discard pending gameplay jump events")
 
         resetJump()
         jumpTap("z")
-        room:resetCourse()
+        resetRoom()
         app:update(1/30)
-        assert(room.player.vy == 0, "Resetting a course must discard pending jump events")
+        assert(room.player.vy == 0, "Resetting a level must discard pending jump events")
 
         resetJump()
         jumpTap("z")
@@ -164,15 +183,21 @@ function Test.run(app)
     app:showScreen(previousScreen)
     assert(ok, err)
 
-    room:resetCourse()
+    resetRoom()
     app.controls = remapped
-    local remaining = room.ropes
+    local remaining = room.run.ropes
     room:keypressed("s")
-    assert(room.ropes == remaining, "The original rope key must stop working after a remap")
+    assert(room.run.ropes == remaining, "The original rope key must stop working after a remap")
+    room:simulationStepBody({ attack = true })
     room:keypressed("t")
-    assert(room.ropes == remaining - 1 and #room.tools.ropes == 1,
+    assert(room.run.ropes == remaining and #room.tools.ropes == 0,
+        "A rope press during the whip animation must not spend a rope")
+    for _ = 1, 20 do room:simulationStepBody({}) end
+    room:keypressed("t")
+    assert(room.run.ropes == remaining - 1 and #room.tools.ropes == 1,
         "The configured rope key must reach the live gameplay screen")
 
+    resetRoom()
     app.controls = original
     local fullLevel = app.screens.full_level_playtest
     local bombs, ropes = fullLevel.run.bombs, fullLevel.run.ropes

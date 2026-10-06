@@ -19,10 +19,10 @@ Jar/skull override the item parent Step, and scarabs use depth 40.
 Buried objects follow these visibility depths too. The shop
 `k` marker instantiates `oSign` at 110; the separate dice-sign *tile* is 9004.
 
-`WorldGeneration:submitLevel` submits static backdrops, entities, terrain and
+`MinesRenderer:submitLevel` submits static backdrops, entities, terrain and
 cave lips for both the preview and live playtest. Full Level Playtest submits
 items, creatures, dynamic terrain, traps, tools, projectiles, player, whip and
-effects to the **same** queue. Platforming Engine and Enemy AI also use the
+effects to the **same** queue. Scenario Tests also use the
 same queue and depth mapping. Sprite draw functions only draw their own image;
 they must not establish global bands by drawing neighboring objects. The room
 background is drawn before the queue. Darkness masks the completed world;
@@ -42,3 +42,8 @@ object from its owner into the queue, and add a rendered-order regression in
 `src/tests/render_depth_test.lua` for at least one relevant occlusion boundary.
 Keep the queue inside the world camera transform; never put HUD or darkness
 into it. `love . --smoke-test` exercises preview and live playtest ordering.
+
+`mines_renderer.lua` owns shared art and submissions independently of screens.
+`level_preview.lua` fits the playtest level into its viewport and draws the optional
+room-path overlay. Full Level Playtest pauses while its map is open; Full game
+does not expose map or diagnostic controls.

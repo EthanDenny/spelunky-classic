@@ -69,7 +69,7 @@ function Test.run(app)
         "Destroyed terrain must remove the cave lip attached above that tile")
     world:destroyTerrain(6 * 16 + 8, 6 * 16 + 8, 0)
     assert(not world:has("solid", 6, 6), "The boulder must remove an altar's collision cell")
-    local renderer = app.screens.world_generation
+    local renderer = app.renderer
     renderer:loadAssets()
     local drawn = {}
     local drawEntity = renderer.drawEntity

@@ -314,16 +314,6 @@ function Test.run()
     assert(#failures == 0, table.concat(failures, "\n"))
 
     do
-        local world = World.makeTestCourse()
-        assert(world:has("solid", 12, 12) and world:has("solid", 20, 19),
-            "Visible brick ledges in the platform course must be solid terrain")
-        assert(not world:has("solid", 15, 12) and not world:has("solid", 15, 17),
-            "Solid ledges must leave openings for their ladder tops")
-        assert(world:has("ladderTop", 15, 12) and world:has("ladderTop", 15, 17),
-            "Only explicit ladder tops should retain one-way platform behavior")
-    end
-
-    do
         local world = flatWorld()
         local player = groundedPlayer(world)
         local startX = player.x
@@ -610,7 +600,7 @@ function Test.run()
             { name = "left", x = 309, direction = -1, firstTile = 16, lastTile = 18, sprint = true },
             { name = "right", x = 187, direction = 1, firstTile = 12, lastTile = 14 },
         }) do
-            local world = World.makeTestCourse()
+            local world = require("src.tests.fixtures.platform_course")()
             local player = Player.new(case.x, 278)
             player.vy = 1
             local toward = { left = case.direction < 0, right = case.direction > 0,
@@ -739,7 +729,7 @@ function Test.run()
     end
 
     do
-        local world = World.makeTestCourse()
+        local world = require("src.tests.fixtures.platform_course")()
         local player = Player.new(248, 190)
         player.state = Player.STATES.falling
         for _ = 1, 30 do

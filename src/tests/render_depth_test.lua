@@ -187,7 +187,7 @@ function Test.run(app)
         end
     end
 
-    local renderer = app.screens.world_generation
+    local renderer = app.renderer
     local originalEntity, originalTile, originalBackdrop =
         renderer.drawEntity, renderer.drawTile, renderer.drawBackdrops
     local previewOrder = {}

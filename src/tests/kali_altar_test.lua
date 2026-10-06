@@ -200,7 +200,7 @@ function Test.run(app)
                     "ACTION must pick up a dead " .. kind)
                 ticks(game, 25)
                 assert(body.held and game.run.favor == 0, "A held corpse cannot be consumed")
-                body:draw(app.screens.world_generation)
+                body:draw(app.renderer)
                 game:handleActionPressed({ down = true, attack = true })
                 assert(not game.heldNpc and not body.held and body.corpse,
                     "ACTION must release a corpse without resurrecting it")
@@ -226,7 +226,7 @@ function Test.run(app)
                 "Either half's destruction must cause one penalty and six spiders per head")
             ticks(game, 1)
             assert(game.run.kaliPunish == 1, "Destroyed altars must not punish on subsequent ticks")
-            app.screens.world_generation:drawEntity(game.level.entities[3])
+            app.renderer:drawEntity(game.level.entities[3])
             game.effects:draw()
         end },
         { "support collapse escalates to ball and chain then darkness and a ghost", function()
@@ -262,7 +262,7 @@ function Test.run(app)
         end },
         { "exits retain Kali progress and chains while dropping corpses", function()
             local game = FullLevel.new(app)
-            game.renderer = app.screens.world_generation
+            game.renderer = app.renderer
             game:generateLevel(17)
             game.run.favor, game.run.kaliGift, game.run.kaliPunish = 16, 2, 2
             local body = game:spawnEntity("damsel", game.player.x, game.player.y)
@@ -292,7 +292,7 @@ function Test.run(app)
             assert(game.player.x ~= x and game.player.ball.x == game.player.x
                 and game.player.ball.y == game.player.y,
                 "Teleportation must move the punished player's ball too")
-            app.screens.world_generation:drawItem(game.player.ball)
+            app.renderer:drawItem(game.player.ball)
             local queue = require("src.render.depth_queue").new()
             require("src.platform.kali").submit(game, queue)
             queue:draw()
