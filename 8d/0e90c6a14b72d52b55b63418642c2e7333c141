@@ -1,0 +1,64 @@
+src/tests/render_depth_test.lua
+  s_a149baf2181030::t_01837c5c5d8f42 190
+README.md
+  s_a149baf2181030::t_4da1c5e04668c3 5,7,17,19-21
+src/tests/mines_followup_regression_test.lua
+  s_a149baf2181030::t_01837c5c5d8f42 72
+src/screens/full_game.lua
+  s_a149baf2181030::t_88b200c5c92fec 35
+main.lua
+  s_a149baf2181030::t_01837c5c5d8f42 155-156,161
+src/tests/enemy_ai_test.lua
+  s_a149baf2181030::t_01837c5c5d8f42 339
+src/tests/kali_altar_test.lua
+  s_a149baf2181030::t_01837c5c5d8f42 203,229,265,295
+src/tests/playtest_log_test.lua
+  s_a149baf2181030::t_01837c5c5d8f42 14,28,53
+src/tests/classic_controls_test.lua
+  s_a149baf2181030::t_007065e27cd157 200
+  s_a149baf2181030::t_4da1c5e04668c3 45,47-66,87,96,147,155-156,161,163,186,188,190-195,197
+src/render/mines_renderer.lua
+  s_a149baf2181030::t_01837c5c5d8f42 1-255
+src/tests/fixtures/platform_course.lua
+  s_a149baf2181030::t_01837c5c5d8f42 1-31
+src/tests/playtest_feedback_test.lua
+  s_a149baf2181030::t_01837c5c5d8f42 156
+src/tests/mines_level_selection_test.lua
+  s_a149baf2181030::t_5baefc0e7e808a 71-84,86-106,108-119,121-122
+src/screens/full_level_playtest.lua
+  s_a149baf2181030::t_01837c5c5d8f42 20,78-79,107,897,925-928,930-934,1109,1168-1174,1185,1201
+  s_a149baf2181030::t_88b200c5c92fec 179-181,924,929
+src/tests/platform_player_test.lua
+  s_a149baf2181030::t_01837c5c5d8f42 603,732
+src/app.lua
+  s_a149baf2181030::t_01837c5c5d8f42 40,56
+src/tests/gameplay_systems_test.lua
+  s_a149baf2181030::t_01837c5c5d8f42 203
+src/render/level_preview.lua
+  s_a149baf2181030::t_01837c5c5d8f42 1-2,4-15,17-30,32,35-43,45-48,50-54,56-58,60-61,64-65,67-69,72
+  s_a149baf2181030::t_0019da98a30693 3,55
+src/observability/playtest_log.lua
+  s_a149baf2181030::t_01837c5c5d8f42 138
+src/render/README.md
+  s_a149baf2181030::t_4da1c5e04668c3 22,25,45-49
+src/tests/full_game_test.lua
+  s_a149baf2181030::t_01837c5c5d8f42 16-17,96,100-101
+src/screens/enemy_ai.lua
+  s_a149baf2181030::t_01837c5c5d8f42 713
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8d0e90c6a14b72d52b55b63418642c2e7333c141",
+  "prompts": {},
+  "sessions": {
+    "s_a149baf2181030": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0fdc3-ae05-7e41-a96b-bd7a333b41c3",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Ethan Denny <ethandenny@protonmail.com>"
+    }
+  }
+}
