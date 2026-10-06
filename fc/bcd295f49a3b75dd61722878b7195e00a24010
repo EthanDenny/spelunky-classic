@@ -1,0 +1,71 @@
+src/platform/projectile_body.lua
+  s_a149baf2181030::t_babd4e754aced7 1,5,9-14,16-19,22-31,33,35-39,42-45
+src/platform/items/teleporter.lua
+  s_a149baf2181030::t_9890beb066134c 31-32,34-39,42
+src/platform/item_actions.lua
+  s_a149baf2181030::t_9890beb066134c 135
+src/app.lua
+  s_a149baf2181030::t_a315f456059733 82
+  s_ee7f34f4fcc8bb::t_de82699f1c6f31 69,146
+src/platform/player.lua
+  s_a149baf2181030::t_8c6c341562da76 215,225
+src/platform/projectiles/web_ball.lua
+  s_a149baf2181030::t_3eb85635896eef 6-11
+src/screens/full_level_playtest.lua
+  s_a149baf2181030::t_a315f456059733 901-904
+  s_a149baf2181030::t_8c6c341562da76 635-646
+  s_ee7f34f4fcc8bb::t_8bf5ee2ba41867 204,944
+src/platform/projectile_system.lua
+  s_a149baf2181030::t_2577562e5caa42 82
+src/platform/entity_collision.lua
+  s_a149baf2181030::t_2577562e5caa42 86-96
+  s_a149baf2181030::t_8c6c341562da76 97-109
+src/platform/projectiles/pellet.lua
+  s_a149baf2181030::t_2577562e5caa42 3-4
+src/tests/classic_controls_test.lua
+  s_a149baf2181030::t_7cad1ebf998b94 39,45-76
+  s_a149baf2181030::t_35d56f25f3247e 77
+src/input/classic_controls.lua
+  s_a149baf2181030::t_57c4c660c1bd9f 174-175
+  s_a149baf2181030::t_a315f456059733 23-24,53-61,101-103,117,121-157,176-177
+  s_ee7f34f4fcc8bb::t_4d022809fbd6c8 158,178
+src/platform/projectiles/bullet.lua
+  s_a149baf2181030::t_2577562e5caa42 3-6
+src/platform/items/arrow.lua
+  s_a149baf2181030::t_2577562e5caa42 125-128
+  s_a149baf2181030::t_8c6c341562da76 51,56-61
+src/tests/mines_completion_test.lua
+  s_a149baf2181030::t_36d6ceca992910 68-92
+  s_a149baf2181030::t_7cad1ebf998b94 60-67
+src/platform/traps/arrow_trap_sensor.lua
+  s_a149baf2181030::t_9890beb066134c 6-7
+src/tests/playtest_feedback_test.lua
+  s_a149baf2181030::t_a315f456059733 174
+  s_a149baf2181030::t_e76fd8ef4d3333 191,197
+src/screens/full_game.lua
+  s_ee7f34f4fcc8bb::t_3a3a7dca97b34c 77
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "fcbcd295f49a3b75dd61722878b7195e00a24010",
+  "prompts": {},
+  "sessions": {
+    "s_a149baf2181030": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0fdc3-ae05-7e41-a96b-bd7a333b41c3",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Ethan Denny <ethandenny@protonmail.com>"
+    },
+    "s_ee7f34f4fcc8bb": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a10d41-7390-7562-94d7-d99688788e2b",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Ethan Denny <ethandenny@protonmail.com>"
+    }
+  }
+}
