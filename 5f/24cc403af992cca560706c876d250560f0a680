@@ -1,0 +1,69 @@
+src/tests/classic_controls_test.lua
+  s_a149baf2181030::t_2dd1ec026f1697 273-287
+src/platform/enemies/shopkeeper.lua
+  s_a149baf2181030::t_7e0ccd953f2e1e 149,242,244
+  s_a149baf2181030::t_a005ecc70a33c4 52-54,238-240,251-258,294,298
+  s_a149baf2181030::t_3de51db3703c0b 260
+src/platform/creature.lua
+  s_a149baf2181030::t_7e0ccd953f2e1e 131-134
+src/platform/items/jar.lua
+  s_a149baf2181030::t_a4d6571c792931 20
+src/platform/fragile_contact.lua
+  s_a149baf2181030::t_a4d6571c792931 1-4,6-50
+  s_a149baf2181030::t_aadc49c685e8d1 5
+src/platform/physical_body.lua
+  s_a149baf2181030::t_aadc49c685e8d1 161
+  s_a149baf2181030::t_3de51db3703c0b 174-179
+  s_a149baf2181030::t_7e0ccd953f2e1e 162-173
+src/screens/full_level_playtest.lua
+  s_a149baf2181030::t_3172575d242561 700,713,802-803,805
+  s_a149baf2181030::t_7e0ccd953f2e1e 379,383,385
+  s_a149baf2181030::t_f7db87fc7d2f65 6,834
+  s_a149baf2181030::t_2dd1ec026f1697 908-913
+src/platform/enemies/caveman.lua
+  s_a149baf2181030::t_3de51db3703c0b 96,173
+  s_a149baf2181030::t_7e0ccd953f2e1e 12,144,149-154,172,175-178,194
+  s_a149baf2181030::t_9602a54c2096d4 63,76,88,103,140-142,155-170,174,187-188,191-193
+src/screens/enemy_ai.lua
+  s_a149baf2181030::t_7e0ccd953f2e1e 924-925
+src/tests/mines_completion_test.lua
+  s_a149baf2181030::t_3de51db3703c0b 233-258
+  s_a149baf2181030::t_8fd880429dad82 298
+  s_a149baf2181030::t_e67203528e1e7c 299-317
+  s_a149baf2181030::t_15533ab756d30b 1071-1073,1083-1085
+  s_a149baf2181030::t_a005ecc70a33c4 208-209,225-226
+  s_a149baf2181030::t_6325879436fee5 1078-1082,1086-1090
+  s_a149baf2181030::t_7d4a2ef03454f7 321-329,1091
+src/platform/items/skull.lua
+  s_a149baf2181030::t_8fd880429dad82 9
+src/platform/item_body.lua
+  s_a149baf2181030::t_8fd880429dad82 22-24,32,36-39
+docs/object-source-audit.md
+  s_a149baf2181030::t_bcfb48d71f4d63 600-615,617-626,628-662
+  s_a149baf2181030::t_15533ab756d30b 616,627
+src/platform/item_actions.lua
+  s_a149baf2181030::t_6325879436fee5 80
+  s_a149baf2181030::t_7e0ccd953f2e1e 78,83,87
+README.md
+  s_a149baf2181030::t_bcfb48d71f4d63 7,9,17,25
+  s_a149baf2181030::t_4114ff81401ab0 79,100-101,135
+src/platform/README.md
+  s_a149baf2181030::t_aadc49c685e8d1 69-70
+  s_a149baf2181030::t_bcfb48d71f4d63 71-73
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "5f24cc403af992cca560706c876d250560f0a680",
+  "prompts": {},
+  "sessions": {
+    "s_a149baf2181030": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0fdc3-ae05-7e41-a96b-bd7a333b41c3",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Ethan Denny <ethandenny@protonmail.com>"
+    }
+  }
+}
