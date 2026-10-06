@@ -83,4 +83,28 @@ function EntityCollision.distance(a, b, player)
     return math.sqrt(dx*dx+dy*dy)
 end
 
+function EntityCollision.solid(world, body, player)
+    local left, top, right, bottom = EntityCollision.bounds(body, player)
+    for y = math.floor(top), math.ceil(bottom)-1 do
+        for x = math.floor(left), math.ceil(right)-1 do
+            if world:solidAtPoint(x, y)
+                and EntityCollision.overlaps(body, player, x, y, x+1, y+1) then return true end
+        end
+    end
+    return false
+end
+
+function EntityCollision.nearest(groups, kind, x, y)
+    local nearest, distance
+    for _, group in ipairs(groups) do
+        for _, body in ipairs(group) do
+            if body.kind == kind and body.alive ~= false and not body.opened then
+                local d = (body.x-x)^2+(body.y-y)^2
+                if not distance or d < distance then nearest, distance = body, d end
+            end
+        end
+    end
+    return nearest
+end
+
 return EntityCollision

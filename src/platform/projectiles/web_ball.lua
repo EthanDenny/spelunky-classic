@@ -3,6 +3,12 @@ local Body = require("src.platform.projectile_body")
 local WEB_CREATE_FRAMES = 5
 local webImages
 
+function WebBall.collisionSprite(projectile)
+    return projectile.phase == "create" and "sWebCreate" or "sWebBall",
+        projectile.phase == "create" and projectile.phaseAge or 0,
+        projectile.x, projectile.y, false
+end
+
 function WebBall.loadImages()
     if webImages then return webImages end
     webImages = { create = {} }

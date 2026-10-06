@@ -1,5 +1,9 @@
 local Bullet = { depth = 0, projectile = { persistent = true, impact = "bullet" } }
 
+function Bullet.collisionSprite(projectile)
+    return "sBullet", 0, projectile.x, projectile.y, false
+end
+
 function Bullet.drawProjectile(projectile)
     local image = Bullet.image
     if not image then

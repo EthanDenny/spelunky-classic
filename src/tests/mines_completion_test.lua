@@ -57,6 +57,39 @@ end
 
 function Test.run()
     local cases = {
+        { "bullets test their final sprite position rather than sweeping through enemies", function()
+            local game = fixture()
+            local snake = game:spawnEntity("snake", 80, 112)
+            local bullet = game.projectiles:spawn("bullet", 40, 104, 80, 0, nil, { damage = 4 })
+            game.projectiles:update({ snake }, game.player, {})
+            assert(bullet.x == 120 and bullet.alive and snake.alive,
+                "oBullet's direct Step movement can pass a target between collision events")
+        end },
+        { "fast rocks transfer velocity, ignore immunity, and can be caught by a mitt", function()
+            for _, mitt in ipairs({ false, true }) do
+                local game = fixture()
+                game.player.invincibleTimer = 10
+                game.player.equipment.mitt = mitt
+                local rock = game:spawnEntity("rock", game.player.x+8, game.player.y)
+                rock.vx = -5
+                game:resolveItemPlayerContact(rock)
+                if mitt then
+                    assert(game.player.health == 4 and game.heldItem == rock and rock.held,
+                        "An empty-handed pitching mitt catches a fast unsafe rock")
+                else
+                    assert(game.player.health == 2 and game.player.vx == -5 and game.player.vy == -4
+                        and game.player.stunTimer == 20,
+                        "Rock contact ignores invincibility and transfers the rock's velocity")
+                end
+            end
+            local game = fixture()
+            local touching = game:spawnEntity("rock", game.player.x+8, game.player.y)
+            touching.vx = -5
+            game:spawnEntity("rock", game.player.x, game.player.y)
+            game:resolveItemPlayerContact(touching)
+            assert(game.player.health == 4,
+                "A nearer stationary rock suppresses the source's separate nearest-instance damage query")
+        end },
         { "C cycles a free held item through unarmed bomb and rope with refunds", function()
             local game = fixture()
             local bow = game:spawnEntity("bow", game.player.x, game.player.y)

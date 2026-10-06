@@ -74,7 +74,7 @@ function FullGame:advanceLevel()
     self.transition = Transition.new(self)
     self.exiting = nil
     self.music:stop()
-    self.app.controls:clearJumpEdges()
+    self.app.controls:clearEdges()
 end
 
 function FullGame:simulationStepBody(input)

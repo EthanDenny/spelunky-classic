@@ -171,6 +171,7 @@ function Test.run(app)
     collisionGame.enemies = {}
     collisionGame.player = Player.new(96, 80)
     local fallingRock = Item.new({ kind = "rock", x = 6, y = 5 })
+    collisionGame.items = { fallingRock }
     fallingRock.vy = 5
     fallingRock.safeTimer = 2
     local health = collisionGame.player.health
@@ -187,11 +188,13 @@ function Test.run(app)
         "A rock faster than four horizontally still deals two hearts")
     collisionGame.player = Player.new(96, 80)
     local slowRock = Item.new({ kind = "rock", x = 6, y = 5 })
+    collisionGame.items = { slowRock }
     slowRock.vy = 3
     collisionGame:resolveItemPlayerContact(slowRock)
     assert(collisionGame.player.health == health,
         "A gently falling object must not damage the player")
     local movingArrow = Item.new({ kind = "arrow", x = 6, y = 5 })
+    collisionGame.items = { movingArrow }
     movingArrow.vx = 5
     collisionGame:resolveItemPlayerContact(movingArrow)
     assert(movingArrow.opened and collisionGame.player.health == health - 2,

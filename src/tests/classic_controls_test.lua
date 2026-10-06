@@ -36,11 +36,44 @@ function Test.run(app)
     local active = app.controls
     local loaded = ClassicControls.fromContents(
         assert(love.filesystem.read(active.keySource)),
-        assert(love.filesystem.read(active.settingsSource)))
+        (assert(love.filesystem.read(active.settingsSource))))
     assert(active.keys.left == loaded.keys.left and active.keys.bomb == loaded.keys.bomb
         and active.keys.rope == loaded.keys.rope
         and active.settings.downToRun == loaded.settings.downToRun,
         "The app must use the actual files selected at startup")
+
+    do
+        local controls = ClassicControls.fromContents(nil, "0\n1\n1\n1", "-1\n1\n3\n5\n7\n8\n4\n6\n10")
+        local axis, buttons = { 0, 0, 0 }, {}
+        local pad = {
+            getAxisCount = function() return 3 end,
+            getAxis = function(_, index) return axis[index] end,
+            getHatCount = function() return 1 end,
+            getHat = function() return "lu" end,
+            isDown = function(_, index) return not not buttons[index] end,
+        }
+        local hardware = love.joystick.getJoysticks
+        local ok, err = pcall(function()
+            love.joystick.getJoysticks = function() return { pad } end
+            axis[3], buttons[7] = 0.2, true
+            controls:pollGamepad()
+            local input = controls:playerInput(true)
+            assert(input.left and input.up and input.jump and input.jumpPressed
+                and controls:takeGamepadPress("bomb"),
+                "A configured Z-axis trigger, diagonal hat and bomb button reach Classic controls")
+            controls:pollGamepad()
+            assert(not controls:playerInput(true).jumpPressed and not controls:takeGamepadPress("bomb"),
+                "Holding a gamepad button cannot repeat its pressed edge")
+            axis[3], buttons[7] = 0, false
+            controls:pollGamepad()
+            assert(controls:playerInput(true).jumpReleased, "Releasing the trigger delivers jump release")
+            controls.settings.gamepadOn = false
+            controls:pollGamepad()
+            assert(not controls.padHeld.left, "Disabling gamepad input clears its held directions")
+        end)
+        love.joystick.getJoysticks = hardware
+        assert(ok, err)
+    end
 
     local room = app.screens.full_level_playtest
     room:enter()

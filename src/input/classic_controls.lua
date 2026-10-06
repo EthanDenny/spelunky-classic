@@ -20,6 +20,8 @@ local DEFAULT_SETTINGS = {
     fullscreen = true, graphicsHigh = true, downToRun = true,
     gamepadOn = false, screenScale = 3, musicVol = 15, soundVol = 15,
 }
+local PAD_ORDER = { "jump", "attack", "item", "run", "bomb", "rope", "flare", "pay", "start" }
+local DEFAULT_PAD = { 2, 1, 3, 5, 7, 8, 4, 6, 10 }
 local SPECIAL_KEYS = {
     [8] = { "backspace" }, [9] = { "tab" }, [13] = { "return", "kpenter" },
     [16] = { "lshift", "rshift" }, [17] = { "lctrl", "rctrl" },
@@ -48,8 +50,15 @@ local function lines(contents)
     return result
 end
 
-function ClassicControls.fromContents(keysContents, settingsContents)
-    local self = setmetatable({ keys = {}, settings = {} }, ClassicControls)
+function ClassicControls.fromContents(keysContents, settingsContents, gamepadContents)
+    local self = setmetatable({ keys = {}, settings = {}, gamepad = {}, padHeld = {},
+        padPressed = {} }, ClassicControls)
+    local padLines = lines(gamepadContents)
+    for index, action in ipairs(PAD_ORDER) do
+        local button = tonumber(padLines[index])
+        self.gamepad[action] = button and button % 1 == 0 and
+            (button > 0 or button == -1 or button == -2) and button or DEFAULT_PAD[index]
+    end
     local keyLines = lines(keysContents)
     for index, action in ipairs(KEY_ORDER) do
         local code = tonumber(keyLines[index])
@@ -89,7 +98,9 @@ function ClassicControls.load()
     local settingsSource = settings and "settings.cfg" or "original-game-reference/settings.cfg"
     keys = keys or love.filesystem.read(keySource)
     settings = settings or love.filesystem.read(settingsSource)
-    local self = ClassicControls.fromContents(keys, settings)
+    local pad = love.filesystem.read("gamepad.cfg")
+        or love.filesystem.read("original-game-reference/gamepad.cfg")
+    local self = ClassicControls.fromContents(keys, settings, pad)
     self.keySource = keySource
     self.settingsSource = settingsSource
     return self
@@ -103,8 +114,46 @@ function ClassicControls:matches(action, key)
 end
 
 function ClassicControls:held(action)
-    return love.keyboard.isDown(unpack(loveKeys(assert(self.keys[action],
+    return self.padHeld[action] or love.keyboard.isDown(unpack(loveKeys(assert(self.keys[action],
         "Unknown Classic control: " .. tostring(action)))))
+end
+
+function ClassicControls:pollGamepad()
+    local pad = self.settings.gamepadOn and love.joystick.getJoysticks()[1]
+    local nextHeld = {}
+    if pad then
+        local z = pad:getAxisCount() >= 3 and pad:getAxis(3) or 0
+        for _, action in ipairs(PAD_ORDER) do
+            local button = self.gamepad[action]
+            nextHeld[action] = button > 0 and pad:isDown(button)
+                or button == -1 and z > 0.1 or button == -2 and z < -0.1
+        end
+        local x = pad:getAxisCount() >= 1 and pad:getAxis(1) or 0
+        local y = pad:getAxisCount() >= 2 and pad:getAxis(2) or 0
+        local hat = pad:getHatCount() > 0 and pad:getHat(1) or "c"
+        nextHeld.left = x < -0.5 or hat:find("l", 1, true) ~= nil
+        nextHeld.right = x > 0.5 or hat:find("r", 1, true) ~= nil
+        nextHeld.up = y < -0.5 or hat:find("u", 1, true) ~= nil
+        nextHeld.down = y > 0.5 or hat:find("d", 1, true) ~= nil
+    end
+    for action, held in pairs(nextHeld) do
+        if held and not self.padHeld[action] then
+            if action == "jump" then self.jumpPressed = true
+            else self.padPressed[action] = true end
+        end
+    end
+    if self.padHeld.jump and not nextHeld.jump then self.jumpReleased = true end
+    self.padHeld = nextHeld
+end
+
+function ClassicControls:takeGamepadPress(action)
+    local pressed = self.padPressed[action]
+    self.padPressed[action] = nil
+    return pressed
+end
+
+function ClassicControls:keyFor(action)
+    return action == "start" and "escape" or loveKeys(self.keys[action])[1]
 end
 
 -- GameMaker separates checkJump from checkJumpPressed/checkJumpReleased.
@@ -120,6 +169,11 @@ end
 
 function ClassicControls:clearJumpEdges()
     self.jumpPressed, self.jumpReleased = false, false
+end
+
+function ClassicControls:clearEdges()
+    self:clearJumpEdges()
+    self.padPressed = {}
 end
 
 function ClassicControls:label(action)

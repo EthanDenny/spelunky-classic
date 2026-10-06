@@ -132,6 +132,7 @@ function ItemActions.updateMelee(context)
         local y = player.y
         if not context.world:solidAtPoint(x, y) then y = y + 9 end
         local destroyed = context.world:destroyTerrain(x, y, 0)
+        if #destroyed > 0 then context.world:cleanExplosionTerrain(destroyed) end
         if not context.world.game then
             for _, cell in ipairs(destroyed) do
                 context.effects:terrainBreak(cell.pixelX or (cell.x + 0.5) * context.world.tileSize,

@@ -48,12 +48,17 @@ local function materializeArrow(projectile, items, x, y, velocityFactor, retainF
 end
 
 function Definition.hitPlayer(arrow, player, game)
-    if arrow.alive == false or arrow.opened or arrow.held or arrow.safe
-        or (arrow.safeTimer or 0) > 0 or math.abs(arrow.vx) <= 3 or player:isDead() then return false end
+    if arrow.alive == false or arrow.opened or player:isDead() then return false end
     -- oPlayer1 asks collision_rectangle with prec=false, not its movement mask.
     local Collision = require("src.platform.sprite_collision")
     if not Collision.overlaps("sArrowRight", 0, arrow.x, arrow.y, false,
         player.x-8, player.y-8, player.x+9, player.y+9, true, arrow.arrowAngle) then return false end
+    if game then
+        arrow = require("src.platform.entity_collision").nearest({ game.items or {},
+            game.traps and game.traps.projectiles or {},
+            game.projectiles and game.projectiles.projectiles or {} }, "arrow", player.x, player.y) or arrow
+    end
+    if arrow.safe or (arrow.safeTimer or 0) > 0 or math.abs(arrow.vx) <= 3 then return false end
     if not player:hurt(arrow.x, 2, "arrow", 20, "arrow", arrow.vx) then return false end
     arrow.alive, arrow.opened = false, true
     if game then
@@ -116,6 +121,10 @@ Definition.projectile = {
     materialize = materializeArrow,
     nextGravity = 0.6,
 }
+
+function Definition.update(system, arrow, enemies, items, player)
+    Definition.updateTrapProjectile(system, arrow, player, enemies, items)
+end
 
 function Definition.drawProjectile(projectile)
     local image = Definition.projectileImage

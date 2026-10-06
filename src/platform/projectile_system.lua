@@ -79,7 +79,7 @@ function ProjectileSystem:update(enemies, player, items)
     for _, projectile in ipairs(self.projectiles) do
         if projectile.alive then
             local definition = projectile.definition or Types[projectile.kind]
-            if definition.update then definition.update(self, projectile, enemies, items)
+            if definition.update then definition.update(self, projectile, enemies, items, player)
             else Body.step(self, projectile, definition.projectile, enemies, player, items) end
         end
     end

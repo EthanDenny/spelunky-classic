@@ -28,13 +28,18 @@ function Definition.use(context, _, input)
     if player.ball then
         player.ball.x, player.ball.y = x, y
     end
-    player:setState("falling")
+    for _, chain in ipairs(context.chains or {}) do chain.x, chain.y = x, y end
+    local Collision = require("src.platform.entity_collision")
     for _, enemy in ipairs(context.enemies) do
-        if enemy.alive and enemy:overlapsRectangle(x - 4, y - 4, x + 4, y + 4) then
-            context.effects:blood(enemy.x, enemy.y, 3)
-            enemy:damage(99, x)
+        if (enemy.alive or enemy.corpse) and enemy.kind ~= "ghost" and enemy.kind ~= "damsel"
+            and Collision.touching(player, enemy, player) then
+            context.effects:blood(x, y, 3)
+            enemy.hp, enemy.alive, enemy.corpse = enemy.hp-99, false, false
+            enemy.state = "dead"
+            break
         end
     end
+    player:setState("falling")
     context.sounds:play("teleport")
     return 1
 end

@@ -212,7 +212,7 @@ function Player:kill(cause, vx, vy)
 end
 
 function Player:hurt(sourceX, amount, cause, stunDuration, reaction, impactVx)
-    local directImpact = reaction == "bullet" or reaction == "arrow"
+    local directImpact = reaction == "bullet" or reaction == "arrow" or reaction == "rock"
     if (self.invincibleTimer > 0 and not directImpact) or self:isDead() then
         if self.playtestLog then self.playtestLog:record("damage_blocked", {
             sourceX = sourceX, amount = amount or 1, cause = cause,
@@ -222,7 +222,7 @@ function Player:hurt(sourceX, amount, cause, stunDuration, reaction, impactVx)
     end
     local previousHealth = self.health
     self.health = math.max(0, self.health - (amount or 1))
-    if reaction ~= "bullet" then self.invincibleTimer = 30 end
+    if not directImpact then self.invincibleTimer = 30 end
     self.vx = directImpact and impactVx or (self.x < sourceX and -6 or 6)
     if reaction ~= "enemy_contact" then
         self.vy = -4

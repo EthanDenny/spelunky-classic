@@ -66,7 +66,7 @@ function App:showScreen(name)
         self.currentScreen:leave(name)
     end
 
-    self.controls:clearJumpEdges()
+    self.controls:clearEdges()
     self.currentScreen = nextScreen
     self.currentScreenName = name
 
@@ -79,6 +79,7 @@ function App:showScreen(name)
 end
 
 function App:update(dt)
+    self.controls:pollGamepad()
     if self.currentScreen and self.currentScreen.update then
         self.currentScreen:update(dt)
     end
@@ -142,7 +143,7 @@ function App:keyreleased(key, scancode)
 end
 
 function App:focus(focused)
-    if not focused then self.controls:clearJumpEdges() end
+    if not focused then self.controls:clearEdges() end
 end
 
 function App:mousepressed(x, y, button)

@@ -201,7 +201,7 @@ function FullLevelPlaytest:generateSelectedLevel(startSeed, freshRun)
 end
 
 function FullLevelPlaytest:buildSimulation()
-    self.app.controls:clearJumpEdges()
+    self.app.controls:clearEdges()
     self.itemQueued, self.itemHeld = false, false
     self.cycleItemKind = nil
     self.world = GeneratedWorld.fromLevel(self.level)
@@ -632,15 +632,18 @@ function FullLevelPlaytest:resolveItemPlayerContact(item)
     if item.kind == "arrow" then
         return require("src.platform.items.arrow").hitPlayer(item, player, self)
     end
-    if item.held or item.opened or item.safeTimer > 0 or player:isDead()
-        or player:isStunned() then return end
-    local halfWidth = player:getCollisionHalfWidth()
-    local top, bottom = player:getVerticalBounds()
-    if not item:overlapsRectangle(player.x - halfWidth, player.y + top,
-        player.x + halfWidth, player.y + bottom) then return end
-    if item.kind ~= "rock" or math.abs(item.vx) <= 4 then return end
-    local damage = 2
-    if not player:hurt(item.x, damage, item.kind, 20) then return end
+    if item.kind ~= "rock" or item.opened or player:isDead() or player:isStunned() then return end
+    local collision = require("src.platform.entity_collision")
+    if not collision.overlaps(item, player, player.x-8, player.y-8, player.x+9, player.y+9, true) then return end
+    item = collision.nearest({ self.items }, "rock", player.x, player.y)
+    if not item or item.safe or (item.safeTimer or 0) > 0 or math.abs(item.vx) <= 4 then return end
+    if player.equipment.mitt and not self.heldItem and not self.heldNpc then
+        self.heldItem = item
+        item.held = true
+        item:updateHeldPosition(player)
+        return
+    end
+    if not player:hurt(item.x, 2, item.kind, 20, "rock", item.vx) then return end
     self.effects:blood(player.x, player.y, 3)
     self.sounds:play("hurt")
     self:dropHeldItemFromHurt()
@@ -895,6 +898,10 @@ function FullLevelPlaytest:fallOutOfLevel()
 end
 
 function FullLevelPlaytest:simulationStep()
+    local controls = self.app.controls
+    for _, action in ipairs({ "item", "pay", "bomb", "rope", "up", "down", "attack", "start" }) do
+        if controls:takeGamepadPress(action) then self:keypressed(controls:keyFor(action), nil, false) end
+    end
     local input = self:getInput(true)
     local log = self.app.playtestLog
     local before = log and log.capture(self)
@@ -934,7 +941,7 @@ function FullLevelPlaytest:keypressed(key, _, isRepeat)
     if self.screenName == "full_level_playtest" and key == "tab" then
         self.mapPreview = not self.mapPreview
         self.accumulator = 0
-        controls:clearJumpEdges()
+        controls:clearEdges()
         return
     elseif self.screenName == "full_level_playtest" and key == "f2" then
         self.showRoomPath = not self.showRoomPath
