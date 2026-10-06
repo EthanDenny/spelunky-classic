@@ -1,0 +1,46 @@
+src/platform/melee_mask.lua
+  s_a149baf2181030::t_846a4767851293 36-43
+src/platform/enemy.lua
+  s_a149baf2181030::t_e94daaeafe78fc 161
+src/platform/object_simulation.lua
+  s_a149baf2181030::t_846a4767851293 11-13
+src/platform/pickups/scarab.lua
+  s_a149baf2181030::t_d70864227d8f2b 11-28,31-32,42-44,47,49,51-54
+src/platform/treasure.lua
+  s_a149baf2181030::t_d70864227d8f2b 14,31,33-34,71-72
+src/platform/whip_mask.lua
+  s_a149baf2181030::t_846a4767851293 43-50
+src/platform/entity_collision.lua
+  s_a149baf2181030::t_846a4767851293 71-72,78,84-88
+  s_a149baf2181030::t_634a20fbdcc408 89-90
+src/screens/full_level_playtest.lua
+  s_a149baf2181030::t_846a4767851293 393-394
+src/platform/world.lua
+  s_a149baf2181030::t_24bc34c2537d0e 371-407
+src/platform/enemies/caveman.lua
+  s_a149baf2181030::t_e94daaeafe78fc 109-110,113-114
+src/tests/mines_completion_test.lua
+  s_a149baf2181030::t_8b85e7186b0684 1004-1012,1017,1021,1023-1028,1038
+  s_a149baf2181030::t_d70864227d8f2b 1039-1049
+  s_a149baf2181030::t_11025729d401ff 788-789,1013-1016,1035
+  s_a149baf2181030::t_e94daaeafe78fc 1018-1020,1022,1029-1034,1036-1037
+src/platform/item_actions.lua
+  s_a149baf2181030::t_24bc34c2537d0e 88-89,131-132
+  s_a149baf2181030::t_846a4767851293 38,83
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9914dcd7972e83403aed95ab7717eba81a3169b4",
+  "prompts": {},
+  "sessions": {
+    "s_a149baf2181030": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0fdc3-ae05-7e41-a96b-bd7a333b41c3",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Ethan Denny <ethandenny@protonmail.com>"
+    }
+  }
+}
