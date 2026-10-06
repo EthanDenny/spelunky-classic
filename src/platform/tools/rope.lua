@@ -2,7 +2,36 @@ local Traits = require("src.platform.item_traits")
 local Assets = require("src.platform.object_assets")
 
 local Rope = { depth = 200 }
-Rope.definition = Traits.body({ impactOnce = true })
+Rope.__index = Rope
+local Holdable = require("src.platform.holdable")
+Rope.definition = Traits.body({ impactOnce = true, hold = { standing = 2, ducking = 4 } })
+
+function Rope:getCollisionHalfWidth() return 4 end
+function Rope:getVerticalBounds() return -4, 4 end
+function Rope:updateHeldPosition(player) Holdable.position(self, player) end
+function Rope:dropFromHurt(player)
+    Holdable.dropFromHurt(self, player)
+    self.armed = true
+end
+
+function Rope.hold(tools, player)
+    local rope = setmetatable({ kind = "rope", definition = Rope.definition,
+        x = player.x, y = player.y, launchX = player.x, vx = 0, vy = 0,
+        gravity = 0.6, radius = 4, alive = true, held = true, armed = false,
+        segments = {} }, Rope)
+    rope:updateHeldPosition(player)
+    tools.ropes[#tools.ropes+1] = rope
+    return rope
+end
+
+function Rope.definition.useHeld(game, held, input)
+    local rope = Rope.throwFromPlayer(game.tools, game.player, input, held)
+    if not rope then return false end
+    held.alive, held.held = false, false
+    require("src.platform.item_cycle").restore(game)
+    if game.throwSound then game.throwSound:clone():play() end
+    return true
+end
 
 function Rope.definition.onEnemyHit(rope, enemy, context)
     if context and context.onRopeHit then context:onRopeHit(enemy, rope) end
@@ -17,7 +46,7 @@ local function ropeSideClear(world, gridX, candidateX, y)
     return not world:solidRect(left, y, left + 2, y + 17)
 end
 
-function Rope.throwFromPlayer(self, player, input)
+function Rope.throwFromPlayer(self, player, input, held)
     if player.whipping or player:isDead() or player:isStunned() then return nil end
     local downward = input and input.down
     if not downward and self.world:collidesSolid(player, player.x, player.y - 1) then
@@ -37,7 +66,15 @@ function Rope.throwFromPlayer(self, player, input)
         deployed = false,
         segments = {},
         alive = true,
+        armed = true,
     }
+    local function fallback()
+        if held then
+            rope.x, rope.y, rope.vx, rope.vy = held.x, held.y, player.facing*3.2, 0.5
+        end
+        self.ropes[#self.ropes+1] = rope
+        return rope
+    end
     if downward then
         local direction = player.facing < 0 and -1 or 1
         local gridX = snap(player.x + direction * 16, self.world.tileSize)
@@ -45,8 +82,7 @@ function Rope.throwFromPlayer(self, player, input)
         -- oPlayer1 first checks the side of the player, then tries the edge
         -- nearest the player and finally the far edge of the snapped cell.
         if self.world:solidAtPoint(player.x + direction * 8, player.y) then
-            self.ropes[#self.ropes+1] = rope
-            return rope
+            return fallback()
         end
         local nearX = gridX - direction * 8
         local farX = gridX + direction * 8
@@ -55,8 +91,7 @@ function Rope.throwFromPlayer(self, player, input)
         elseif ropeSideClear(self.world, gridX, farX, gridY) then
             rope.x = farX
         else
-            self.ropes[#self.ropes+1] = rope
-            return rope
+            return fallback()
         end
         rope.y = gridY
         rope.vy = 0
@@ -90,6 +125,10 @@ function Rope.anchor(self, rope)
 end
 
 function Rope.update(self, rope, enemies)
+    if rope.held then
+        if self.game then rope:updateHeldPosition(self.game.player) end
+        return
+    end
     if rope.deploying then
         local nextY = rope.deployY + 8
         rope.segmentCount = rope.segmentCount + 1

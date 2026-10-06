@@ -7,6 +7,30 @@ local Definition = Traits.carry({ stickOnWall = 6, gravity = 0.2, consumeOnEnemy
 
 Definition.depth = 100
 
+function Definition.hangAt(world, x, y)
+    local game = world.game
+    if not game then return false end
+    local Collision = require("src.platform.sprite_collision")
+    local near, nearestDistance, head, above, below
+    for _, arrows in ipairs({ game.items or {}, game.traps and game.traps.projectiles or {} }) do
+        for _, arrow in ipairs(arrows) do
+            if arrow.kind == "arrow" and arrow.alive ~= false and not arrow.opened then
+                local function at(py)
+                    return Collision.overlaps("sArrowRight", 0, arrow.x, arrow.y, false,
+                        x, py, x+1, py+1, true, arrow.arrowAngle)
+                end
+                head = head or at(y-5) or at(y-6)
+                above, below = above or at(y-9), below or at(y+9)
+                local distance = (arrow.x-x)^2+(arrow.y-(y-5))^2
+                if not nearestDistance or distance < nearestDistance then
+                    near, nearestDistance = arrow, distance
+                end
+            end
+        end
+    end
+    return head and not above and not below and near and near.stuck or false
+end
+
 local function materializeArrow(projectile, items, x, y, velocityFactor, retainFlight)
     if not items then return end
     local arrow = require("src.platform.item").new({ kind = "arrow", x = x / 16, y = y / 16 })

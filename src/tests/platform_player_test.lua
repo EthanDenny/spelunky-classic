@@ -31,6 +31,30 @@ function Test.run()
     -- Independent Classic 1.1 contracts, exercised through a simulation step.
     -- Report every mismatch so a source audit can establish the pre-fix failures.
     local sourceCases = {
+        { "stuck arrows admit the source wall hang without a directional press", function()
+            local Item = require("src.platform.item")
+            for _, side in ipairs({ -1, 1 }) do
+                for _, stuck in ipairs({ false, true }) do
+                    local world = World.new(20, 20, 16)
+                    world:fill("solid", side > 0 and 5 or 3, 3, 1, 10)
+                    local player = Player.new(side > 0 and 75 or 69, 104)
+                    player.facing, player.vy = side, 2
+                    local arrow = Item.new({ kind = "arrow", x = player.x/16, y = 99/16 })
+                    arrow.stuck, arrow.arrowAngle = stuck, 0
+                    world.game = { items = { arrow } }
+                    player:step(world, {})
+                    assert((player.state == Player.STATES.hanging) == stuck,
+                        "Only a stuck arrow at the source head probes permits an automatic hang")
+                    if stuck then
+                        assert(player.y == 104 and player.vy == 0,
+                            "Arrow hanging preserves the source vertical pixel offset")
+                        player:step(world, { down = true, jump = true })
+                        assert(player.state == Player.STATES.falling and player.hangCooldown > 0,
+                            "DOWN + JUMP drops from an arrow using ordinary hanging rules")
+                    end
+                end
+            end
+        end },
         { "jump support follows the original ledge collision line", function()
             for _, speed in ipairs({ 0, 4 }) do
                 local half = speed == 0 and 5 or 8

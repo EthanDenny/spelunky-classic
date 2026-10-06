@@ -57,6 +57,88 @@ end
 
 function Test.run()
     local cases = {
+        { "C cycles a free held item through unarmed bomb and rope with refunds", function()
+            local game = fixture()
+            local bow = game:spawnEntity("bow", game.player.x, game.player.y)
+            bow:pickup(game.player, game.run)
+            game.heldItem = bow
+            local arrows = game.run.arrows
+            for _, expected in ipairs({ "bomb", "rope", "bow" }) do
+                game:keypressed("c", "c", false)
+                game:simulationStepBody({})
+                assert(game.heldItem and game.heldItem.kind == expected,
+                    "The source item key must select " .. expected)
+                if expected ~= "bow" then
+                    assert(game.heldItem.held and not game.heldItem.armed,
+                        "Selecting a tool must hold it without arming or launching it")
+                end
+            end
+            assert(game.run.bombs == 4 and game.run.ropes == 4 and game.run.arrows == arrows,
+                "Cycling returns reserved resources and does not grant bow ammunition twice")
+            game.heldItem.bowArmed, game.heldItem.bowStrength = true, 4
+            game:keypressed("c", "c", false)
+            game:simulationStepBody({})
+            assert(game.heldItem.kind == "bomb" and game.run.arrows == arrows-1,
+                "Cycling away from an armed bow fires its arrow once")
+            game:simulationStepBody({ attack = true })
+            assert(game.heldItem and game.heldItem.armed and game.heldItem.held,
+                "The first ACTION arms a selected bomb without throwing it")
+            local armed = game.heldItem
+            game:keypressed("c", "c", false)
+            game:simulationStepBody({})
+            assert(game.heldItem == armed and game.run.bombs == 3,
+                "An armed bomb cannot be switched away or refunded")
+            game:simulationStepBody({ attack = true })
+            assert(game.heldItem.kind == "bow" and not armed.held and armed.alive,
+                "The next ACTION throws the same armed bomb and restores the reserved item")
+            for _, selected in ipairs({ "bomb", "rope", "armed_bomb" }) do
+                local exitGame = fixture()
+                local rock = exitGame:spawnEntity("rock", exitGame.player.x, exitGame.player.y)
+                rock:pickup(exitGame.player, exitGame.run)
+                exitGame.heldItem = rock
+                exitGame:keypressed("c", "c", false)
+                exitGame:simulationStepBody({})
+                if selected == "rope" then
+                    exitGame:keypressed("c", "c", false)
+                    exitGame:simulationStepBody({})
+                elseif selected == "armed_bomb" then
+                    exitGame:simulationStepBody({ attack = true })
+                end
+                Exit.prepare(exitGame)
+                assert(exitGame.run.bombs == (selected == "armed_bomb" and 3 or 4)
+                    and exitGame.run.ropes == 4 and exitGame.run.heldItem.kind == "rock",
+                    "Exit refunds unused selected tools and carries the reserved item")
+            end
+        end },
+        { "the gameplay camera follows source borders and delayed look input", function()
+            local game = fixture()
+            game.getViewport = function() return { logicalWidth = 320, logicalHeight = 240 } end
+            game.player.x, game.player.y = 176, 104
+            game:simulationStepBody({})
+            game:updateCamera(game:getViewport())
+            assert(game.cameraX == 0 and game.cameraY == 0,
+                "Moving inside the 128/96 follow borders must not center the camera")
+            game.world.solid = {}
+            game.world:fill("solid", 0, 20, 42, 1)
+            game.player.x, game.player.y = 400, 312
+            game.cameraX, game.cameraY = 208, 192
+            for _ = 1, 31 do game:simulationStepBody({ up = true }) end
+            assert(game.cameraY == 192, "Look scrolling waits through the first 31 held ticks")
+            game:simulationStepBody({ up = true })
+            assert(game.cameraY == 188, "The next held UP tick scrolls four source pixels")
+            game:simulationStepBody({})
+            for _ = 1, 31 do game:simulationStepBody({ down = true }) end
+            assert(game.cameraY == 188, "Releasing look input must restart its delay")
+            game:simulationStepBody({ down = true })
+            assert(game.cameraY == 192, "DOWN scrolls in the opposite direction")
+            game.shakeTicks = 5
+            for tick = 1, 5 do
+                game:simulationStepBody({})
+                assert(game.cameraX == 208 and game.cameraY == (tick%2 == 1 and 189 or 192),
+                    "Source screen shake alternates the camera vertically by three pixels")
+            end
+            assert(game.shakeTicks == 0, "Screen shake consumes one duration tick per gameplay step")
+        end },
         { "Up and Action opens the glowing flare crate into three live flares", function()
             local game = fixture()
             local crate = game:spawnEntity("flare_crate", game.player.x, game.player.y)

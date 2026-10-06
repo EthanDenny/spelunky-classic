@@ -11,7 +11,7 @@ function Terrain.update(game)
         game.effects:terrainBreak(x, y, 16, event.entity or event.tile)
         if definition and definition.onDestroyed then definition.onDestroyed(game, event, x, y) end
         for _, lamp in ipairs(game.level.entities) do
-            if (not definition or definition.dropsSupportedLamp)
+            if (not definition or definition.inheritsSolidDestroy)
                 and (lamp.kind == "lamp" or lamp.kind == "lamp_red") and not lamp.destroyed
                 and lamp.x == event.x and lamp.y == event.y+1 then
                 lamp.destroyed = true

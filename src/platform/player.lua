@@ -986,6 +986,14 @@ function Player:updateNormal(world, input, jumpPressed, jumpReleased)
     self.collisionTopOffset = self.vy > 0 and self:isAirState() and -6 or -8
     self.wideCollision = false
 
+    if self.hangCooldown == 0 and self.y > 16 and self.state == Player.STATES.falling
+        and require("src.platform.items.arrow").hangAt(world, self.x, self.y) then
+        self.vy, self.ay, self.gravity = 0, 0, 0
+        self:setState(Player.STATES.hanging)
+        self:updateHanging(world, input, jumpPressed)
+        return
+    end
+
     if not colTop and self.hangCooldown == 0 and self.y > 16 and self:isAirState()
         and direction ~= 0 and ((direction < 0 and colLeft) or (direction > 0 and colRight)) then
         local ledge = world:ledgeFor(self, direction, self.equipment.gloves and self.vy > 0)

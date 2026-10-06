@@ -70,6 +70,7 @@ function Boulder.move(self, boulder, time, player)
                             + self.world.tileSize / 2,
                             tileY * self.world.tileSize + self.world.tileSize / 2, 0)
                         if #destroyed > 0 then
+                            self.world:cleanBoulderTerrain(tileX*16, tileY*16, 16)
                             slowBoulder(boulder)
                             if self.crunchSound then self.crunchSound:clone():play() end
                         end
@@ -90,6 +91,7 @@ function Boulder.move(self, boulder, time, player)
                             slowBoulder(boulder)
                             sparedFloor = true
                         else
+                            self.world:cleanBoulderTerrain(block.x, block.y, block.width)
                             self.world:removeDynamicSolid(block)
                             slowBoulder(boulder)
                             if self.crunchSound then self.crunchSound:clone():play() end

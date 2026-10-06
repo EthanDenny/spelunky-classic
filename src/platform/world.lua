@@ -1,3 +1,4 @@
+local Tiles = require("src.platform.tiles.types")
 local World = {}
 World.__index = World
 
@@ -62,22 +63,18 @@ function World:remove(kind, x, y)
     end
     if kind == "solid" and existed and self.level then
         local tile = self.destructions[#self.destructions].tile
-        if tile and tile.shopWall then
+        local definition = type(value) == "table" and require("src.platform.objects")[value.kind]
+            or tile and Tiles[tile.kind]
+        local inherits = not definition or definition.inheritsSolidDestroy
+        if inherits and tile and tile.shopWall then
             self.destroyedShopWalls = self.destroyedShopWalls or {}
             self.destroyedShopWalls[#self.destroyedShopWalls + 1] = {
                 x = (x + 0.5) * self.tileSize, y = (y + 0.5) * self.tileSize,
             }
         end
-        -- Cave lips are generated one cell above their supporting brick.
-        -- The original removes that depth-3 tile when the solid is destroyed.
-        for index = #(self.level.decorations or {}), 1, -1 do
-            local decoration = self.level.decorations[index]
-            if decoration.x == x and decoration.y + 1 == y then
-                table.remove(self.level.decorations, index)
-            end
+        if inherits then
+            destroySpikesAbove(self, x * self.tileSize, y * self.tileSize, self.tileSize)
         end
-        -- oSolid's Destroy event also destroys oSpikes immediately above it.
-        destroySpikesAbove(self, x * self.tileSize, y * self.tileSize, self.tileSize)
         if type(value) == "table" then
             value.destroyed = true
             -- A two-cell entity such as the sacrifice altar must not leave
@@ -217,6 +214,34 @@ function World:addDynamicSolid(block)
     return block
 end
 
+function World:cleanBoulderTerrain(left, top, width)
+    destroySpikesAbove(self, left, top, width)
+    if not self.level then return end
+    for index = #(self.level.decorations or {}), 1, -1 do
+        local decoration = self.level.decorations[index]
+        if decoration.x*16 == left and decoration.y*16 == top-16 then
+            table.remove(self.level.decorations, index)
+        end
+    end
+end
+
+function World:cleanExplosionTerrain(destroyed)
+    if not self.level then return end
+    for _, cell in ipairs(destroyed) do
+        for index = #(self.level.decorations or {}), 1, -1 do
+            local decoration = self.level.decorations[index]
+            if decoration.x == cell.x and (decoration.y == cell.y-1 or decoration.y == cell.y+1) then
+                table.remove(self.level.decorations, index)
+            end
+        end
+    end
+    for _, entity in ipairs(self.level.entities or {}) do
+        if entity.kind == "spikes" and not self:solidAtPoint(entity.x*16, entity.y*16+16) then
+            entity.destroyed = true
+        end
+    end
+end
+
 function World:removeDynamicSolid(block)
     if block.alive == false then return end
     if block.kind ~= "boulder" then
@@ -225,7 +250,8 @@ function World:removeDynamicSolid(block)
             x = block.x/16, y = block.y/16, pixelX = block.x+block.width/2, pixelY = block.y+block.height/2 }
     end
     block.alive = false
-    if block.kind ~= "boulder" then
+    local definition = Tiles[block.kind]
+    if definition and definition.inheritsSolidDestroy then
         destroySpikesAbove(self, block.x, block.y, block.width)
     end
     if self.playtestLog then self.playtestLog:record("dynamic_solid_removed", {

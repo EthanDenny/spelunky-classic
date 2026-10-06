@@ -25,7 +25,9 @@ local function pose(target, player)
         if target.deployed then return nil end
         return "sRopeEnd", 0, target.x, target.y, false
     end
-    if target.kind == "bomb" then return "sBombArmed", target.animation, target.x, target.y, false end
+    if target.kind == "bomb" then
+        return target.armed and "sBombArmed" or "sBomb", target.animation, target.x, target.y, false
+    end
     if target.kind == "arrow" then return "sArrowRight", 0, target.x, target.y, false, target.arrowAngle end
     if target.kind == "ball" then return "sBall", 0, target.x, target.y, false end
     if target.kind == "push_block" then return "sBlock", 0, target.x, target.y, false end

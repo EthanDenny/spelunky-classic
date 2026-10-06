@@ -56,7 +56,8 @@ function ToolSystem:submit(queue, player)
     for _, rope in ipairs(self.ropes) do
         if rope.alive then
             local current = rope
-            queue:add(Depth.entity(current.deployed and "rope" or "rope_throw"),
+            queue:add(current.held and Depth.heldItem(player)
+                or Depth.entity(current.deployed and "rope" or "rope_throw"),
                 function() self:drawRope(current) end)
         end
     end

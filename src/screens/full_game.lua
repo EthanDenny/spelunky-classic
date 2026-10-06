@@ -124,7 +124,7 @@ function FullGame:keypressed(key, scancode, isRepeat)
     if self.exiting then return end
     if key == "m" then self.music:toggle() end
     local controls = self.app.controls
-    if controls:matches("pay", key) or controls:matches("rope", key)
+    if controls:matches("pay", key) or controls:matches("item", key) or controls:matches("rope", key)
         or controls:matches("bomb", key) or controls:matches("up", key) then
         FullLevel.keypressed(self, key, scancode, false)
         if self.exiting then self.music:stop() end

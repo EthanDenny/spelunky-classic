@@ -37,7 +37,22 @@ function Bomb:throw(player, input, world)
     Holdable.throw(self, player, input, world)
 end
 
+function Bomb.arm(bomb)
+    bomb.armed, bomb.animation = true, 0
+end
+
+function Bomb.definition.useHeld(game, bomb, input)
+    if not bomb.armed then Bomb.arm(bomb)
+    else
+        bomb:throw(game.player, input, game.world)
+        require("src.platform.item_cycle").restore(game)
+        if game.throwSound then game.throwSound:clone():play() end
+    end
+    return true
+end
+
 function Bomb:dropFromHurt(player)
+    Bomb.arm(self)
     Holdable.dropFromHurt(self, player)
 end
 
@@ -73,7 +88,7 @@ function Bomb.spawn(self, x, y, options)
         timer = options.timer or Timing.scaledTicks(80 + 40, self.tickRate),
         flashStart = Timing.scaledTicks(40, self.tickRate),
         alive = true,
-        armed = true,
+        armed = options.armed ~= false,
         sticky = options.sticky or false,
         stuck = false,
     }, Bomb)
@@ -82,9 +97,11 @@ function Bomb.spawn(self, x, y, options)
 end
 
 function Bomb.update(self, bomb, enemies, player)
-    bomb.timer = bomb.timer - 1
-    bomb.animation = bomb.animation + (bomb.timer <= bomb.flashStart and 1 or 0.2)
-    if bomb.timer <= 0 then
+    if bomb.armed then
+        bomb.timer = bomb.timer - 1
+        bomb.animation = bomb.animation + (bomb.timer <= bomb.flashStart and 1 or 0.2)
+    end
+    if bomb.armed and bomb.timer <= 0 then
         bomb.alive = false
         bomb.held = false
         self:explode(bomb.x, bomb.y)
@@ -111,7 +128,7 @@ function Bomb.draw(self, bomb)
     if not self.assets or not bomb.alive then return end
     love.graphics.setColor(1, 1, 1, 1)
     local frame = math.floor(bomb.animation) % 2 + 1
-    local image = self.assets.bombArmed[frame]
+    local image = bomb.armed and self.assets.bombArmed[frame] or self.assets.bomb
     love.graphics.draw(image, math.floor(bomb.x), math.floor(bomb.y), 0, 1, 1, 4, 4)
 end
 

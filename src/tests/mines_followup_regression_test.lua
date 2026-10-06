@@ -5,6 +5,7 @@ local TrapSystem = require("src.platform.trap_system")
 local World = require("src.platform.world")
 local DepthQueue = require("src.render.depth_queue")
 
+local ToolSystem = require("src.platform.tool_system")
 local Test = {}
 
 local function level()
@@ -65,8 +66,14 @@ function Test.run(app)
     scene.entities[1] = altar
     local world = GeneratedWorld.fromLevel(scene)
     world:destroyTerrain(4 * 16 + 8, 6 * 16 + 8, 0)
-    assert(#scene.decorations == 0,
-        "Destroyed terrain must remove the cave lip attached above that tile")
+    assert(#scene.decorations == 1,
+        "Direct solid destruction does not run explosion-only cave tile cleanup")
+    local blastScene = level()
+    blastScene.tiles[7][5] = { kind = "brick" }
+    blastScene.decorations[1] = { kind = "cave_top", x = 4, y = 5, variant = 1 }
+    local blastWorld = GeneratedWorld.fromLevel(blastScene)
+    ToolSystem.new(blastWorld, 30):explode(4*16+8, 6*16+8)
+    assert(#blastScene.decorations == 0, "An explosion removes the cave lip above its collided solid")
     world:destroyTerrain(6 * 16 + 8, 6 * 16 + 8, 0)
     assert(not world:has("solid", 6, 6), "The boulder must remove an altar's collision cell")
     local renderer = app.renderer

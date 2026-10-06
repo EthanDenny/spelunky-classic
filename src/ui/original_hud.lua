@@ -26,6 +26,7 @@ local HELD_SLOT_ITEMS = {
     rock = true, jar = true, skull = true, arrow = true,
     machete = true, mattock = true, pistol = true, web_cannon = true,
     teleporter = true, shotgun = true, bow = true, key = true,
+    flare = true, mattock_head = true,
 }
 
 local EQUIPMENT_ORDER = {

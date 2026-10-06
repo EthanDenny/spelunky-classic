@@ -13,6 +13,7 @@ local function assertDarkLighting(app)
     game:loadAssets()
     game:generateLevel(17)
     game.player.x, game.player.y, game.player.visible = 400, 300, false
+    game.cameraX, game.cameraY = 240, 180
     game.enemies, game.items, game.collectibles, game.hiddenEntities = {}, {}, {}, {}
     game.fakeBones, game.level.entities, game.level.decorations, game.level.backdrops = {}, {}, {}, {}
     game.tools.bombs, game.tools.ropes, game.tools.explosions = {}, {}, {}

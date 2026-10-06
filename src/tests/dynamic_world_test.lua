@@ -17,6 +17,20 @@ local function emptyLevel(width, height)
 end
 
 function Test.run()
+    for _, kind in ipairs({ "brick", "block", "push_block" }) do
+        local level = emptyLevel(8, 8)
+        level.tiles[5][4] = { kind = kind, shopWall = true }
+        level.entities[1] = { kind = "spikes", x = 3, y = 3 }
+        local world = GeneratedWorld.fromLevel(level)
+        if kind == "push_block" then world:removeDynamicSolid(world.dynamicSolids[1])
+        else world:remove("solid", 3, 4) end
+        assert(level.entities[1].destroyed == (kind == "brick") or
+            (kind ~= "brick" and not level.entities[1].destroyed),
+            "Only solids inheriting oSolid Destroy remove supported spikes: " .. kind)
+        assert((world.destroyedShopWalls ~= nil) == (kind == "brick"),
+            "Overridden block Destroy events do not inherit shop-wall anger")
+    end
+
     do
         local level = emptyLevel(8, 40)
         level.tiles[2][4] = { kind = "push_block" }

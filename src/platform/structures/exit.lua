@@ -22,6 +22,7 @@ function Definition.contact(game)
 end
 function Definition.prepare(game)
     Definition.contact(game)
+    require("src.platform.item_cycle").prepareExit(game)
     if game.heldItem and game.heldItem.heavy then
         game.heldItem.held = false
         game.heldItem = nil

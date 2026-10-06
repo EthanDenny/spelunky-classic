@@ -1,5 +1,5 @@
 local Brick = {
-    dropsSupportedLamp = true, solid = true,
+    inheritsSolidDestroy = true, solid = true,
     worldLayer = "solid",
     depth = 100,
     images = {

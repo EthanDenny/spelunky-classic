@@ -71,7 +71,7 @@ function Test.run(app)
     movingSupportTraps:updateBoulder({ x = 96, y = 72, vx = 4.5, vy = 0,
         alive = true, bounced = true }, Player.new(16, 16), {})
     assert(not movingBlock.alive and movingSpikes.destroyed,
-        "A boulder must also remove spikes above a crushed push block")
+        "The boulder collision separately removes spikes above a crushed push block")
     boulderWorld:set("solid", 8, 4)
     level.tiles[5][9] = { kind = "brick", properties = { invincible = true } }
     boulder.x, boulder.vx = 112, 4.5

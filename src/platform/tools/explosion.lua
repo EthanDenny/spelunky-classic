@@ -9,6 +9,8 @@ end
 
 function Explosion.spawn(self, x, y)
     local destroyed = self.world:destroyTerrain(x, y, 24)
+    self.world:cleanExplosionTerrain(destroyed)
+    if self.game then self.game.shakeTicks = math.max(self.game.shakeTicks or 0, 5) end
     if not self.world.game then
         for _, cell in ipairs(destroyed) do
             self.effects:terrainBreak(cell.pixelX or (cell.x + 0.5) * self.world.tileSize,
@@ -53,6 +55,7 @@ function Explosion.update(self, player, enemies, items)
     for _, explosion in ipairs(self.explosions) do
         if explosion.alive then
             local destroyed = self.world:destroyTerrain(explosion.x, explosion.y, 24)
+            self.world:cleanExplosionTerrain(destroyed)
             if not self.world.game then
                 for _, cell in ipairs(destroyed) do
                     self.effects:terrainBreak((cell.x+0.5)*16, (cell.y+0.5)*16, 16, cell.entity)

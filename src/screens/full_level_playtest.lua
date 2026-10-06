@@ -18,6 +18,8 @@ local RunState = require("src.game.run_state")
 local Depth = require("src.render.classic_depth")
 local DepthQueue = require("src.render.depth_queue")
 local LevelPreview = require("src.render.level_preview")
+local Camera = require("src.render.game_camera")
+local ItemCycle = require("src.platform.item_cycle")
 local ClassicSounds = require("src.audio.classic_sounds")
 local Shop = require("src.platform.shop")
 local Shopkeeper = require("src.platform.enemies.shopkeeper")
@@ -202,6 +204,8 @@ end
 
 function FullLevelPlaytest:buildSimulation()
     self.app.controls:clearJumpEdges()
+    self.itemQueued, self.itemHeld = false, false
+    self.cycleItemKind = nil
     self.world = GeneratedWorld.fromLevel(self.level)
     local spawnX, spawnY = GeneratedWorld.spawnPoint(self.level)
     self.player = Player.new(spawnX, spawnY)
@@ -294,7 +298,8 @@ function FullLevelPlaytest:buildSimulation()
         if body:pickup(self.player) then self.heldNpc = body end
     end
     self.chains = {}
-    self.shakeTicks = 0
+    self.shakeTicks, self.shakeToggle, self.viewBorderY = 0, false, 96
+    self.viewCount = 0
     if self.run.kaliPunish >= 2 then Kali.attachBall(self) end
 
     self.accumulator = 0
@@ -600,7 +605,7 @@ function FullLevelPlaytest:dropHeldItemFromHurt()
         ItemActions.updateBow(self, {})
         self.heldItem.visible = true
         self.heldItem:dropFromHurt(self.player)
-        self.heldItem = nil
+        ItemCycle.restore(self)
     end
     self.meleeItem = nil
     if self.heldNpc then
@@ -676,10 +681,13 @@ end
 function FullLevelPlaytest:simulationStepBody(input)
     local viewport = self:getViewport()
     self:updateCamera(viewport)
+    Camera.shake(self)
     self.world.activeView = { x = self.cameraX, y = self.cameraY,
         width = viewport.logicalWidth, height = viewport.logicalHeight }
     local payPressed = self.payQueued or (input.pay and not self.payHeld)
     self.payQueued, self.payHeld = false, input.pay or false
+    local itemPressed = self.itemQueued or (input.item and not self.itemHeld)
+    self.itemQueued, self.itemHeld = false, input.item or false
     if self.completed then return end
     self.run:update()
     if self.exiting then
@@ -715,10 +723,14 @@ function FullLevelPlaytest:simulationStepBody(input)
     local actionPressed = input.attack and not self.actionHeld
     self.actionHeld = input.attack
     local containerToOpen = Simulation.prepareAction(self, input, actionPressed, true)
+    if itemPressed then input.suppressWhip = true end
     local previousY = self.player.y
     local previousHealth = self.player.health
     local previousState = self.player.state
     self.player:step(self.world, input)
+    Camera.follow(self, viewport)
+    Camera.look(self, input)
+    if itemPressed then ItemCycle.select(self); actionPressed = false end
     if self.heldItem then self.heldItem:updateHeldPosition(self.player) end
     if self.heldNpc then self.heldNpc:updateHeldPosition(self.player) end
     Shop.update(self)
@@ -935,6 +947,8 @@ function FullLevelPlaytest:keypressed(key, _, isRepeat)
     if (self.exiting or self.completed) and key ~= "r" and key ~= "n" then return end
     if controls:matches("pay", key) then
         self.payQueued = true
+    elseif controls:matches("item", key) then
+        self.itemQueued = true
     elseif controls:matches("rope", key) then
         if self.run.ropes > 0 and self.player and not self.player:isDead()
             and self.tools:throwRope(self.player, self:getInput()) then
@@ -985,12 +999,7 @@ function FullLevelPlaytest:getViewport()
 end
 
 function FullLevelPlaytest:updateCamera(viewport)
-    local worldWidth = self.world.width * self.world.tileSize
-    local worldHeight = self.world.height * self.world.tileSize
-    local targetX = self.player.x - viewport.logicalWidth / 2
-    local targetY = self.player.y - viewport.logicalHeight / 2
-    self.cameraX = math.floor(clamp(targetX, 0, math.max(0, worldWidth - viewport.logicalWidth)))
-    self.cameraY = math.floor(clamp(targetY, 0, math.max(0, worldHeight - viewport.logicalHeight)))
+    Camera.follow(self, viewport)
 end
 
 function FullLevelPlaytest:drawBackground()
@@ -1019,9 +1028,6 @@ function FullLevelPlaytest:drawWorld(viewport)
     love.graphics.translate(viewport.x, viewport.y)
     love.graphics.scale(viewport.scale, viewport.scale)
     love.graphics.translate(-self.cameraX, -self.cameraY)
-    if (self.shakeTicks or 0) > 0 then
-        love.graphics.translate(self.shakeTicks % 2 == 0 and 2 or -2, 1)
-    end
 
     self:drawBackground()
     local queue = DepthQueue.new()
@@ -1093,7 +1099,7 @@ function FullLevelPlaytest:drawWorld(viewport)
             queue:add(Depth.EFFECT, function() self.player:drawWhip() end)
         end
     end
-    if self.heldItem and self.heldItem.kind ~= "bomb" then
+    if self.heldItem and self.heldItem.kind ~= "bomb" and self.heldItem.kind ~= "rope" then
         queue:add(Depth.heldItem(self.player), function()
             self.renderer:drawItem(self.heldItem, self.player.facing)
         end)
@@ -1137,7 +1143,7 @@ function FullLevelPlaytest:drawPlayerHUD(viewport)
         bombs = self.run.bombs,
         ropes = self.run.ropes,
         money = self.run.money,
-        heldItem = self.heldItem or self.heldNpc,
+        heldItem = self.cycleItemKind and { kind = self.cycleItemKind } or self.heldItem or self.heldNpc,
         equipment = self.run.equipment,
         stickyBombs = self.run.equipment.paste,
         compass = self.run.equipment.compass and self.level.exit and {

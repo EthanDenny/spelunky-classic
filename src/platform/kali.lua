@@ -65,7 +65,7 @@ local function sacrifice(game, body, altar)
     else game.run.favor = game.run.favor + (body.corpse and spec.deadFavor or spec.favor) end
     local response = favorMessage(game, body, altar)
     game.run:addMessage(message .. "\n" .. response, 200)
-    game.shakeTicks = 10
+    game.shakeTicks = math.max(game.shakeTicks or 0, 10)
     game.effects:add("flame", body.x, body.y - 8)
     game.effects:blood(body.x, body.y - 8, 3)
     game.sounds:play("small_explode")
@@ -96,7 +96,7 @@ end
 local function punish(game)
     local run = game.run
     run.favor = run.favor - 16
-    game.shakeTicks = 10
+    game.shakeTicks = math.max(game.shakeTicks or 0, 10)
     run:addMessage("YOU DARE DEFILE MY ALTAR?\nI WILL PUNISH YOU!", 200)
     if run.kaliPunish == 0 then armHeads(game)
     elseif run.kaliPunish == 1 then Kali.attachBall(game)
@@ -122,7 +122,6 @@ local function punish(game)
 end
 
 function Kali.update(game)
-    if (game.shakeTicks or 0) > 0 then game.shakeTicks = game.shakeTicks - 1 end
     for _, entity in ipairs(game.level.entities) do
         if entity.kind == "kali_head" then Head.update(game, entity) end
     end
