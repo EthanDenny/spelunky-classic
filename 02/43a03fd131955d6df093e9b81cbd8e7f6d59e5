@@ -1,0 +1,82 @@
+src/platform/item_actions.lua
+  s_a149baf2181030::t_968fc5b0268546 175
+src/screens/full_level_playtest.lua
+  s_a149baf2181030::t_968fc5b0268546 22,207,689-690,726,733,950-951,1102,1146
+  s_a149baf2181030::t_1dd08d121bbec1 208,608
+  s_a149baf2181030::t_3e1a741eef3c29 21,302,731-732,1002
+  s_a149baf2181030::t_454b215956204e 301,684
+src/platform/terrain_destruction.lua
+  s_a149baf2181030::t_fa49cad8a4d79a 14
+src/platform/tiles/solid.lua
+  s_a149baf2181030::t_fa49cad8a4d79a 2
+src/render/game_camera.lua
+  s_a149baf2181030::t_3e1a741eef3c29 1-11,13-43
+  s_a149baf2181030::t_d20c3ef7f2587e 12
+src/platform/structures/exit.lua
+  s_a149baf2181030::t_1dd08d121bbec1 25
+src/ui/original_hud.lua
+  s_a149baf2181030::t_1dd08d121bbec1 29
+src/platform/tools/rope.lua
+  s_a149baf2181030::t_968fc5b0268546 5-34,49,69,71-77,85,94,128-131
+src/tests/mines_completion_test.lua
+  s_a149baf2181030::t_67b7625d663632 113-123,125,127,129-130,132,141
+  s_a149baf2181030::t_f3014afdfbeb59 124,126,128,131,133
+  s_a149baf2181030::t_db6c44c9d79294 134-140
+  s_a149baf2181030::t_998d539cce382a 60-91,112
+  s_a149baf2181030::t_968fc5b0268546 92-93
+  s_a149baf2181030::t_1dd08d121bbec1 94-111
+src/platform/items/arrow.lua
+  s_a149baf2181030::t_3e1a741eef3c29 10-33
+src/screens/full_game.lua
+  s_a149baf2181030::t_968fc5b0268546 127
+src/platform/tiles/brick.lua
+  s_a149baf2181030::t_fa49cad8a4d79a 2
+src/platform/player.lua
+  s_a149baf2181030::t_3e1a741eef3c29 989-996
+src/tests/platform_player_test.lua
+  s_a149baf2181030::t_67b7625d663632 34-57
+src/platform/traps/arrow_trap_sensor.lua
+  s_a149baf2181030::t_968fc5b0268546 28-30
+src/platform/world.lua
+  s_a149baf2181030::t_fa49cad8a4d79a 1,66-69,75-76,217-244,253-254
+src/platform/item_cycle.lua
+  s_a149baf2181030::t_1dd08d121bbec1 60-71
+  s_a149baf2181030::t_968fc5b0268546 1-59,72
+src/platform/tool_system.lua
+  s_a149baf2181030::t_968fc5b0268546 59-60
+src/tests/dynamic_world_test.lua
+  s_a149baf2181030::t_2869742798f1f5 20-25,27-33
+  s_a149baf2181030::t_edb3c281305d41 26
+src/platform/tools/explosion.lua
+  s_a149baf2181030::t_fa49cad8a4d79a 12-13,58
+src/tests/render_depth_test.lua
+  s_a149baf2181030::t_998d539cce382a 16
+src/tests/mines_followup_regression_test.lua
+  s_a149baf2181030::t_fa49cad8a4d79a 8,69-76
+src/platform/tools/bomb.lua
+  s_a149baf2181030::t_968fc5b0268546 40-53,55,91,100-104,131
+src/platform/tiles/smooth_brick.lua
+  s_a149baf2181030::t_fa49cad8a4d79a 1
+src/platform/kali.lua
+  s_a149baf2181030::t_d52cce209b95d5 68,99
+src/platform/traps/boulder.lua
+  s_a149baf2181030::t_c53e1d602f254e 73,94
+src/tests/mines_report_regression_test.lua
+  s_a149baf2181030::t_88ccfa1de2eb27 74
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0243a03fd131955d6df093e9b81cbd8e7f6d59e5",
+  "prompts": {},
+  "sessions": {
+    "s_a149baf2181030": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0fdc3-ae05-7e41-a96b-bd7a333b41c3",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Ethan Denny <ethandenny@protonmail.com>"
+    }
+  }
+}
