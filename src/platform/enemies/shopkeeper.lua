@@ -49,6 +49,9 @@ function Shopkeeper.initialize(body, seed)
     body.heavy = true
     body.physicsOriginY = -8
     body.definition = Traits.body({ hold = { standing = 4, ducking = 6 }, enemyBody = true })
+    body.definition.bodyStep = function(world, actor, player, game)
+        Shopkeeper.step(actor, world, player, game)
+    end
     body.state = body.entity.properties and body.entity.properties.exitGuard and "patrol" or "idle"
     body.hasGun = true
     body.firing = 0
@@ -143,7 +146,7 @@ function Shopkeeper.step(body, world, player, context)
         (game.run.shopkeeperAnger > 0 or game.run.murderer)) then setState(body, "attack") end
     Physics.move(world, body, "x", body.vx)
     Physics.move(world, body, "y", body.vy)
-    body.vy = math.min(8, body.vy + 0.6)
+    body.vy = math.min(10, body.vy + 0.6)
     local left = Physics.probe(world, body, "x", -1)
     local right = Physics.probe(world, body, "x", 1)
     local floor = Physics.probe(world, body, "y", 1)
@@ -232,28 +235,29 @@ function Shopkeeper.step(body, world, player, context)
         end
     elseif body.state == "stunned" then
         Shopkeeper.dropGun(body, game)
+        body.stunSprite = floor and "sShopStunL"
+            or body.bounced and (body.vy < 0 and "sShopBounceL" or "sShopFallL")
+            or body.vx < 0 and "sShopDieLL" or "sShopDieLR"
         -- scrCheckCollisions retains the shorter stunned mask after recovery.
-        body.shortMask = true
-        if left or right then
-            if left and not right then body.x = body.x + 1 elseif right then body.x = body.x - 1 end
-            body.vx = -body.vx * 0.5
-        end
-        if top and not floor then body.y = body.y + 1
-        elseif floor then
-            if body.vy > 1 then body.vy = -body.vy * 0.5
-            elseif math.abs(body.vy) < 1 then body.vy = 0 end
-            body.vx = math.abs(body.vx) < 0.1 and 0 or body.vx * 0.3
+        if floor and not body.bounced then
             body.bounced = true
+            if game.effects then game.effects:blood(body.x, body.y-8, 3) end
         end
         if floor or body.held then
             if body.stunned > 0 then body.stunned = body.stunned - 1
             elseif body.hp > 0 then setState(body, "attack") end
         end
         ItemBody.resolveEnemyContacts(body, nil, game)
+    elseif body.state == "dead" then
+        body.stunSprite = "sShopDieL"
+        if body.vx ~= 0 or body.vy ~= 0 then body.state = "stunned" end
     end
-    if body.vx > 0 then body.vx = body.vx - 0.1 end
-    if body.vx < 0 then body.vx = body.vx + 0.1 end
-    if math.abs(body.vx) < 0.5 then body.vx = 0 end
+    if body.state == "stunned" or body.state == "dead" then
+        Shopkeeper.dropGun(body, game)
+        Physics.resolveEnemyCollision(body, left, right, top, floor)
+        if body.corpse and body.vx == 0 and body.vy == 0 then body.state = "dead" end
+    end
+    Physics.enemyFriction(body)
     Shopkeeper.advanceAnimation(body)
 end
 
@@ -287,13 +291,12 @@ function Shopkeeper.collisionSprite(body)
     local name = body.vx == 0 and "sShopLeft" or "sShopRunLeft"
     if body.corpse then
         name = body.held and "sShopDHeldL"
-            or body.vx == 0 and body.vy == 0 and "sShopDieL" or "sShopDieLL"
+            or body.vx == 0 and body.vy == 0 and "sShopDieL" or body.stunSprite or "sShopDieLL"
     elseif body.held then name = "sShopHeldL"
     elseif body.state == "throw" then name = "sShopThrowL"
     elseif body.state == "stunned" then
-        name = body.bounced and (body.vy < 0 and "sShopBounceL" or "sShopFallL")
+        name = body.stunSprite or body.bounced and (body.vy < 0 and "sShopBounceL" or "sShopFallL")
             or (body.vx < 0 and "sShopDieLL" or "sShopDieLR")
-        if body.vy == 0 then name = "sShopStunL" end
     end
     -- Its Draw event mirrors the image without changing image_xscale.
     return name, body.animation, body.x-8, body.y-16, false

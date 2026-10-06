@@ -3,6 +3,7 @@ local MinesLevelSelection = require("src.world.mines_level_selection")
 local GeneratedWorld = require("src.platform.generated_world")
 local Player = require("src.platform.player")
 local Enemy = require("src.platform.enemy")
+local Sight = require("src.platform.enemies.enemy_sight")
 local Item = require("src.platform.item")
 local ItemActions = require("src.platform.item_actions")
 local EntityBody = require("src.platform.entity_body")
@@ -375,12 +376,13 @@ end
 function FullLevelPlaytest:checkWhip()
     local left = self.player:getWhipHitbox()
     if not left then return end
+    local _, whipX = self.player:getWhipSprite()
     for _, enemy in ipairs(self:combatActors()) do
         if Simulation.whipContact(self.player, enemy) then
             local hit
-            if enemy.kind == "shopkeeper" then hit = enemy:damage(0, self.player.x, { kind = "whip" })
+            if enemy.kind == "shopkeeper" then hit = enemy:damage(0, whipX+8, { kind = "whip" })
             elseif enemy.spec and enemy.spec.melee then hit = enemy.spec.melee(enemy, self, 0)
-            else hit = enemy:damage(1, self.player.x, { kind = "whip", phase = self.player:getWhipPhase() }) end
+            else hit = enemy:damage(1, whipX+8, { kind = "whip", phase = self.player:getWhipPhase() }) end
             if hit and enemy.kind ~= "damsel" and not (enemy.spec and enemy.spec.bloodless) then
                 self.effects:blood(enemy.x, enemy.y-8, 1)
             end
@@ -695,6 +697,7 @@ function FullLevelPlaytest:simulationStepBody(input)
         self.exiting = self.exiting+1
         self.world.time = self.world.time+1
         for _, enemy in ipairs(self.enemies) do enemy:step(self.world, self.player, self) end
+        Sight.update(self.world, self.player, self.enemies, self)
         Simulation.stepItems(self)
         Simulation.stepCollectibles(self, self.player)
         self.projectiles:update(self:combatActors(), self.player, self.items)
@@ -707,6 +710,7 @@ function FullLevelPlaytest:simulationStepBody(input)
     end
     if self.player:isDead() then
         for _, enemy in ipairs(self.enemies) do enemy:step(self.world, self.player, self) end
+        Sight.update(self.world, self.player, self.enemies, self)
         Simulation.stepItems(self)
         self.effects:burning(self.player)
         self.effects:update(self.world)
@@ -795,10 +799,10 @@ function FullLevelPlaytest:simulationStepBody(input)
             Spikes.checkActor(self, enemy)
             enemy:step(self.world, self.player, self)
             if enemy.kind ~= "spider" and enemy.kind ~= "giant_spider" and enemy.kind ~= "ghost"
-                and not enemy.held and enemy.alive
-                and self.world:webRect(enemy:getBounds()) then
+                and not enemy.held
+                and self.world:webRect(require("src.platform.entity_collision").bounds(enemy)) then
                 enemy.vx, enemy.vy = 0, 0
-                if enemy.kind == "shopkeeper" then Shopkeeper.provoke(enemy) end
+                if enemy.kind == "shopkeeper" and enemy.alive then Shopkeeper.provoke(enemy) end
             end
             if enemy.kind == "bat" and oldState == "HANG" and enemy.state ~= oldState then
                 self.sounds:play("bat")
@@ -827,7 +831,7 @@ function FullLevelPlaytest:simulationStepBody(input)
         end
     end
 
-    require("src.platform.enemies.enemy_sight").update(self.world, self.player, self.enemies, self)
+    Sight.update(self.world, self.player, self.enemies, self)
     self.projectiles:update(self:combatActors(), self.player, self.items)
 
     if self.player.health < previousHealth then
@@ -901,7 +905,12 @@ end
 function FullLevelPlaytest:simulationStep()
     local controls = self.app.controls
     for _, action in ipairs({ "item", "pay", "bomb", "rope", "up", "down", "attack", "start" }) do
-        if controls:takeGamepadPress(action) then self:keypressed(controls:keyFor(action), nil, false) end
+        if controls:takeGamepadPress(action) then
+            if action == "start" then
+                self.app:keypressed("escape", nil, false)
+                if self.app.currentScreen ~= self then return end
+            else self:keypressed(controls:keyFor(action), nil, false) end
+        end
     end
     local input = self:getInput(true)
     local log = self.app.playtestLog

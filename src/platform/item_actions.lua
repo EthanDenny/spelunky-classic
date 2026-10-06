@@ -24,7 +24,6 @@ local function useMelee(context, item)
         end
         item.visible = false
         context.meleeItem = item
-        context.meleeHits = { back = {}, front = {} }
         context.meleePreAge = nil
         context.meleeStrikeAge = nil
         player.meleeStrikeAge = nil
@@ -62,13 +61,11 @@ function ItemActions.updateMelee(context)
     if (not context.meleePreAge or spec.renewWindup) and player.whipping
         and player.attackKind == item.kind and frame < 2 then
         context.meleePreAge = 0
-        context.meleeHits.back = {}
     end
     if context.meleeStrikeAge then
         context.meleeStrikeAge = context.meleeStrikeAge + 1
     elseif player.whipping and player.attackKind == item.kind and frame > 4 then
         context.meleeStrikeAge = 0
-        context.meleeHits.front = {}
         context.sounds:play("whip")
     end
     local striking = context.meleeStrikeAge and context.meleeStrikeAge < strikeDuration
@@ -78,17 +75,16 @@ function ItemActions.updateMelee(context)
     local name, spriteFrame, x, y = MeleeMask.pose(player, spec, phase,
         context.meleeStrikeAge)
     if name then
-        local hits = context.meleeHits[phase]
+        local sourceX = player.x+(player.meleeFacing or player.facing)*(phase == "back" and -16 or 16)
         for _, enemy in ipairs(context.combatActors and context:combatActors() or context.enemies or {}) do
-            if (enemy.alive or enemy.corpse) and enemy.kind ~= "ghost" and not hits[enemy]
+            if (enemy.alive or enemy.corpse) and enemy.kind ~= "ghost"
                 and meleeOverlaps(name, spriteFrame, x, y, enemy) then
-                hits[enemy] = true
                 if enemy.kind == "shopkeeper" then
-                    enemy:damage(spec.keeperWhipDamage or 0, player.x, { kind = "whip" })
+                    enemy:damage(spec.keeperWhipDamage or 0, sourceX, { kind = "whip" })
                 elseif enemy.spec and enemy.spec.melee then
                     enemy.spec.melee(enemy, context, spec.strike == "slash" and spec.damage or 0)
                 else
-                    if enemy:damage(spec.damage, player.x, { kind = "whip", weapon = item.kind, phase = phase })
+                    if enemy:damage(spec.damage, sourceX, { kind = "whip", weapon = item.kind, phase = phase })
                         and not (enemy.spec and enemy.spec.bloodless) then
                         context.effects:blood(enemy.x, enemy.y-8, 1)
                     end

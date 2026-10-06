@@ -921,7 +921,8 @@ function EnemyAI:stepScenario(scenario)
         end
         if player then
             if Simulation.whipContact(player, enemy) then
-                enemy:damage(1, player.x)
+                local _, whipX = player:getWhipSprite()
+                enemy:damage(1, whipX+8, { kind = "whip", phase = player:getWhipPhase() })
                 if enemy.kind ~= "skeleton" then
                     scenario.effects:blood(enemy.x, enemy.y - 8, 1)
                 end

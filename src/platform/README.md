@@ -66,9 +66,11 @@ The full LÖVE smoke suite passes. Existing tests retain the previously measured
 original-executable walk, sprint, and held-jump traces. Fresh executable comparison
 was unavailable during this audit because the Parallels service could not connect.
 
-This does not establish complete Classic physics parity. Water/ice, vines/trees,
-stuck-arrow hanging, ball-and-chain movement, and the source's general slope
-adjustment remain outside this controller's implemented or verified coverage.
+This does not establish complete Classic physics parity. Water/ice and vines/trees
+remain outside the Mines controller scope. Stuck-arrow
+hanging, ball-and-chain movement and the general ground slope adjustment are
+implemented with source-based scenarios as of 2026-10-06; their complete
+GameMaker runtime equivalence has not been certified.
 The world also represents terrain with rectangles rather than every original
 precise sprite collision mask. These gaps must stay explicit when adding those
 features or claiming executable-level parity.

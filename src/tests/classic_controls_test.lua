@@ -270,6 +270,21 @@ function Test.run(app)
     fullLevel.run.bombs, fullLevel.run.ropes = bombs, ropes
     fullLevel:buildSimulation()
     app.controls = active
+    local previousScreen = app.currentScreenName
+    local hardware = love.joystick.getJoysticks
+    local ok, err = pcall(function()
+        app.controls = ClassicControls.fromContents(nil, "0\n1\n1\n1")
+        love.joystick.getJoysticks = function()
+            return { { getAxisCount = function() return 0 end, getHatCount = function() return 0 end,
+                isDown = function(_, index) return index == 10 end } }
+        end
+        app:showScreen("full_level_playtest")
+        app:update(1/30)
+        assert(app.currentScreenName == "menu", "Gamepad Start follows the same menu navigation as Escape")
+    end)
+    love.joystick.getJoysticks, app.controls = hardware, active
+    app:showScreen(previousScreen)
+    assert(ok, err)
 end
 
 return Test

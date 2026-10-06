@@ -597,3 +597,66 @@ growing to 96 near lamps or the entrance flare crate. The crate additionally
 emits its own radius-96 circle. The broad entrance illumination is present in
 the source; no smaller arbitrary radius was substituted. Exact legacy
 Direct3D edge-pixel coverage has not been compared to an executable capture.
+
+## Mines parity implementation pass (2026-10-06)
+
+This supersedes the earlier remaining-difference entries for Mines item cycling,
+arrow hanging, camera behavior, inspected enemy state machines, solid Destroy
+inheritance, projectile contacts, audio settings and the Mines intermission.
+The bundled Classic 1.1 source remains the authority. This pass does not certify
+100% executable parity.
+
+| Area | Implemented behavior | Production owner / primary proof |
+|---|---|---|
+| Player and held items | C cycles light items through reserved unarmed bombs/ropes, restores unused resources and the original item, respects armed/heavy/unpaid/stunned restrictions, and handles exit/hurt cleanup. Falling players can catch stuck arrows; hanging still requires adjacent support. Ground movement applies the source slope adjustment. | `item_cycle.lua`, `items/arrow.lua`, `player.lua`; Mines completion and platform player scenarios |
+| Camera | Horizontal/vertical borders 128/96, delayed Up/Down look, four-pixel look movement, source vertical shake and edge borders. | `render/game_camera.lua`; camera owner and light-render checks |
+| Enemy behavior | Snake, bat, spider, skeleton and giant-spider movement/state ordering, timers, detection and steering; caveman sight travels as an object and alerts nearby cavemen on contact. Spider alarms and inspected animation-end events continue offscreen. | `enemies/`; enemy AI, gameplay systems and Mines completion owners |
+| NPC bodies | Caveman/Shopkeeper stun and corpse physics, enemy falling limit, floor bounce, shorter recovery bounds, collision adjustment, poses and source whip impulse origin. Machetes bypass the caveman’s stunned/dead whip restriction. | `creature.lua`, `enemies/caveman.lua`, `enemies/shopkeeper.lua`; rendered corpse/landing scenarios |
+| Object contacts | Source sprite masks and bounding-box queries are distinct from movement bounds. Pot/skull contacts query overlap, then select the nearest enemy independently. NPC bodies use their own rectangle query. Fast rocks can be caught by a mitt and use the source nearest-instance selection. | `entity_collision.lua`, `body_contact.lua`, `fragile_contact.lua`, `item_body.lua`; Mines and platform item owners |
+| Weapons | Bullets move once before contact, use current masks, pass through ghosts, and hit corpses. Bow/trap arrows share loose-item physics, stick/materialize into normal arrows, and are consumed even against stunned cavemen. Melee tests both masks and puncturing hits repeat during their lifetime. Key unlocks require actual key/chest contact; telefrag selects the contacted enemy; a mattock hit selects one solid. | Projectile, melee, item-action and teleporter modules; gameplay systems and Mines owners |
+| Explosions | Frame-specific expanding masks drive terrain, actors, items and webs. The player reacts once per tick and uses the nearest explosion for impulse. Opened chests still receive item impulses. Rotated arrow tips participate in contact. Bomb chains reset their short fuse on contact. | `tools/explosion.lua`; Mines completion and bomb scenarios |
+| Terrain inheritance | Solid children retain their Destroy overrides; inherited destruction and explicit explosion/boulder cleanup have separate consequences for cave fringes, spikes, shop walls and lamps. | `world.lua`, tile modules, `terrain_destruction.lua`; destruction scenarios |
+| Treasure and presentation | Existing treasure/resource alarms, blood/Kapala, Kali rewards/punishments, shops and ghosts remain covered. Scarabs use creation counters, integer direction choices, post-hop wall checks and three-frame animation. HUD equipment/compass/ammo placement and delayed kiss effects follow source rules. | Pickup, shop, HUD, effects and Kali modules; relevant gameplay/render owners |
+| Controls and settings | Original keyboard and nine-entry gamepad mapping files, buttons, Z triggers, movement axes/hat, press/release edges, prompt labels, sound/music attenuation and high/low graphics effects. Start is delivered through the app’s Escape navigation. | `input/classic_controls.lua`, audio adapters; controls owner |
+| Mines intermission | Original `rTransition1`/`rTransition1x` layouts and cave fringe/background, tally sequence, walking/exiting actor, damsel kiss, held item, cape, jetpack and punishment ball/chain. | `screens/level_transition.lua`, `render/transition_room.lua`; Full game lifecycle owner and 320×240 render inspection |
+| Tunnel Man | First-visit delay, introduction, refusal/partial/completed donations, $100 selections, source hold-repeat acceleration and money/remaining-cost limits. Progress saves across runs/restarts. | `characters/tunnel_man.lua`, `game/progress.lua`; actual Full game exits, conversations and save/reload tests |
+| Full game | Fresh 1-1 start, fullscreen, four distinct Mines depths, normal once-per-Mines dark odds, music/ghost slowdown, exits and intermissions. The forced dark 1-1 override and general falling-carryable damage are removed. | `screens/full_game.lua`; lifecycle, generation, music and darkness owners |
+
+### Validation and limits
+
+The native `love . --smoke-test` suite passes with **67 Mines completion
+scenarios**, **12 Kali altar scenarios**, scenario-viewer checks, gameplay input,
+rendering, generation and Full game lifecycle/persistence checks. New regressions
+were run against pre-fix owners and failed for the intended discrepancies,
+including nearest-instance contact, ghost/corpse bullets, repeated blast damage,
+rotated-arrow contact, offscreen animation endings, mattock selection, scarab
+hop order, NPC bounce/velocity, kiss timing and low graphics. These scenarios
+execute the production simulation and renderer; no test-only gameplay exports
+were added. Gamepad delivery uses a hardware mock while retaining the actual
+app input path. Intermission rendering was inspected at 320×240. `git diff
+--check` passes.
+
+The executable oracle was retried on 2026-10-06. Parallels returned “Unable to
+connect to Parallels Service,” so fresh original-game capture/comparison remains
+blocked. The following are still open, rather than implied to be certified:
+
+- GameMaker Step/Collision/End Step/Alarm/Animation end ordering, creation-tick
+  behavior, equal-depth instance order and every activation/instance-cap case.
+  The inspected branches are ported; the clone is not a complete GM8 scheduler.
+- Exact RNG algorithm and call order. Generation, actors and effects still use
+  different random streams. Seed equality with Classic is not established.
+- Universal terrain AUTO-mask coverage, exact rotated-mask rasterization and
+  legacy Direct3D circle/surface edge pixels. The inspected sprite contacts use
+  the archived masks; terrain movement still uses the world’s rectangles.
+- Mattock instance selection and collision iteration use deterministic clone
+  order; original tie behavior needs an executable trace.
+- Scarab Destroy’s use of `other` and the lab-only visual skull fallback still
+  need original-runtime verification. Generated Mines drop real carryable skulls.
+- The lab frontend retains its own dimensions, navigation and configuration UI.
+  Full game intentionally forces fullscreen. Immediate death-to-menu remains
+  the user’s explicit requirement, so Classic’s death-summary/high-score flow
+  has not replaced it.
+- Playable Jungle, shortcut entry rooms, later-area Tunnel Man encounters and
+  original high-score/stat-file interoperability remain outside the selected
+  Mines/intermission scope. Completing the first tunnel persists its cost;
+  this does not add a playable Jungle shortcut.

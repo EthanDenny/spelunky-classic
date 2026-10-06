@@ -205,8 +205,8 @@ function Test.run()
             assert(crate.opened and count == 3, "Source flare crates release exactly three scattered flares")
         end },
         { "caveman and shopkeeper corpses lie flat after settling, including after a throw", function()
-            for _, example in ipairs({ { "caveman", "sCavemanDeadL", "sCavemanDHeldL", "sCavemanDieLL" },
-                { "shopkeeper", "sShopDieL", "sShopDHeldL", "sShopDieLL" } }) do
+            for _, example in ipairs({ { "caveman", "sCavemanDeadL", "sCavemanDHeldL", "sCavemanBounceL" },
+                { "shopkeeper", "sShopDieL", "sShopDHeldL", "sShopBounceL" } }) do
                 local game = fixture()
                 game.player.x = 400
                 local body = game:spawnEntity(example[1], 160, 80)
@@ -222,10 +222,38 @@ function Test.run()
                 game:simulationStepBody({})
                 game:simulationStepBody({ attack = true })
                 assert(not body.held and (body.vx ~= 0 or body.vy ~= 0), "ACTION must throw the corpse")
+                assertBodySprite(game, body, example[2])
+                game:simulationStepBody({})
                 assertBodySprite(game, body, example[4])
                 for _ = 1, 120 do game:simulationStepBody({}) end
                 assert(body.vx == 0 and body.vy == 0, "The thrown corpse must settle again")
                 assertBodySprite(game, body, example[2])
+            end
+        end },
+        { "stunned cavemen use enemy collision adjustment after landing", function()
+            local game = fixture()
+            game.player.x = 400
+            local body = game:spawnEntity("caveman", 160, 106)
+            body:damage(0, 100)
+            body.vx, body.vy = 4, 6
+            body:step(game.world, game.player, game)
+            assert(body.x == 164 and body.y == 112 and math.abs(body.vx-1.1) < 0.000001
+                and math.abs(body.vy+3.3) < 0.000001 and body.stunned == 199
+                and body:getVerticalBounds() == -10,
+                "Landing applies scrCheckCollisions, then the caveman's normal friction")
+            body:step(game.world, game.player, game)
+            assertBodySprite(game, body, "sCavemanBounceL")
+            assert(#game.effects.particles == 1, "The first floor contact emits one caveman blood droplet")
+        end },
+        { "stunned NPCs retain the enemy terminal speed", function()
+            for _, kind in ipairs({ "caveman", "shopkeeper" }) do
+                local game = fixture()
+                game.player.x = 400
+                local body = game:spawnEntity(kind, 160, 64)
+                body:damage(0, 100)
+                body.vx, body.vy = 0, 9.8
+                body:step(game.world, game.player, game)
+                assert(body.vy == 10, kind .. " uses the oEnemy ten-pixel falling limit")
             end
         end },
         { "item bodies inherit impacts across object categories in the level simulation", function()
@@ -267,26 +295,37 @@ function Test.run()
                 "Carrying and throwing an opened chest cannot reroll its contents")
         end },
         { "pots smash on creature contact even when the target cannot take damage", function()
-            for _, example in ipairs({ { "caveman", false, 3 }, { "caveman", true, 3 },
-                { "caveman", "dead", -97 },
-                { "spider", false, 0 }, { "damsel", true, 3 } }) do
-                local game = fixture()
-                game.player.x = 400
-                local target = game:spawnEntity(example[1], 160, 80)
-                if example[2] then target:damage(example[2] == "dead" and 100 or 0, target.x) end
-                target.timer = 1000
-                local jar = game:spawnEntity("jar", 152, 72)
-                jar.vx = 8
-                game:simulationStepBody({})
-                assert(jar.opened and jar.x == -1000,
-                    "A fast pot must smash against " .. example[1]
-                        .. (example[2] == "dead" and " corpse" or example[2] and " while stunned" or ""))
-                assert(target.hp == example[3], "Pot damage must follow the target's source rule")
-                if example[1] == "damsel" then
-                    assert(target.stunned == 120 and target.vy == -6,
-                        "A pot must restart the damsel's thrown state")
+            for _, kind in ipairs({ "jar", "skull" }) do
+                for _, example in ipairs({ { "caveman", false, 3 }, { "caveman", true, 3 },
+                    { "caveman", "dead", -97 },
+                    { "spider", false, 0 }, { "damsel", true, 3 } }) do
+                    local game = fixture()
+                    game.player.x = 400
+                    local target = game:spawnEntity(example[1], 160, 80)
+                    if example[2] then target:damage(example[2] == "dead" and 100 or 0, target.x) end
+                    target.timer = 1000
+                    local jar = game:spawnEntity(kind, 152, 72)
+                    jar.vx = 8
+                    game:simulationStepBody({})
+                    assert(jar.opened and jar.x == -1000,
+                        "A fast " .. kind .. " must smash against " .. example[1]
+                            .. (example[2] == "dead" and " corpse" or example[2] and " while stunned" or ""))
+                    assert(target.hp == example[3], "Pot damage must follow the target's source rule")
+                    if example[1] == "damsel" then
+                        assert(target.stunned == 120 and target.vy == -6,
+                            "A pot must restart the damsel's thrown state")
+                    end
                 end
             end
+        end },
+        { "an arrow is consumed against a stunned caveman without damaging it again", function()
+            local game = fixture()
+            local caveman = game:spawnEntity("caveman", 160, 80)
+            caveman:damage(0, 100)
+            local arrow = game.projectiles:spawn("arrow", 152, 72, 8, 0, nil, { gravity = 0.2 })
+            game.projectiles:update(game:combatActors(), game.player, game.items)
+            assert(not arrow.alive and caveman.hp == 3 and math.abs(caveman.vx-2.4) < 0.000001,
+                "The oItem contact still transfers horizontal momentum and destroys the arrow")
         end },
         { "pot contact affects the nearest enemy even when a different enemy overlaps", function()
             local game = fixture()
@@ -1029,12 +1068,26 @@ function Test.run()
             assert(corpse.hp == -97, "An ordinary whip cannot damage DEAD cavemen")
             local machete = game:spawnEntity("machete", 80, 104)
             machete:pickup(game.player, game.run)
-            game.heldItem, game.meleeItem = machete, machete
-            game.player.attackKind = "machete"
-            game.meleeHits = { back = {}, front = {} }
+            game.heldItem, game.player.whipping = machete, false
+            game:useHeldItem({ attack = true })
+            game.player.animationFrame = 5
             for _ = 1, 3 do require("src.platform.item_actions").updateMelee(game) end
             assert(corpse.corpse and corpse.hp == -99,
                 "The Machete exception still damages a dead caveman")
+        end },
+        { "machete contact repeats during a single rear hitbox lifetime", function()
+            local game = fixture()
+            local body = game:spawnEntity("caveman", 64, 104)
+            local item = game:spawnEntity("machete", 80, 104)
+            item:pickup(game.player, game.run)
+            game.heldItem = item
+            game:useHeldItem({ attack = true })
+            game.player.animationFrame = 1
+            require("src.platform.item_actions").updateMelee(game)
+            assert(body.hp == 1, "The rear machete hitbox initially deals two damage")
+            require("src.platform.item_actions").updateMelee(game)
+            assert(body.hp == -1 and body.corpse,
+                "The same live hitbox damages again; caveman stunned immunity has a Machete exception")
         end },
         { "scarabs turn a new hop away from an adjacent wall immediately", function()
             local game = fixture()

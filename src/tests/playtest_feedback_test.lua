@@ -145,7 +145,6 @@ function Test.run(app)
     webGame.sounds = { play = function() end }
     webGame.meleeItem = Item.new({ kind = "machete", x = 4.5, y = 5.5 })
     webGame.meleeItem.held = true
-    webGame.meleeHits = { back = {}, front = {} }
     ItemActions.updateMelee(webGame)
     assert(web.destroyed and not webGame.world:webAtPoint(88, 88),
         "Classic's machete slash must cut a web on contact")

@@ -158,6 +158,25 @@ function PhysicalBody.stepItem(world, body)
     end
 end
 
+-- scrCheckCollisions applies the enemy's shortened mask and collision response.
+function PhysicalBody.resolveEnemyCollision(body, left, right, top, bottom)
+    body.shortMask = true
+    if left and not right then body.x = body.x+1 elseif right then body.x = body.x-1 end
+    if left or right then body.vx = -body.vx*0.5 end
+    if top and not bottom then body.y = body.y+1
+    elseif bottom then
+        if body.vy > 1 then body.vy = -body.vy*0.5
+        elseif math.abs(body.vy) < 1 then body.vy = 0 end
+        body.vx = math.abs(body.vx) < 0.1 and 0 or body.vx*0.3
+    end
+end
+
+function PhysicalBody.enemyFriction(body)
+    if body.vx > 0 then body.vx = body.vx-0.1 end
+    if body.vx < 0 then body.vx = body.vx+0.1 end
+    if math.abs(body.vx) < 0.5 then body.vx = 0 end
+end
+
 -- oItem passes part of its velocity to the enemy; the item itself keeps flying.
 function PhysicalBody.strikeEnemy(body, enemy)
     if enemy.invincible and enemy.invincible ~= 0 then return false end

@@ -128,7 +128,10 @@ function Creature:damage(amount, sourceX, hit)
     local stun = self.spec.stunDuration
     if type(stun) == "function" then stun = stun(hit) end
     self.stunned = self.hp > 0 and (stun or 20) or 0
-    if sourceX then self.vx = self.x < sourceX and -3 or 3 end
+    if sourceX then
+        local impulse = self.spec.creatureKnockback or 3
+        self.vx = self.x < sourceX and -impulse or impulse
+    end
     self.vy = -3
     if self.hp > 0 and self.spec.sacrifice then self.state = "stunned" end
     if self.hp <= 0 then

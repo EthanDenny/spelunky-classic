@@ -19,7 +19,9 @@ function ItemBody.resolveEnemyContacts(body, enemies, context)
             or enemy.held and body.safe) then return end
         -- Contact overrides may consume a hit without dealing damage.
         if definition.enemyContact and definition.enemyContact(body, enemy, context) then return end
-        if not Physics.strikeEnemy(body, enemy) then return end
+        if enemy.invincible and enemy.invincible ~= 0 then return end
+        local damaged = Physics.strikeEnemy(body, enemy)
+        if not damaged and not definition.consumeOnEnemyHit then return end
         if enemy.kind == "damsel" then
             enemy.held, enemy.cooldown = false, 10
             if context and context.heldNpc == enemy then context.heldNpc = nil end
@@ -27,12 +29,14 @@ function ItemBody.resolveEnemyContacts(body, enemies, context)
                 require("src.platform.shop").anger(context, enemy.x, enemy.y, "YOU'LL PAY FOR YOUR CRIMES!")
             end
         end
-        if definition.impactOnce then
+        if damaged and definition.impactOnce then
             body.hitEnemies = body.hitEnemies or {}
             body.hitEnemies[enemy] = true
         end
-        if definition.onEnemyHit then definition.onEnemyHit(body, enemy, context)
-        elseif context and context.effects then context.effects:blood(enemy.x, enemy.y-8, 1) end
+        if damaged then
+            if definition.onEnemyHit then definition.onEnemyHit(body, enemy, context)
+            elseif context and context.effects then context.effects:blood(enemy.x, enemy.y-8, 1) end
+        end
         if definition.breakOnImpact then
             body.justHit = true
             if context and context.processItemImpact then context:processItemImpact(body) end

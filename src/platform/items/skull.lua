@@ -6,5 +6,6 @@ local Definition = Traits.carry({ flight = "fragile", hold = { standing = 0, duc
 Definition.depth = 100
 
 Definition.breakOnBullet = true
+Definition.updateLoose = require("src.platform.fragile_contact").update
 
 return Definition

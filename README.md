@@ -4,9 +4,9 @@ This is a coverage inventory for the original **Spelunky Classic (1.1)**, not a 
 
 The playable implementation currently focuses on **Mines 1–4 only**. Full Level Playtest and Full game generate Mines levels; the playtest completes after the 1–4 exit animation; R then starts a new run. Jungle, Ice Caves, Temple, Olmec, and special-level generation/gameplay were removed for this focused pass. Their entries below remain as future coverage goals, not active implementations. The animation viewer, original-source archive, and image/sound assets still cover the wider Classic game. Run the project with Love 11.5 (`love .`); run its smoke suite with `love . --smoke-test`. The smoke suite mutes application audio before loading screens; normal playtest audio is unchanged.
 
-Choose **4. Full game** for a fresh run from **1-1** in exclusive fullscreen. It uses Classic's 320×240 camera with integer scaling and the original HUD. Level resets, rerolls, depth/type selectors and collision overlays are disabled; progression happens through the exits. Death returns immediately to the main menu, restoring its previous window size and cursor. Escape also ends the run at the menu. The current playable run returns to the menu after the 1-4 exit. Starting Full game again always creates a new run with four health, four bombs, four ropes and no carried equipment. The original `cave.ogg` loops during Mines play, stops when an exit opens or the run ends, and restarts at normal pitch in the next level. After two minutes in 1-2 or later, it slows over 100 simulation ticks before the timed ghost arrives. M toggles music, preserving that choice across levels and runs.
+Choose **4. Full game** for a fresh run from **1-1** in exclusive fullscreen. It uses Classic's 320×240 camera with integer scaling and the original HUD. Level resets, rerolls, depth/type selectors and collision overlays are disabled; progression happens through the exits. Death returns immediately to the main menu, restoring its previous window size and cursor. Escape also ends the run at the menu. The run plays the original Mines intermission after each exit and returns to the menu after the 1-4 intermission. The final intermission includes Tunnel Man’s introduction and donation conversation once its first-visit delay has elapsed; payments persist in `progress.cfg` in Love’s save directory. Starting Full game again always creates a new run with four health, four bombs, four ropes and no carried equipment. The original `cave.ogg` loops during Mines play, stops when an exit opens or the run ends, and restarts at normal pitch in the next level. After two minutes in 1-2 or later, it slows over 100 simulation ticks before the timed ghost arrives. M toggles music, preserving that choice across levels and runs.
 
-**Temporary lighting playtest:** Full game currently forces only Mines 1-1 to be dark; 1-2 through 1-4 stay normal. Set `game.darkTestLevel` to `nil` in `src/screens/full_game.lua` to restore normal dark-level odds and the once-per-Mines restriction. Dark Mines include the entrance flare crate (Up + ACTION opens three flares), animated lamps and lit arrow traps.
+Full game uses normal dark-level selection: 1-1 stays normal, and subsequent Mines depths have the source’s one-in-twelve chance with a once-per-Mines restriction. Use the lab’s Dark selector for a lighting playtest. Dark Mines include the entrance flare crate (Up + ACTION opens three flares), animated lamps and lit arrow traps.
 
 Implemented objects live in individual Lua modules under `src/platform/` (`items/shotgun.lua`, `pickups/compass.lua`, `enemies/skeleton.lua`, `tiles/brick.lua`, etc.). See [object module conventions](src/platform/README.md#object-modules) for the registries and shared systems.
 
@@ -14,7 +14,7 @@ The [step-by-step object source audit](docs/object-source-audit.md) records the 
 
 Normal playtest sessions log automatically to `playtest-logs/` in Love's save directory. `latest.txt` points to the most recent JSONL session; press F9 during a test to add a bookmark for later diagnosis. The smoke suite does not create a playtest session.
 
-Gameplay controls load the original 12-line `keys.cfg` and seven-line `settings.cfg` format. A file in Love's save directory takes priority; otherwise the real files in `original-game-reference/` are used. The shipped keyboard bindings are arrows to move/climb, Z jump, X action/pickup/throw, Shift run, A bomb, and S rope—WASD does not move the player. Hold Up+A for a high bomb throw or Down+A for a short grounded drop; Down+S drops a rope beside a ledge. A blocked downward rope falls back to an upward throw; an upward placement without headroom does not spend a rope. In Full Level Playtest, R resets the selected Mines level with full health, four bombs, and no gold. The loaded `downToRun` setting affects movement, and Full game applies `musicVol` to its music using Classic's attenuation scale. The remaining settings are parsed but not yet applied to the Love display/audio adapters; P purchases eligible shop stock. C switch remains unsupported; the original source comments out F flare activation.
+Gameplay controls load the original 12-line `keys.cfg` and seven-line `settings.cfg` format. A file in Love's save directory takes priority; otherwise the real files in `original-game-reference/` are used. The shipped keyboard bindings are arrows to move/climb, Z jump, X action/pickup/throw, Shift run, A bomb, and S rope—WASD does not move the player. Hold Up+A for a high bomb throw or Down+A for a short grounded drop; Down+S drops a rope beside a ledge. A blocked downward rope falls back to an upward throw; an upward placement without headroom does not spend a rope. In Full Level Playtest, R resets the selected Mines level with full health, four bombs, and no gold. The loaded `downToRun` setting affects movement; `musicVol` and `soundVol` use Classic’s attenuation scale. `graphicsHigh` controls cave fringes, bomb flames and blood trails. `gamepad.cfg` loads the original nine button/trigger mappings when `gamepadOn` is enabled, with joystick axes and the directional hat for movement. Gamepad Start follows Escape navigation. The lab keeps its own window dimensions; Full game forces fullscreen and scales the 320×240 view to fit, overriding the display settings. P purchases eligible shop stock. C cycles a light held item through an unarmed bomb and rope, reserving and refunding resources; ACTION arms or throws the selected tool. The source comments out F flare activation.
 
 The lab menu contains **Animation Viewer**, **Scenario Tests**, **Full Level Playtest**, and **Full game**. Full Level Playtest includes the former generation preview: **Tab** switches between gameplay and a paused whole-level map; **F2** toggles the room-path overlay in either view. Gameplay actions are disabled while viewing the map. Use **N** for the next seed, **R** to restart, **-/=** for depth, and **[/]** for level type in either view.
 
@@ -22,7 +22,7 @@ Choices are Random, Standard, Idol, Kali Altar, Snake Pit, Shop, and Dark. Selec
 
 Kali altars accept unheld, stationary stunned bodies and corpses after twenty countdown ticks. Use Down + ACTION to pick up a damsel, stunned caveman/shopkeeper, or corpse, then ACTION to release it over either altar half. Living cavemen give 2 favor and dead ones 1; living stunned shopkeepers give 12 and dead ones 6. Classic's executable damsel rule gives 8 for both living thrown and dead damsels. Gifts appear at 8 favor (unowned equipment), 16 (Kapala), and 32 (99 bombs, or vitality with at least 80 bombs); further vitality starts at 48 and repeats every 16 favor. Destroying an altar, including its support, costs 16 favor and destroys all altars in the level. Punishments escalate from six spiders per Kali head to a persistent ball and chain, then darkness and an immediate ghost. An already haunted dark level gets spiders instead. Favor, gift progress and punishment count persist through exits and reset for a new run.
 
-The Mines completion pass restores contact supplies, treasure alarms and delayed cash, Kapala blood collection, scarab movement, terrain destruction contents, ongoing blasts and chain bombs, enemy impalement, Ghost diamonds/death, source light behavior, and animated exits/rescues. See the source audit for tested contracts and exact-runtime limits. Automated validation does not mark the player-confirmed inventory below complete.
+The current Mines pass also implements stuck-arrow ledge catches, source camera borders and delayed look, general slope adjustment, moving caveman sight objects, offscreen spider alarms and animation endings, NPC bounce/death poses, exact key/chest contact, source projectile and nearest-instance selection, expanding blast masks, solid Destroy inheritance, and the Mines intermission with saved Tunnel Man donations. The Mines completion pass restores contact supplies, treasure alarms and delayed cash, Kapala blood collection, scarab movement, terrain destruction contents, ongoing blasts and chain bombs, enemy impalement, Ghost diamonds/death, source light behavior, and animated exits/rescues. See the source audit for tested contracts and exact-runtime limits. Automated validation does not mark the player-confirmed inventory below complete.
 
 Mines gameplay screens share the [source-based render-depth rules](src/render/README.md); add new visible objects there rather than introducing a screen-specific draw band.
 
@@ -76,7 +76,7 @@ Legend: **`[ ]`** not started; **`[ ] … [WIP]`** started, but incomplete or no
     - [ ] Moai interior
   - [ ] Mines 1–4 level transitions [WIP]
   - [ ] In-memory run state [WIP]
-  - [ ] Tunnel Man encounters
+  - [ ] Tunnel Man encounters [WIP]
   - [ ] Shortcut construction
   - **City of Gold route**
     - [ ] Udjat Eye reveals the Black Market entrance
@@ -97,8 +97,8 @@ Legend: **`[ ]`** not started; **`[ ] … [WIP]`** started, but incomplete or no
   - [ ] Playable entrance lobby (`rTitle`)
   - [ ] Playable tutorial (`rTutorial`)
   - [ ] Return from tutorial to main screen
-  - [ ] Between-area transition scenes (`rTransition*`)
-  - [ ] Tunnel Man encounters in transition scenes
+  - [ ] Between-area transition scenes (`rTransition*`) [WIP]
+  - [ ] Tunnel Man encounters in transition scenes [WIP]
   - [ ] Shortcut House
   - [ ] Entrances to unlocked rooms
   - [ ] Title-hub score-room entrance
@@ -132,7 +132,7 @@ Legend: **`[ ]`** not started; **`[ ] … [WIP]`** started, but incomplete or no
   - [ ] Preserve and update records
   - [ ] Preserve and update trophies
   - [ ] Preserve and update unlocks
-  - [ ] Persist Tunnel Man payments across runs and restarts
+  - [ ] Persist Tunnel Man payments across runs and restarts [WIP]
   - [ ] Persist unlocked shortcuts across runs and restarts
   - [ ] Reconcile original save data with Love's save location without discarding or resetting it
   - **In-memory run state**
