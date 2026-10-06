@@ -1,0 +1,54 @@
+src/tests/render_depth_test.lua
+  s_a149baf2181030::t_0fcf5781961fc0 87
+  s_a149baf2181030::t_c5098e658bb6af 122-123
+  s_a149baf2181030::t_583e5d16e67e70 11,33-78,80,82,84-86,88-106,110-118,124-132,523
+  s_a149baf2181030::t_afac57687c203c 81,107-109
+  s_a149baf2181030::t_8d7726e0d05cd7 30-32
+  s_a149baf2181030::t_a278045a416d82 79
+  s_a149baf2181030::t_d1c697250ef6d1 119-121
+  s_a149baf2181030::t_7214d3d2e6af58 83
+docs/object-source-audit.md
+  s_a149baf2181030::t_3f9173ebc60d39 663-678
+src/platform/pickups/jetpack.lua
+  s_a149baf2181030::t_312218af3b559b 2,21-30
+  s_1c03dfeb8d211d::t_a81342db1348a8 31
+src/platform/player.lua
+  s_a149baf2181030::t_312218af3b559b 4-5,171,1251,1376,1380
+src/platform/structures/exit.lua
+  s_a149baf2181030::t_32f06791edcd0e 62-63
+  s_a149baf2181030::t_312218af3b559b 64
+src/screens/full_level_playtest.lua
+  s_a149baf2181030::t_312218af3b559b 698,1108
+src/screens/enemy_ai.lua
+  s_a149baf2181030::t_312218af3b559b 1241
+src/platform/pickups/cape.lua
+  s_a149baf2181030::t_a278045a416d82 13-21,23-26,31-32,34
+  s_a149baf2181030::t_312218af3b559b 2,22,27-30,33,35-41
+  s_1c03dfeb8d211d::t_ce407057d7aa42 42
+src/platform/item.lua
+  s_a149baf2181030::t_312218af3b559b 57
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "1f89eef094009924f4f72f07dfa9bb037fda3866",
+  "prompts": {},
+  "sessions": {
+    "s_1c03dfeb8d211d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1114b-8c84-7b92-8707-04bbb6787867",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "Ethan Denny <ethandenny@protonmail.com>"
+    },
+    "s_a149baf2181030": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0fdc3-ae05-7e41-a96b-bd7a333b41c3",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Ethan Denny <ethandenny@protonmail.com>"
+    }
+  }
+}
