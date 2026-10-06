@@ -149,9 +149,9 @@ function MineItemScenarios.step(scenario, input)
             game.items[#game.items + 1] = chest
         end
     end
-    if game.heldItem and game.heldItem.kind == "key" then
+    if game.heldItem then
         game.heldItem:updateHeldPosition(game.player)
-        if game:openNearbyContainer() then
+        if game.heldItem.kind == "key" and game:openNearbyContainer() then
             scenario.event = "UNLOCKED"
             scenario.eventTick = scenario.tick
         end
@@ -175,7 +175,6 @@ function MineItemScenarios.step(scenario, input)
     ItemActions.updateBow(game, input)
     ItemActions.updateMelee(game)
     Simulation.stepItems(game, function(current)
-        game:processItemImpact(current)
         if current.opened and (current.kind == "jar" or current.kind == "skull") then
             scenario.event = current.kind == "jar" and "JAR SMASHED" or "SKULL SMASHED"
             scenario.eventTick = scenario.tick

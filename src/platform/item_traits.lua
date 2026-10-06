@@ -1,14 +1,21 @@
 -- Shared capabilities for per-kind item and pickup definitions.
 local Traits = {}
+local ItemBody = require("src.platform.item_body")
 
 local light = { standing = 2, ducking = 4 }
 local heavy = { standing = -4, ducking = -2 }
+
+function Traits.body(spec)
+    spec = spec or {}
+    spec.bodyStep = ItemBody.step
+    return spec
+end
 
 function Traits.carry(spec)
     spec = spec or {}
     spec.carryable = true
     spec.hold = spec.hold or (spec.heavy and heavy or light)
-    return spec
+    return Traits.body(spec)
 end
 
 function Traits.money(value, sound)

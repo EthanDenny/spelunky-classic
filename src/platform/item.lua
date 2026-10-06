@@ -2,7 +2,6 @@ local Item = {}
 Item.__index = Item
 local Definitions = require("src.platform.item_definitions")
 local Holdable = require("src.platform.holdable")
-local PhysicalBody = require("src.platform.physical_body")
 local ItemContents = require("src.platform.item_contents")
 
 function Item.isCarryable(kind)
@@ -148,7 +147,7 @@ function Item:open(run, random)
     return ItemContents.open(self, run, random)
 end
 
-function Item:update(world, player)
+function Item:update(world, player, context)
     if not self.alive then return end
     if self.definition.update then self.definition.update(self, world, player) end
     if not self.alive or not require("src.platform.activity").contains(world, self) then return end
@@ -160,9 +159,7 @@ function Item:update(world, player)
         return
     end
     if self.safeTimer > 0 then self.safeTimer = self.safeTimer - 1 end
-    PhysicalBody.stepItem(world, self)
-    if self.definition.updateLoose then self.definition.updateLoose(self, world, player) end
-    PhysicalBody.stopInWeb(world, self)
+    self.definition.bodyStep(world, self, player, context)
     self.entity.x, self.entity.y = self.x / 16, self.y / 16
 end
 

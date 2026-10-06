@@ -1,3 +1,4 @@
+local ItemBody = require("src.platform.item_body")
 local Item = require("src.platform.item")
 local Player = require("src.platform.player")
 local TrapSystem = require("src.platform.trap_system")
@@ -222,13 +223,13 @@ function Test.run()
             game.enemies = { enemy }
             local rock = object("rock", enemy.x, enemy.y - 8)
             rock.vx, rock.vy = 1.5, 1.5
-            game:resolveItemEnemyContact(rock)
+            ItemBody.resolveEnemyContacts(rock, nil, game)
             assert(enemy.hp == 3, "Two slow components must not add up to a damaging throw")
             rock.x, rock.vx, rock.vy = enemy.x - 9, 4, 0
-            game:resolveItemEnemyContact(rock)
+            ItemBody.resolveEnemyContacts(rock, nil, game)
             assert(enemy.hp == 3, "The item's outer mask is outside its small source damage rectangle")
             rock.x = enemy.x
-            game:resolveItemEnemyContact(rock)
+            ItemBody.resolveEnemyContacts(rock, nil, game)
             assert(enemy.hp == 2 and rock.vx == 4 and rock.vy == 0,
                 "An enemy hit must not manufacture a rebound in the thrown item")
             close(enemy.vx, 1.2, "Thrown-item enemy impulse")
@@ -237,13 +238,13 @@ function Test.run()
             game.enemies = { enemy }
             local arrow = object("arrow", enemy.x, enemy.y - 8)
             arrow.vx = 4
-            game:resolveItemEnemyContact(arrow)
+            ItemBody.resolveEnemyContacts(arrow, nil, game)
             assert(arrow.opened and enemy.hp == 2, "An effective loose-arrow hit consumes the arrow")
             enemy = Creature.new({ kind = "caveman", x = 6, y = 5 })
             game.enemies = { enemy }
             local die = object("die", enemy.x, enemy.y - 8)
             die.vx = 2.5
-            game:resolveItemEnemyContact(die)
+            ItemBody.resolveEnemyContacts(die, nil, game)
             assert(enemy.hp == 3, "Dice use their own stricter three-pixel damage threshold")
         end },
         { "Down overrides simultaneous Up when throwing", function()

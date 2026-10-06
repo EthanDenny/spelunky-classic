@@ -1,4 +1,5 @@
 local PhysicalBody = require("src.platform.physical_body")
+local Traits = require("src.platform.item_traits")
 
 local Damsel = {
     creatureConfig = { hp = 4, speed = 1.2, npc = true },
@@ -20,12 +21,11 @@ function Damsel.initializeCreature(self)
     self.timer = 200
     self.gravity = 0.6
     self.physicsOriginY = -8
-    self.definition = { hold = { standing = 8, ducking = 10 } }
+    self.definition = Traits.body({ hold = { standing = 8, ducking = 10 } })
 end
 
-function Damsel.creatureStep(self, world, _, game)
-    PhysicalBody.stepItem(world, self)
-    PhysicalBody.stopInWeb(world, self)
+function Damsel.creatureStep(self, world, player, game)
+    self.definition.bodyStep(world, self, player, game)
     if self.vy > 2 then Damsel.onThrown(self) return end
     if self.forSale then
         if self.kissTimer and self.kissTimer > 0 then self.kissTimer = self.kissTimer-1 end
@@ -94,9 +94,8 @@ function Damsel.updateExit(body)
     return true
 end
 
-function Damsel.stunnedStep(self, world)
-    PhysicalBody.stepItem(world, self)
-    local web = PhysicalBody.stopInWeb(world, self)
+function Damsel.stunnedStep(self, world, player, game)
+    local web = self.definition.bodyStep(world, self, player, game)
     if web or PhysicalBody.probe(world, self, "y", 1, 2) then
         self.stunned = self.stunned - 1
     end

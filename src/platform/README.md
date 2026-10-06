@@ -137,6 +137,18 @@ their distinct source-specific bounce and fuse rules but use the shared web
 interaction. When adding a carryable, define its traits first and add a new
 ACTION handler only if none of the existing behaviors fit.
 
+`item_body.lua` owns the complete loose-body step: terrain motion, per-kind
+flight updates, breaking, enemy impacts, and web contact. `Traits.carry()`
+includes this behavior automatically; `Traits.body()` supplies it to NPC
+bodies and tools without classifying them as ordinary inventory items.
+Damage depends on that behavior, not membership in the screen's `items`
+collection. Damsels, loose cavemen, corpses, armed bombs, and flying rope ends
+share the same impact handler. It excludes the source body, uses its physics
+origin, and preserves speed thresholds, arrow consumption, fragile breaking,
+paste attachment, and rope hit history through definition properties/hooks.
+The shopkeeper retains its custom stunned movement and uses the shared impact
+handler directly. Loose treasure keeps its separate `oTreasure` behavior.
+
 The source of truth is `original-game-reference/source/extracted/spelunky/`:
 `Objects/Basis/oItem.events/Step.xml` for held offsets and impacts,
 `Scripts/Character/scrUseItem.gml` for weapon use, `Objects/oPlayer1.events/Step.xml`
@@ -177,7 +189,9 @@ flying ropes, and held/thrown damsels against the bundled `oItem`, `oJar`,
   motion at walls. Dice retain their six-pixel gravity condition and stricter
   enemy-hit threshold. Mitt gravity persists for these overrides; ordinary
   parent items reset it to 0.6 after the first flight tick. Down wins simultaneous
-  Up/Down throw input. A standing-position skull drop can break on the floor.
+  Up/Down throw input. Held positions refresh after the player's movement and
+  crouch transition, before ACTION, in both the playtest and item scenarios.
+  Gentle crouched placement preserves jars/skulls; a subsequent fall can break them.
 - Loose money retains its distinct pre-movement floor/side contacts and stops
   without bouncing. Released equipment and supplies use their `oItem` bounds
   and bounce rules even when not for sale. Web collisions stop motion after Step.

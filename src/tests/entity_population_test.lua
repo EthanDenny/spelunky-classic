@@ -51,8 +51,45 @@ local function assertAltarDoesNotFaceArrowTrap()
     end
 end
 
+local function assertCrowdedProgressionPlacement()
+    -- No ordinary chest location clears the entrance radius, and the only
+    -- treasure is buried. The exit must still receive a usable chest and key.
+    local level = {
+        width = 5, height = 5, levelNumber = 4,
+        startRoomX = 0, startRoomY = 0,
+        roomPath = { { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 } },
+        entrance = { x = 2, y = 1 }, exit = { x = 2, y = 3 },
+        entities = {
+            { kind = "ruby_big", x = 1.5, y = 1.5 },
+            { kind = "entrance", x = 2, y = 1 },
+            { kind = "exit", x = 2, y = 3 },
+        }, tiles = {},
+    }
+    for y = 1, level.height do
+        level.tiles[y] = {}
+        for x = 1, level.width do level.tiles[y][x] = { kind = "empty" } end
+    end
+    level.tiles[2][2] = { kind = "brick" }
+    level.tiles[5][3] = { kind = "brick" }
+    local rng = { integer = function(_, _, maximum) return maximum end }
+    EntityGenerator.populate(level, rng)
+    local chests, keys = 0, 0
+    for _, entity in ipairs(level.entities) do
+        if entity.kind == "locked_chest" or entity.kind == "key" then
+            assert(entity.x == 2.5 and entity.y == 3.5,
+                "Fallback progression items must occupy the clear exit cell")
+            if entity.kind == "locked_chest" then chests = chests + 1
+            else keys = keys + 1 end
+        end
+    end
+    assert(chests == 1 and keys == 1,
+        "A crowded level without exposed treasure must still generate the Udjat pair")
+    assert(level.entities[1].kind == "ruby_big", "A buried gem must not become an inaccessible key")
+end
+
 function Test.run()
     assertAltarDoesNotFaceArrowTrap()
+    assertCrowdedProgressionPlacement()
     local lamps, scarabs, litTraps = 0, 0, 0
     for seed = 1, 48 do
         local level = MinesGenerator.generate(seed, { levelNumber = 1, forceDark = true })
@@ -85,6 +122,7 @@ function Test.run()
     end
     assert(lamps > 0 and scarabs > 0 and litTraps > 0, "Dark fixtures must exercise all dark Mines spawns")
     local foundShopkeeper = false
+    local foundKissingShop, foundWildDamsel = false, false
     for depth = 1, 4 do
         local foundEnemy = false
         local foundLoot = false
@@ -92,6 +130,7 @@ function Test.run()
         for seed = 1, 48 do
             local level = MinesGenerator.generate(seed, { levelNumber = depth })
             local players = 0
+            local kissingShop, damsels, shopDamsels = false, 0, 0
             for _, entity in ipairs(level.entities) do
                 assert(entity.kind ~= "skeleton",
                     "Generated bone piles must stay inert until fake bones awaken")
@@ -99,16 +138,30 @@ function Test.run()
                 foundEnemy = foundEnemy or ENEMIES[entity.kind] or false
                 foundLoot = foundLoot or LOOT[entity.kind] or false
                 foundShopkeeper = foundShopkeeper or entity.kind == "shopkeeper"
+                if entity.kind == "shopkeeper" and entity.properties.shopType == "Kissing" then
+                    kissingShop = true
+                elseif entity.kind == "damsel" then
+                    damsels = damsels + 1
+                    if entity.properties.forSale then shopDamsels = shopDamsels + 1
+                    else foundWildDamsel = true end
+                end
                 assert(SpriteData[entity.kind] or SPECIAL_RENDERERS[entity.kind],
                     "Mines entity has no original sprite mapping: " .. entity.kind)
             end
             assert(players == 1, "Mines must place exactly one player at its entrance")
+            if kissingShop then
+                foundKissingShop = true
+                assert(damsels == 1 and shopDamsels == 1,
+                    "Kissing-shop levels must have only the shop's damsel (seed " .. seed .. ")")
+            end
         end
 
         assert(foundEnemy, "Mines sample produced no enemies at depth " .. depth)
         assert(foundLoot, "Mines sample produced no visible loot at depth " .. depth)
     end
     assert(foundShopkeeper, "Mines sample produced no shopkeeper")
+    assert(foundKissingShop, "Mines sample must exercise kissing shops")
+    assert(foundWildDamsel, "Levels without kissing shops must still generate wild damsels")
 end
 
 return Test

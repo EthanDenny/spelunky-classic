@@ -1,11 +1,20 @@
-local PhysicalBody = require("src.platform.physical_body")
+local Traits = require("src.platform.item_traits")
 local Holdable = require("src.platform.holdable")
 local Assets = require("src.platform.object_assets")
 local Timing = require("src.platform.tool_timing")
 
 local Bomb = {}
 Bomb.__index = Bomb
-Bomb.definition = { hold = { standing = 2, ducking = 4 } }
+Bomb.definition = Traits.body({ hold = { standing = 2, ducking = 4 }, webAfterImpact = true })
+
+function Bomb.definition.enemyContact(bomb, enemy)
+    if not bomb.sticky then return false end
+    bomb.attached = enemy
+    bomb.attachX = enemy.x - bomb.x
+    bomb.attachY = enemy.y - bomb.y
+    bomb.vx, bomb.vy, bomb.stuck = 0, 0, true
+    return true
+end
 
 function Bomb:getCollisionHalfWidth() return 4 end
 function Bomb:getVerticalBounds() return -4, 4 end
@@ -95,24 +104,7 @@ function Bomb.update(self, bomb, enemies, player)
         end
         bomb.attached, bomb.stuck = nil, false
     end
-    PhysicalBody.stepItem(self.world, bomb)
-    if math.abs(bomb.vx) > 2 or math.abs(bomb.vy) > 2 then
-        for _, enemy in ipairs(enemies or {}) do
-            if enemy.alive and enemy:overlapsRectangle(
-                bomb.x - 2, bomb.y - 2, bomb.x + 2, bomb.y + 2) then
-                if bomb.sticky then
-                    bomb.attached = enemy
-                    bomb.attachX = enemy.x - bomb.x
-                    bomb.attachY = enemy.y - bomb.y
-                    bomb.vx, bomb.vy, bomb.stuck = 0, 0, true
-                    break
-                else
-                    PhysicalBody.strikeEnemy(bomb, enemy)
-                end
-            end
-        end
-    end
-    PhysicalBody.stopInWeb(self.world, bomb)
+    bomb.definition.bodyStep(self.world, bomb, player, self, enemies)
 end
 
 function Bomb.draw(self, bomb)

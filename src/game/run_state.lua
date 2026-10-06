@@ -46,6 +46,7 @@ function RunState.new(seed)
         kaliPunish = 0,
         blood = 0,
         hadDarkLevel = false,
+        madeUdjatEye = false,
         messages = {},
         heldItem = nil,
         heldCreature = nil,

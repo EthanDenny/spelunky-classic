@@ -18,8 +18,6 @@ local RunState = require("src.game.run_state")
 local Depth = require("src.render.classic_depth")
 local DepthQueue = require("src.render.depth_queue")
 local ClassicSounds = require("src.audio.classic_sounds")
-local PhysicalBody = require("src.platform.physical_body")
-local Contact = require("src.platform.body_contact")
 local Shop = require("src.platform.shop")
 local Shopkeeper = require("src.platform.enemies.shopkeeper")
 local Spikes = require("src.platform.traps.spikes")
@@ -617,28 +615,6 @@ function FullLevelPlaytest:processItemImpact(item)
     item.x, item.y = -1000, -1000
 end
 
-function FullLevelPlaytest:resolveItemEnemyContact(item)
-    local speed = item.definition.hitSpeed or 2
-    if item.held or item.opened or item.skipEnemyHitOnce or not Contact.moving(item, speed) then return end
-    local reach = item.definition.flight == "fragile" and 3 or 2
-    Contact.scan(item, self:combatActors(), reach, function(enemy)
-        return enemy.alive and (not enemy.stunned or enemy.stunned == 0)
-    end, function(enemy)
-        if PhysicalBody.strikeEnemy(item, enemy) then
-            self.effects:blood(enemy.x, enemy.y-8, 1)
-            if item.definition.breakOnImpact then
-                item.justHit = true
-                self:processItemImpact(item)
-                return true
-            elseif item.definition.consumeOnEnemyHit then
-                item.opened = true
-                item.x, item.y = -1000, -1000
-                return true
-            end
-        end
-    end)
-end
-
 function FullLevelPlaytest:resolveItemPlayerContact(item)
     local player = self.player
     if item.kind == "arrow" then
@@ -838,13 +814,7 @@ function FullLevelPlaytest:simulationStepBody(input)
         self.sounds:play("hurt")
         self:dropHeldItemFromHurt()
     end
-    Simulation.stepItems(self, function(item)
-        self:processItemImpact(item)
-        -- oItem's enemy collision has no safe-period gate.
-        self:resolveItemEnemyContact(item)
-        self:resolveItemPlayerContact(item)
-        item.skipEnemyHitOnce = false
-    end)
+    Simulation.stepItems(self, function(item) self:resolveItemPlayerContact(item) end)
     Kali.updateChains(self)
     ItemActions.recoverArrows(self)
     for _, collectible in ipairs(self.collectibles) do

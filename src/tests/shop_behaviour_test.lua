@@ -1,3 +1,4 @@
+local ItemBody = require("src.platform.item_body")
 local Controls = require("src.input.classic_controls")
 local Creature = require("src.platform.creature")
 local Effects = require("src.platform.effects")
@@ -158,7 +159,7 @@ function Test.run()
             local rock = game:spawnEntity("rock", keeper.x, keeper.y - 8)
             rock.vx = 5
             local hp = keeper.hp
-            game:resolveItemEnemyContact(rock)
+            ItemBody.resolveEnemyContacts(rock, nil, game)
             assert(keeper.hp == hp - 1 and keeper.hasGun,
                 "A keeper awakened by a whip must take the next rock hit without dropping his gun")
         end },
@@ -520,7 +521,7 @@ function Test.run()
             local game, keeper = fixture()
             local rock = Item.new({ kind = "rock", x = keeper.x / 16, y = (keeper.y - 8) / 16 })
             rock.vx = 5
-            game:resolveItemEnemyContact(rock)
+            ItemBody.resolveEnemyContacts(rock, nil, game)
             assert(keeper.hp == 19 and keeper.state == "attack" and keeper.stunned == 0,
                 "A fast ordinary oItem costs one keeper heart and enters ATTACK rather than STUNNED")
             keeper:step(game.world, game.player, game)

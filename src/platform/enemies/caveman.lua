@@ -1,3 +1,4 @@
+local Traits = require("src.platform.item_traits")
 local Caveman = {
     initialTimer = 0,
     initialFacing = 1,
@@ -141,14 +142,14 @@ local Assets = require("src.platform.object_assets")
 local sprites = {}
 function Caveman.initializeCreature(body)
     body.heavy = true
-    body.definition = { hold = { standing = 4, ducking = 6 } }
+    body.definition = Traits.body({ hold = { standing = 4, ducking = 6 } })
     body.physicsOriginY = -8
     body.timer, body.facing = 0, 1
 end
 
-function Caveman.stunnedStep(body, world)
-    Physics.stepItem(world, body)
-    if Physics.stopInWeb(world, body) or Physics.probe(world, body, "y", 1) then
+function Caveman.stunnedStep(body, world, player, game)
+    local web = body.definition.bodyStep(world, body, player, game)
+    if web or Physics.probe(world, body, "y", 1) then
         body.stunned = body.stunned - 1
     end
 end

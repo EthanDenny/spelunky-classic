@@ -44,14 +44,16 @@ function Test.run(app)
         stepTo(viewer, putDown, 35)
         assert(putDown.itemGame.heldItem == nil and not putDown.mineItem.held,
             kind .. " must leave the player's hands on DOWN + ACTION")
-        if kind == "jar" then
+        if kind == "jar" or kind == "skull" then
             stepTo(viewer, putDown, 60)
             assert(not putDown.mineItem.opened and not hasParticle(putDown, "smoke"),
                 "Putting down a " .. kind .. " gently must not smash it")
-        elseif kind == "skull" then
-            stepTo(viewer, putDown, 45)
-            assert(putDown.mineItem.opened and hasParticle(putDown, "bone"),
-                "The skull's lower held position and same-tick gravity make this drop exceed its floor break threshold")
+            for x = 1, 12 do putDown.world:remove("solid", x, 7) end
+            while putDown.tick < 80 and not putDown.mineItem.opened do
+                viewer:stepScenario(putDown)
+            end
+            assert(putDown.mineItem.opened,
+                "A placed " .. kind .. " must still smash when its floor disappears and it falls")
         end
 
         local action = cases[3]

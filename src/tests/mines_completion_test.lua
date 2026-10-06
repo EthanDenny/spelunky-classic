@@ -26,6 +26,7 @@ local function fixture()
     game.world.game, game.tools.game, game.traps.game = game, game, game
     return game
 end
+
 local function assertBodySprite(game, body, name)
     local expected = love.image.newImageData("original-game-reference/source/extracted/spelunky/Sprites/Enemies/"
         .. (body.kind == "caveman" and "Caveman/" or "Shopkeeper/") .. name .. ".images/image 0.png")
@@ -93,6 +94,28 @@ function Test.run()
                 for _ = 1, 120 do game:simulationStepBody({}) end
                 assert(body.vx == 0 and body.vy == 0, "The thrown corpse must settle again")
                 assertBodySprite(game, body, example[2])
+            end
+        end },
+        { "item bodies inherit impacts across object categories in the level simulation", function()
+            for _, example in ipairs({ { "damsel", false }, { "damsel", true },
+                { "caveman", false }, { "caveman", true }, { "shopkeeper", true },
+                { "rock", false } }) do
+                local game = fixture()
+                local body = game:spawnEntity(example[1], 80, 104)
+                if example[2] then body:damage(100, body.x)
+                elseif example[1] == "caveman" then body:damage(0, body.x) end
+                local target = game:spawnEntity("caveman", 104, 104)
+                target.timer = 1000
+                local hp = body.hp
+                assert(body:pickup(game.player), "The body must be picked up before throwing")
+                if body.spec then game.heldNpc = body else game.heldItem = body end
+                game:simulationStepBody({ attack = true })
+                for _ = 1, 6 do game:simulationStepBody({}) end
+                assert(target.hp == 2 and target.stunned > 0,
+                    example[1] .. (example[2] and " corpse" or "")
+                        .. " must damage and stun its target after ACTION throws it")
+                assert(body.hp == hp and game.heldNpc == nil and game.heldItem == nil,
+                    "A released body must keep its own health and cannot hit itself")
             end
         end },
         { "opened chests can be picked up and thrown without producing more loot", function()

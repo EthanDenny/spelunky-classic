@@ -454,6 +454,7 @@ local function generateSymbol(level, rng, symbol, x, y, roomX, roomY, shopType)
         addEntity(level, "die", x + 0.5, y + 0.5)
     elseif symbol == "D" then
         addEntity(level, "damsel", x + 0.5, y + 0.5, { forSale = true })
+        level.hasDamsel = true
     elseif symbol == "s" then
         if rng:integer(1, 10) == 1 then
             addEntity(level, "snake", x, y)
@@ -586,7 +587,7 @@ function MinesGenerator.generate(seed, options)
     applyWallSprites(level, rng)
     EntityGenerator.resolveRooms(level, rng)
     MinesVariants.apply(level, options.run or RunState.new(seed), rng, options.forceDark)
-    EntityGenerator.populate(level, rng)
+    EntityGenerator.populate(level, rng, options.run)
 
     return level
 end

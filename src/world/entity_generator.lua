@@ -224,7 +224,8 @@ local function placeMinesTrap(level, rng, x, y)
     level.tiles[y + 1][x + 1] = { kind = "empty" }
 end
 
-local function addProgressionItems(level, rng)
+local function addProgressionItems(level, rng, run)
+    if run and run.madeUdjatEye then return end
     local depth = level.levelNumber
     local generateChest = (depth == 2 and rng:integer(1, 3) == 1)
         or (depth == 3 and rng:integer(1, 2) == 1) or depth == 4
@@ -232,7 +233,7 @@ local function addProgressionItems(level, rng)
         local chestX, chestY
         for y = level.height - 2, 2, -1 do
             for x = 1, level.width - 2 do
-                if canStandAbove(level, x, y) and not inShop(level, x, y)
+                if isSolid(level, x, y) and canStandAbove(level, x, y) and not inShop(level, x, y)
                     and not near(level, "entrance", x, y, 3) then
                     chestX, chestY = x + 0.5, y - 0.5
                     break
@@ -240,26 +241,36 @@ local function addProgressionItems(level, rng)
             end
             if chestX then break end
         end
+        -- Like Classic's forced placement, a crowded level still gets its chest
+        -- at the exit rather than losing the run's Udjat pair.
+        if not chestX and level.exit then
+            chestX, chestY = level.exit.x + 0.5, level.exit.y + 0.5
+        end
         if chestX then
             addEntity(level, "locked_chest", chestX, chestY)
             level.hasLockedChest = true
             local replaced = false
             for _, entity in ipairs(level.entities) do
-                if not replaced and (entity.kind == "gold_bar" or entity.kind == "gold_bars"
+                if not replaced and not isSolid(level, math.floor(entity.x), math.floor(entity.y))
+                    and not inShop(level, entity.x, entity.y)
+                    and (entity.kind == "gold_bar" or entity.kind == "gold_bars"
                     or entity.kind == "emerald_big" or entity.kind == "sapphire_big"
                     or entity.kind == "ruby_big") then
                     entity.kind = "key"
                     replaced = true
                 end
             end
-            if not replaced then addEntity(level, "key", chestX - 1, chestY) end
+            -- Sharing the chest's clear cell avoids burying a fallback key in
+            -- the adjacent wall when there is no exposed treasure to replace.
+            if not replaced then addEntity(level, "key", chestX, chestY) end
+            if run then run.madeUdjatEye = true end
         end
     end
 end
 
 EntityGenerator.resolveRooms = resolveEmbeddedEntities
 
-function EntityGenerator.populate(level, rng)
+function EntityGenerator.populate(level, rng, run)
     -- Preserve the random draw made before Mines enemy placement by the
     -- original mixed-area generator, so existing seeds keep their layout.
     rng:integer(1, 4)
@@ -279,7 +290,7 @@ function EntityGenerator.populate(level, rng)
             end
         end
     end
-    addProgressionItems(level, rng)
+    addProgressionItems(level, rng, run)
 
     -- Classic converts eligible oBlock instances only after treasure, enemies,
     -- the locked chest, and its key have all been generated.

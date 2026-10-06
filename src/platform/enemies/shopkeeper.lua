@@ -8,6 +8,8 @@ local Shopkeeper = {
     sacrifice = { favor = 12, deadFavor = 6, rewardOffset = 24 },
 }
 local Physics = require("src.platform.physical_body")
+local Traits = require("src.platform.item_traits")
+local ItemBody = require("src.platform.item_body")
 local Shop = require("src.platform.shop")
 local sprites
 
@@ -38,7 +40,7 @@ end
 function Shopkeeper.initialize(body, seed)
     body.heavy = true
     body.physicsOriginY = -8
-    body.definition = { hold = { standing = 4, ducking = 6 } }
+    body.definition = Traits.body({ hold = { standing = 4, ducking = 6 } })
     body.state = body.entity.properties and body.entity.properties.exitGuard and "patrol" or "idle"
     body.hasGun = true
     body.firing = 0
@@ -242,6 +244,9 @@ function Shopkeeper.step(body, world, player, context)
             if body.stunned > 0 then body.stunned = body.stunned - 1
             elseif body.hp > 0 then setState(body, "attack") end
         end
+        -- Keep the keeper's custom bounce/recovery rules, but use the same
+        -- outgoing impact behavior as every other loose item body.
+        ItemBody.resolveEnemyContacts(body, nil, game)
     end
     if body.vx > 0 then body.vx = body.vx - 0.1 end
     if body.vx < 0 then body.vx = body.vx + 0.1 end

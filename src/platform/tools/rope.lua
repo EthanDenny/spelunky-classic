@@ -1,7 +1,12 @@
-local PhysicalBody = require("src.platform.physical_body")
+local Traits = require("src.platform.item_traits")
 local Assets = require("src.platform.object_assets")
 
 local Rope = { depth = 200 }
+Rope.definition = Traits.body({ impactOnce = true })
+
+function Rope.definition.onEnemyHit(rope, enemy, context)
+    if context and context.onRopeHit then context:onRopeHit(enemy, rope) end
+end
 
 local function snap(value, grid)
     return math.floor(value / grid + 0.5) * grid
@@ -20,6 +25,7 @@ function Rope.throwFromPlayer(self, player, input)
     end
     local rope = {
         kind = "rope",
+        definition = Rope.definition,
         radius = 4,
         gravity = 0.6,
         launchX = player.x,
@@ -100,20 +106,8 @@ function Rope.update(self, rope, enemies)
     end
     if rope.deployed then return end
 
-    PhysicalBody.stepItem(self.world, rope)
-    -- The moving oRopeThrow inherits oItem's fast-item collision. Its fixed
-    -- oRope body does not: only the flying end can damage an enemy.
-    if math.abs(rope.vy) > 2 then
-        rope.hitEnemies = rope.hitEnemies or {}
-        for _, enemy in ipairs(enemies or {}) do
-            if enemy.alive and not rope.hitEnemies[enemy]
-                and enemy:overlapsRectangle(rope.x - 2, rope.y - 2, rope.x + 2, rope.y + 2)
-                and PhysicalBody.strikeEnemy(rope, enemy) then
-                rope.hitEnemies[enemy] = true
-                if self.onRopeHit then self:onRopeHit(enemy, rope) end
-            end
-        end
-    end
+    -- Only the flying end owns item-body behavior; deployed segments do not.
+    rope.definition.bodyStep(self.world, rope, nil, self, enemies)
     if rope.vy >= 0 then
         self:anchorThrownRope(rope)
         self:updateRope(rope, enemies)

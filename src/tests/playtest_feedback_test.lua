@@ -1,3 +1,4 @@
+local ItemBody = require("src.platform.item_body")
 local Effects = require("src.platform.effects")
 local Enemy = require("src.platform.enemy")
 local Creature = require("src.platform.creature")
@@ -163,7 +164,7 @@ function Test.run(app)
     local flyingJar = Item.new({ kind = "jar", x = 5.5, y = 5 })
     flyingJar.vx = 7
     flyingJar.x = 96
-    collisionGame:resolveItemEnemyContact(flyingJar)
+    ItemBody.resolveEnemyContacts(flyingJar, nil, collisionGame)
     assert(flyingJar.opened and #collisionGame.effects.particles >= 4,
         "A jar hitting an enemy must smash and emit its break particles")
 

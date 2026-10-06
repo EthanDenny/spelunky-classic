@@ -2,7 +2,6 @@
 -- Kind-specific capabilities live beside the smaller enemies in enemies/.
 local Types = require("src.platform.enemies.types")
 local Holdable = require("src.platform.holdable")
-local PhysicalBody = require("src.platform.physical_body")
 
 local ActorBody = require("src.platform.actor_body")
 local Creature = {}
@@ -194,8 +193,7 @@ function Creature:step(world, player, context)
     end
     if self.corpse then
         if self.impaled then return end
-        PhysicalBody.stepItem(world, self)
-        PhysicalBody.stopInWeb(world, self)
+        self.definition.bodyStep(world, self, player, context)
         return
     end
     if self.spec.stepCreature then
@@ -208,7 +206,7 @@ function Creature:step(world, player, context)
     if self.webbed > 0 then self.webbed = self.webbed - 1 return end
     if self.stunned > 0 then
         if self.spec.stunnedStep then
-            self.spec.stunnedStep(self, world)
+            self.spec.stunnedStep(self, world, player, context)
         else
             self.stunned = self.stunned - 1
             self:groundPhysics(world)
