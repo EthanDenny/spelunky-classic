@@ -950,7 +950,10 @@ function EnemyAI:stepScenario(scenario)
         scenario.tools:update(player, enemy and { enemy } or {}, {})
         if definition.bomb then
             local bomb = scenario.tools.bombs[1]
-            if #scenario.tools.explosions > explosionCount then
+            if enemy and not enemy.alive and scenario.event == "WALL BLASTED" then
+                scenario.event = "SNAKE BLASTED"
+                scenario.eventTick = scenario.tick
+            elseif #scenario.tools.explosions > explosionCount then
                 scenario.event = player.health == 0 and "PLAYER BLASTED"
                     or enemy and not enemy.alive and "SNAKE BLASTED" or "WALL BLASTED"
                 scenario.eventTick = scenario.tick

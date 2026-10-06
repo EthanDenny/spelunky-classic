@@ -223,8 +223,8 @@ function FullLevelPlaytest:buildSimulation()
     self.traps = TrapSystem.new(self.world, self.level, self.renderer)
     self.traps:loadAssets(soundVolume)
     self.world.game, self.tools.game, self.traps.game = self, self, self
-    self.tools.onExplosion = function(_, x, y, radius)
-        self.traps:explode(x, y, radius)
+    self.tools.onExplosion = function(_, x, y, radius, explosion)
+        self.traps:explode(x, y, radius, explosion)
     end
 
     self.enemies = {}

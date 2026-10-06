@@ -322,7 +322,7 @@ function World:isProtectedCell(tileX, tileY)
     return tile and tile.properties and (tile.properties.invincible or tile.properties.fixed)
 end
 
-function World:destroyTerrain(centerX, centerY, radius)
+function World:destroyTerrain(centerX, centerY, radius, overlaps)
     radius = radius or 24
     local destroyed = {}
     local tileSize = self.tileSize
@@ -334,8 +334,10 @@ function World:destroyTerrain(centerX, centerY, radius)
         for tileX = firstX, lastX do
             local dx = tileX * tileSize + tileSize / 2 - centerX
             local dy = tileY * tileSize + tileSize / 2 - centerY
-            if dx * dx + dy * dy <= (radius + tileSize * 0.35) ^ 2
-                and self:has("solid", tileX, tileY) and not self:isProtectedCell(tileX, tileY) then
+            local touched = self:has("solid", tileX, tileY) and (overlaps
+                and overlaps(tileX*tileSize, tileY*tileSize, (tileX+1)*tileSize, (tileY+1)*tileSize)
+                or not overlaps and dx*dx+dy*dy <= (radius+tileSize*0.35)^2)
+            if touched and not self:isProtectedCell(tileX, tileY) then
                 local entity = self.solid[key(tileX, tileY)]
                 self:remove("solid", tileX, tileY)
                 self:remove("moveableSolid", tileX, tileY)
@@ -351,7 +353,9 @@ function World:destroyTerrain(centerX, centerY, radius)
         local dx = block.x + block.width / 2 - centerX
         local dy = block.y + block.height / 2 - centerY
         if block.alive ~= false and block.kind ~= "boulder"
-            and dx * dx + dy * dy <= (radius + 8) ^ 2 then
+            and not (block.properties and block.properties.invincible)
+            and (overlaps and overlaps(block.x, block.y, block.x+block.width, block.y+block.height)
+                or not overlaps and dx*dx+dy*dy <= (radius+8)^2) then
             self:removeDynamicSolid(block)
             destroyed[#destroyed + 1] = {
                 x = math.floor(block.x / tileSize),

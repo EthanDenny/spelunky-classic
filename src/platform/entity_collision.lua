@@ -36,8 +36,8 @@ local function pose(target, player)
         return name, target.animation, target.x, target.y, false
     end
     local definition = target.definition
+    if definition and definition.collisionSprite then return definition.collisionSprite(target) end
     if not definition or not (definition.carryable or definition.pickup) then return nil end
-    if definition.collisionSprite then return definition.collisionSprite(target) end
     local sprite = definition.sprite
     local metadata = EntitySprites[target.kind]
     local name = sprite and sprite.name or metadata and metadata.sourceSprite

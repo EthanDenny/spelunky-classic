@@ -84,17 +84,20 @@ function TrapSystem:destroyTrap(trap)
     end
 end
 
-function TrapSystem:explode(x, y, radius)
+function TrapSystem:explode(x, y, radius, explosion)
     for _, trap in ipairs(self.traps) do
         local dx, dy = trap.x + 8 - x, trap.y + 8 - y
-        if trap.alive and trap.definition.direction and dx * dx + dy * dy <= (radius + 8) ^ 2 then
+        if trap.alive and trap.definition.direction and (explosion and trap.entity.destroyed
+            or not explosion and dx*dx+dy*dy <= (radius+8)^2) then
             self:destroyTrap(trap)
             self.world:remove("solid", math.floor(trap.entity.x), math.floor(trap.entity.y))
         end
     end
     for _, boulder in ipairs(self.boulders) do
         local dx, dy = boulder.x - x, boulder.y - y
-        if boulder.alive and dx * dx + dy * dy <= (radius + 16) ^ 2 then
+        if boulder.alive and (explosion
+            and require("src.platform.entity_collision").touching(explosion, boulder)
+            or not explosion and dx*dx+dy*dy <= (radius+16)^2) then
             boulder.alive = false
             if self.game then
                 local effects = self.game.effects

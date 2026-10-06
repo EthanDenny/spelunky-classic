@@ -9,6 +9,21 @@ local World = require("src.platform.world")
 local Test = {}
 
 function Test.run(app)
+    do
+        local world = World.new(12, 9, 16)
+        local block = world:addDynamicSolid({ kind = "push_block", x = 108, y = 80 })
+        local tools = ToolSystem.new(world, Player.TICK_RATE)
+        local player = Player.new(112, 88)
+        player.health = 14
+        tools:explode(88, 88)
+        tools:update(player, {}, {})
+        assert(block.alive and player.health == 14,
+            "The first explosion frame cannot destroy or hurt beyond its small source mask")
+        for _ = 1, 5 do tools:update(player, {}, {}) end
+        assert(not block.alive and player.health < 14,
+            "The growing explosion mask later reaches the same block and player")
+    end
+
     local collisionWorld = World.new(12, 9, 16)
     collisionWorld:set("solid", 5, 5)
     local collisionEffects = Effects.new(17)

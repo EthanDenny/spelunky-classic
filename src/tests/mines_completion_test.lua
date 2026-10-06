@@ -652,6 +652,17 @@ function Test.run()
             assert(not body:damage(2, game.player.x, { kind = "whip", weapon = "machete", phase = "front" })
                 and body.hp == 2, "Machete whip collisions retain the caveman's stunned immunity")
         end },
+        { "giant spider wall response follows its source Step event", function()
+            local game = fixture()
+            game.player.x = 160
+            local spider = game:spawnEntity("giant_spider", 200, 80)
+            spider:step(game.world, game.player, game)
+            game.world:addDynamicSolid({ kind = "push_block", x = 214, y = 64, width = 16, height = 48 })
+            spider.vx, spider.vy, spider.state, spider.timer = 0, 0, "recover", 10
+            spider:step(game.world, game.player, game)
+            assert(spider.vx == 1,
+                "The giant spider's right-wall probe sets horizontal speed to one before state handling")
+        end },
         { "giant spider death releases paste and scattered gems", function()
             local game = fixture()
             local spider = game:spawnEntity("giant_spider", 200, 96)

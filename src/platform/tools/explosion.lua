@@ -1,15 +1,32 @@
 local Assets = require("src.platform.object_assets")
 local Timing = require("src.platform.tool_timing")
 
+local Collision = require("src.platform.entity_collision")
 local Explosion = { depth = 1 }
 
-local function overlapsPointEntity(entity, x, y, radius)
-    return math.abs(entity.x - x) <= radius and math.abs(entity.y - y) <= radius
+function Explosion.collisionSprite(explosion)
+    return "sExplosion", explosion.age*0.8*30/(explosion.tickRate or 30),
+        explosion.x, explosion.y, false
 end
 
+local function blastTerrain(self, explosion)
+    if not require("src.platform.activity").contains(self.world, explosion) then return {} end
+    local contacts = {}
+    local destroyed = self.world:destroyTerrain(explosion.x, explosion.y, 24,
+        function(left, top, right, bottom)
+            if not Collision.overlaps(explosion, nil, left, top, right, bottom) then return false end
+            contacts[#contacts+1] = { x = left/16, y = top/16 }
+            return true
+        end)
+    if #contacts > 0 then self.world:cleanExplosionTerrain(contacts) end
+    return destroyed
+end
+
+
 function Explosion.spawn(self, x, y)
-    local destroyed = self.world:destroyTerrain(x, y, 24)
-    self.world:cleanExplosionTerrain(destroyed)
+    local explosion = { kind = "explosion", definition = Explosion,
+        x = x, y = y, age = 0, tickRate = self.tickRate, alive = true }
+    local destroyed = blastTerrain(self, explosion)
     if self.game then self.game.shakeTicks = math.max(self.game.shakeTicks or 0, 5) end
     if not self.world.game then
         for _, cell in ipairs(destroyed) do
@@ -17,21 +34,23 @@ function Explosion.spawn(self, x, y)
                 cell.pixelY or (cell.y + 0.5) * self.world.tileSize, self.world.tileSize, cell.entity)
         end
     end
-    self.explosions[#self.explosions + 1] = { x = x, y = y, age = 0, alive = true }
+    self.explosions[#self.explosions+1] = explosion
     self.effects:explosion(x, y)
     if self.explosionSound then self.explosionSound:clone():play() end
-    if self.onExplosion then self:onExplosion(x, y, 24) end
+    if self.onExplosion then self:onExplosion(x, y, 24, explosion) end
 end
 
 local function release(self, item)
     item.held = false
-    if self.game and self.game.heldItem == item then self.game.heldItem = nil end
+    if self.game and self.game.heldItem == item then
+        self.game.heldItem, self.game.cycleItemKind = nil, nil
+    end
     if self.game and self.game.heldNpc == item then self.game.heldNpc = nil end
 end
 
 local function blastItem(self, explosion, item)
-    if item.alive == false or item.opened
-        or not overlapsPointEntity(item, explosion.x, explosion.y, 24) then return end
+    if item.alive == false or item.opened or item.deployed
+        or not Collision.touching(explosion, item, self.game and self.game.player) then return end
     release(self, item)
     if item.kind == "arrow" or item.kind == "jar" or item.kind == "skull" then
         if item.kind == "jar" and self.game then
@@ -39,7 +58,7 @@ local function blastItem(self, explosion, item)
         elseif item.kind == "skull" then self.effects:skullBreak(item.x, item.y) end
         item.alive, item.visible, item.opened = false, false, true
     elseif item.kind == "bomb" then
-        item.timer = math.min(item.timer, Timing.scaledTicks(self.effects.random:random(4,8), self.tickRate))
+        item.timer = Timing.scaledTicks(self.effects.random:random(4,8), self.tickRate)
         item.attached, item.stuck = nil, false
         item.armed = true
         if item.y < explosion.y then item.vy = -self.effects.random:random(2,4) end
@@ -54,16 +73,16 @@ function Explosion.update(self, player, enemies, items)
     local skeletons = {}
     for _, explosion in ipairs(self.explosions) do
         if explosion.alive then
-            local destroyed = self.world:destroyTerrain(explosion.x, explosion.y, 24)
-            self.world:cleanExplosionTerrain(destroyed)
+            local destroyed = blastTerrain(self, explosion)
             if not self.world.game then
                 for _, cell in ipairs(destroyed) do
                     self.effects:terrainBreak((cell.x+0.5)*16, (cell.y+0.5)*16, 16, cell.entity)
                 end
             end
-            if self.onExplosion then self:onExplosion(explosion.x, explosion.y, 24) end
+            if self.onExplosion then self:onExplosion(explosion.x, explosion.y, 24, explosion) end
             if not player:isDead() and player.state ~= "exiting"
-                and math.abs(player.x-explosion.x) < 32 and math.abs(player.y-explosion.y) < 32 then
+                and Collision.overlaps(explosion, player, player.x-8, player.y-8,
+                    player.x+9, player.y+9, true) then
                 local vx = (player.x < explosion.x and -1 or 1)*self.effects.random:random(4,6)
                 player.invincibleTimer = 0
                 player:hurt(explosion.x, 10, "explosion", 100)
@@ -71,7 +90,8 @@ function Explosion.update(self, player, enemies, items)
                 self.effects:blood(player.x, player.y, 1)
             end
             for _, enemy in ipairs(enemies or {}) do
-                if enemy.alive and enemy:overlapsRectangle(explosion.x-24, explosion.y-24, explosion.x+24, explosion.y+24) then
+                if enemy.alive and not (enemy.invincible and enemy.invincible > 0)
+                    and Collision.touching(explosion, enemy, player) then
                     local vx = (enemy.x < explosion.x and -1 or 1)*self.effects.random:random(4,6)
                     if enemy:damage(enemy.kind == "damsel" and 100 or 30, explosion.x,
                         { kind = "explosion", vx = vx, vy = -6 }) then
@@ -89,13 +109,17 @@ function Explosion.update(self, player, enemies, items)
                 for _, item in ipairs(group) do blastItem(self, explosion, item) end
             end
             for _, web in ipairs(self.world.dynamicWebs) do
-                if overlapsPointEntity(web, explosion.x-8, explosion.y-8, 32) then web.destroyed = true end
+                if Collision.overlaps(explosion, nil, web.x, web.y, web.x+16, web.y+16) then
+                    web.destroyed = true
+                end
             end
             for y = math.floor((explosion.y-24)/16), math.floor((explosion.y+24)/16) do
                 for x = math.floor((explosion.x-24)/16), math.floor((explosion.x+24)/16) do
                     local web = self.world.web[x .. ":" .. y]
-                    if type(web) == "table" then web.destroyed = true end
-                    self.world:remove("web", x, y)
+                    if web and Collision.overlaps(explosion, nil, x*16, y*16, x*16+16, y*16+16) then
+                        if type(web) == "table" then web.destroyed = true end
+                        self.world:remove("web", x, y)
+                    end
                 end
             end
             explosion.age = explosion.age + 1

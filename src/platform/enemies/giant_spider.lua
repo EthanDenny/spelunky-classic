@@ -1,5 +1,7 @@
 -- oGiantSpiderHang converts to oGiantSpider without moving its top-left corner.
 -- Source: Objects/Enemies/oGiantSpider{Hang}.events and their sprite resources.
+local Physics = require("src.platform.physical_body")
+local Collision = require("src.platform.entity_collision")
 local GiantSpider = {}
 
 local SPRITES = {
@@ -39,9 +41,7 @@ local function setSprite(spider, name, speed)
 end
 
 local function activeDistance(spider, player)
-    if not player then return math.huge end
-    local dx, dy = player.x - spider.x, player.y - (spider.y - 16)
-    return math.sqrt(dx * dx + dy * dy)
+    return player and Collision.distance(spider, player, player) or math.huge
 end
 
 function GiantSpider.initialize(spider, seed)
@@ -51,7 +51,7 @@ function GiantSpider.initialize(spider, seed)
     spider.animation = 0
     spider.imageSpeed = 0.4
     spider.rng = love.math.newRandomGenerator(seed or 1)
-    spider.squirtTimer = spider.rng:random(100, 1000)
+    spider.squirtTimer = 0
     spider.squirtFired = false
 end
 
@@ -59,7 +59,7 @@ local function launch(spider, player, minimum, maximum)
     spider.vy = -spider.rng:random(minimum, maximum)
     spider.facing = player and player.x < spider.x and -1 or 1
     spider.vx = spider.facing * 2.5
-    setSprite(spider, "sGiantSpider", 0.4)
+    setSprite(spider, "sGiantSpider")
 end
 
 local function advanceAnimation(spider, context)
@@ -67,20 +67,6 @@ local function advanceAnimation(spider, context)
     if spider.spriteName == "sGiantSpiderFlip" and spider.animation >= SPRITES.sGiantSpiderFlip.count then
         setSprite(spider, "sGiantSpider", 0.4)
     elseif spider.spriteName == "sGiantSpiderSquirt" then
-        if not spider.squirtFired and spider.animation >= 5 then
-            spider.squirtFired = true
-            if context and context.projectiles then
-                -- oWebBall Create rolls vertical speed before horizontal speed and sign.
-                local vy = -(spider.rng:random() * 3 + 1)
-                local vx = spider.rng:random(1, 3)
-                    * (spider.rng:random(1, 2) == 1 and -1 or 1)
-                context.projectiles:spawn("web", spider.x, spider.y - 16,
-                    vx, vy, spider,
-                    { damage = 0, radius = 4, life = spider.rng:random(20, 100),
-                        gravity = 0.2 })
-            end
-            spider.squirtTimer = spider.rng:random(100, 1000)
-        end
         if spider.animation >= SPRITES.sGiantSpiderSquirt.count then
             spider.state = "idle"
             setSprite(spider, "sGiantSpider", 0.4)
@@ -94,67 +80,81 @@ function GiantSpider.step(spider, world, player, context)
         local top = spider.y - spider.height
         local left = spider.x - spider.width / 2
         local ceiling = world:solidAtPoint(left, top - 16)
-        local dx, dy = player and player.x - spider.x or 0,
-            player and player.y - (top + 8) or 0
         local nearPlayer = player and player.y > top
-            and math.abs(dx) < 8 and dx * dx + dy * dy < 90 * 90
+            and math.abs(player.x-spider.x) < 8 and activeDistance(spider, player) < 90
         if spider.hp < 10 or not ceiling or nearPlayer then
             -- The source creates oGiantSpider at the same x,y as the hanging
             -- object. Our physics position is bottom-centered, so add 16.
             spider.y = spider.y + 16
             spider.height = 32
             spider.whipped = 10
-            spider.state = "recover"
-            spider.timer = spider.rng:random(5, 20)
+            spider.state, spider.timer = "idle", 0
+            spider.squirtTimer = spider.rng:random(100, 1000)
             setSprite(spider, "sGiantSpiderFlip", 0.8)
         end
         return
     end
 
-    local grounded = spider:groundPhysics(world, 0.3, 10)
-    if spider.squirtTimer > 0 then spider.squirtTimer = spider.squirtTimer - 1 end
-
-    if spider.state ~= "crawl" and grounded
-        and world:collidesSolid(spider, spider.x, spider.y - 1) then
+    if spider.timer > 0 then
+        spider.timer = spider.timer-1
+        if spider.timer == 0 and spider.spriteName ~= "sGiantSpiderSquirt" then
+            spider.state = "bounce"
+            setSprite(spider, "sGiantSpiderJump")
+            if Physics.probe(world, spider, "y", 1) then launch(spider, player, 2, 5) end
+        end
+    end
+    Physics.move(world, spider, "x", spider.vx)
+    Physics.move(world, spider, "y", spider.vy)
+    spider.vy = math.min(10, spider.vy+0.3)
+    local right = Physics.probe(world, spider, "x", 1)
+    local left = Physics.probe(world, spider, "x", -1)
+    local grounded = Physics.probe(world, spider, "y", 1)
+    local ceiling = Physics.probe(world, spider, "y", -1)
+    if right then spider.vx = 1 end
+    if left then spider.vx = -1 end
+    if ceiling and grounded and spider.state ~= "crawl" then
         spider.state = "crawl"
         spider.vx = player and player.x < spider.x and -1 or 1
     end
-    if spider.state == "crawl" then
-        setSprite(spider, "sGiantSpiderCrawl", 0.4)
-        if not grounded or not world:collidesSolid(spider, spider.x, spider.y - 1) then
-            spider.state = "idle"
+    if spider.squirtTimer > 0 then spider.squirtTimer = spider.squirtTimer-1 end
+    if spider.state == "idle" then
+        if spider.spriteName ~= "sGiantSpiderFlip" then setSprite(spider, "sGiantSpider") end
+        spider.timer = spider.rng:random(5, 20)
+        spider.state = spider.squirtTimer == 0 and "squirt" or "recover"
+        spider.squirtFired = false
+    elseif spider.state == "crawl" then
+        setSprite(spider, "sGiantSpiderCrawl")
+        if not ceiling or not grounded then spider.state = "idle"
+        elseif right then spider.vx = -1
+        elseif left then spider.vx = 1 end
+    elseif spider.state == "squirt" then
+        setSprite(spider, "sGiantSpiderSquirt")
+        if spider.squirtTimer == 0 and spider.animation >= 5 then
+            spider.squirtFired = true
+            if context and context.projectiles then
+                -- oWebBall Create rolls vertical speed before horizontal speed and sign.
+                local vy = -(spider.rng:random() * 3 + 1)
+                local vx = spider.rng:random(1, 3)
+                    * (spider.rng:random(1, 2) == 1 and -1 or 1)
+                context.projectiles:spawn("web", spider.x, spider.y - 16,
+                    vx, vy, spider,
+                    { damage = 0, radius = 4, life = spider.rng:random(20, 100),
+                        gravity = 0.2 })
+            end
+            spider.squirtTimer = spider.rng:random(100, 1000)
         end
     elseif spider.state == "recover" then
         if grounded then spider.vx = 0 end
-        spider.timer = spider.timer - 1
-        if spider.timer <= 0 then
-            spider.state = "bounce"
-            setSprite(spider, "sGiantSpiderJump", 0.4)
-            if grounded then launch(spider, player, 2, 5) end
-        end
-    elseif spider.state == "bounce" then
-        if activeDistance(spider, player) >= 120 then
-            spider.state = "idle"
-        else
-            setSprite(spider, "sGiantSpiderJump", 0.4)
-            if grounded then
-                launch(spider, player, 3, 6)
-                if spider.rng:random(1, 4) == 1 then
-                    spider.state = "idle"
-                    spider.vx, spider.vy = 0, 0
-                end
+    elseif spider.state == "bounce" and activeDistance(spider, player) < 120 then
+        setSprite(spider, "sGiantSpiderJump")
+        if grounded then
+            launch(spider, player, 3, 6)
+            if spider.rng:random(1, 4) == 1 then
+                spider.state, spider.vx, spider.vy = "idle", 0, 0
             end
         end
-    elseif spider.state == "idle" then
-        setSprite(spider, "sGiantSpider", 0.4)
-        spider.state = spider.squirtTimer == 0 and "squirt" or "recover"
-        if spider.state == "squirt" then
-            spider.squirtFired = false
-            setSprite(spider, "sGiantSpiderSquirt", 0.4)
-        else
-            spider.timer = spider.rng:random(5, 20)
-        end
-    end
+    else spider.state = "idle" end
+    if ceiling then spider.vy = 1 end
     advanceAnimation(spider, context)
 end
 
