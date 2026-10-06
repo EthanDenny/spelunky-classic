@@ -1,0 +1,90 @@
+src/tests/mines_completion_test.lua
+  s_a149baf2181030::t_b5d5826c53f596 655,660-661,663-685
+src/platform/shop.lua
+  s_a149baf2181030::t_7d898fe32bb783 140
+  s_a149baf2181030::t_adfad26e718864 141,232,243
+src/input/classic_controls.lua
+  s_a149baf2181030::t_adfad26e718864 190-194
+src/platform/effects.lua
+  s_a149baf2181030::t_adfad26e718864 105,231-232
+src/tests/shop_behaviour_test.lua
+  s_a149baf2181030::t_9ba1b84df374fb 349
+  s_a149baf2181030::t_7d898fe32bb783 347-348,350-355
+src/tests/playtest_feedback_test.lua
+  s_a149baf2181030::t_3a13570dd1df47 244
+src/screens/enemy_ai.lua
+  s_a149baf2181030::t_5c07271efc102b 246,471
+  s_a149baf2181030::t_f6d73112db21c2 891
+src/platform/entity_collision.lua
+  s_a149baf2181030::t_d094ec66e67d53 41,46-48
+src/platform/enemies/enemy_sight.lua
+  s_a149baf2181030::t_f6d73112db21c2 1-38
+src/platform/creature.lua
+  s_a149baf2181030::t_f6d73112db21c2 178
+src/screens/full_game.lua
+  s_a149baf2181030::t_9ba1b84df374fb 18,40,83,115-116,118
+src/screens/level_transition.lua
+  s_a149baf2181030::t_bd8f44fc436b1f 5,38-46,48,63-69,75-78,105,136-145,172,180-187
+  s_a149baf2181030::t_4eb9d0be103a88 188,210,213-219,224,226-236,240-248,260
+  s_a149baf2181030::t_fb7622b3d74a70 208,212
+src/tests/enemy_ai_test.lua
+  s_a149baf2181030::t_5c07271efc102b 277-279
+src/platform/projectile_system.lua
+  s_a149baf2181030::t_d094ec66e67d53 82-83
+src/world/mines_generator.lua
+  s_a149baf2181030::t_adfad26e718864 509,514,565
+src/platform/enemies/damsel.lua
+  s_a149baf2181030::t_adfad26e718864 31-36,123,132
+  s_a149baf2181030::t_7d898fe32bb783 37-40,134-135
+src/game/progress.lua
+  s_a149baf2181030::t_9ba1b84df374fb 1-25
+src/platform/characters/tunnel_man.lua
+  s_a149baf2181030::t_9ba1b84df374fb 1-51
+src/platform/items/arrow.lua
+  s_a149baf2181030::t_d094ec66e67d53 125
+src/render/transition_room.lua
+  s_a149baf2181030::t_b6209dd3556939 4,62-65,68
+  s_a149baf2181030::t_bd8f44fc436b1f 1-3,5-61,66-67,69-72
+src/tests/classic_controls_test.lua
+  s_a149baf2181030::t_7d898fe32bb783 221-229
+src/tests/render_depth_test.lua
+  s_a149baf2181030::t_7d898fe32bb783 271-273,295
+src/platform/enemy.lua
+  s_a149baf2181030::t_f6d73112db21c2 137,139,142
+src/screens/full_level_playtest.lua
+  s_a149baf2181030::t_adfad26e718864 177-178,235
+  s_a149baf2181030::t_f6d73112db21c2 832
+src/tests/full_game_test.lua
+  s_a149baf2181030::t_4eb9d0be103a88 84-87,260-268,270-273,275,277,280,282-296,301-303
+  s_a149baf2181030::t_b6209dd3556939 269,274,276,278-279,281
+src/platform/enemies/caveman.lua
+  s_974fd5b6986d37::t_77982e800d9e50 34-37,52-60,62-69,74-75,77-80,85-86,88-90,92-94,138
+src/platform/enemies/giant_spider.lua
+  s_a149baf2181030::t_08a7dd987abdd2 77-87,177
+src/platform/enemies/spider.lua
+  s_a149baf2181030::t_f3d47db61bb157 54-64
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a9e7b817be4b325f7f043284a1b6159bf0c44a97",
+  "prompts": {},
+  "sessions": {
+    "s_974fd5b6986d37": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a10efb-5d89-7221-a618-bc06f02f212f",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "Ethan Denny <ethandenny@protonmail.com>"
+    },
+    "s_a149baf2181030": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0fdc3-ae05-7e41-a96b-bd7a333b41c3",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Ethan Denny <ethandenny@protonmail.com>"
+    }
+  }
+}
