@@ -1,0 +1,68 @@
+src/tests/platform_item_test.lua
+  s_a149baf2181030::t_6f4edbb22242c6 228
+src/platform/projectile_body.lua
+  s_a149baf2181030::t_4bb0d83351145c 23,36
+src/platform/entity_collision.lua
+  s_a149baf2181030::t_4bb0d83351145c 59,61,65-68
+  s_a149baf2181030::t_454c9cd1e93eed 69-70
+src/platform/enemy.lua
+  s_a149baf2181030::t_d6b960d8cc2ba1 140-147
+src/platform/creature.lua
+  s_a149baf2181030::t_4bb0d83351145c 121,139
+  s_a149baf2181030::t_d6b960d8cc2ba1 180-185
+src/platform/enemies/shopkeeper.lua
+  s_a149baf2181030::t_d6b960d8cc2ba1 24-31,257
+  s_a149baf2181030::t_dfe9ed8c51a8ae 51
+src/platform/tools/explosion.lua
+  s_a149baf2181030::t_dfe9ed8c51a8ae 52,74-91
+  s_a149baf2181030::t_1be482c73aa454 102-103
+src/platform/sprite_collision.lua
+  s_a149baf2181030::t_4bb0d83351145c 44,47-60
+src/platform/items/jar.lua
+  s_a149baf2181030::t_cb9939bdf67c29 35
+  s_a149baf2181030::t_4bb0d83351145c 60-64
+src/platform/enemies/caveman.lua
+  s_a149baf2181030::t_dfe9ed8c51a8ae 136
+src/platform/enemies/giant_spider.lua
+  s_a149baf2181030::t_d6b960d8cc2ba1 65,161,178
+src/platform/physical_body.lua
+  s_a149baf2181030::t_dfe9ed8c51a8ae 163-164,167-169,174-175
+  s_a149baf2181030::t_cb9939bdf67c29 165-166
+src/platform/enemies/damsel.lua
+  s_a149baf2181030::t_d6b960d8cc2ba1 78-82
+src/platform/items/arrow.lua
+  s_a149baf2181030::t_1be482c73aa454 80-81,103
+src/tests/gameplay_systems_test.lua
+  s_a149baf2181030::t_9f15d47bd9ecd3 157-160,162-168
+  s_a149baf2181030::t_7b194d91e0ff4e 161
+  s_a149baf2181030::t_2ad2c613f72c7f 129
+src/tests/mines_completion_test.lua
+  s_a149baf2181030::t_d33267f4dec7f4 250-251
+  s_a149baf2181030::t_d6b960d8cc2ba1 502,746-749,751-765
+  s_a149baf2181030::t_ec02d58ab34cff 319
+  s_a149baf2181030::t_2afbb5db7d5569 750
+  s_a149baf2181030::t_9f15d47bd9ecd3 271,291-301,303-311,316-318,320-322,325,480-492
+  s_a149baf2181030::t_1869baacb9fd26 302,312-314,493-501
+  s_a149baf2181030::t_530ebb6cbed795 323-324
+  s_a149baf2181030::t_cb9939bdf67c29 315
+src/platform/item_body.lua
+  s_a149baf2181030::t_dfe9ed8c51a8ae 9,16-19,21,23-29,45-52
+src/platform/body_contact.lua
+  s_a149baf2181030::t_4bb0d83351145c 4,12,15-21,23-34,36
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "aa7afa01fbc13d656850f10f25d4eed96e38cef6",
+  "prompts": {},
+  "sessions": {
+    "s_a149baf2181030": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0fdc3-ae05-7e41-a96b-bd7a333b41c3",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Ethan Denny <ethandenny@protonmail.com>"
+    }
+  }
+}
