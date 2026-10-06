@@ -660,3 +660,19 @@ blocked. The following are still open, rather than implied to be certified:
   original high-score/stat-file interoperability remain outside the selected
   Mines/intermission scope. Completing the first tunnel persists its cost;
   this does not add a playable Jungle shortcut.
+
+### Worn cape and jetpack rendering follow-up
+
+Equipment acquisition worked, but the gameplay renderer omitted worn capes and
+jetpacks. The per-item modules now draw the source's side/back poses and origins:
+jetpacks surround the player's body draw, while capes use their separate 100/0
+depths and their moving/open animations. Capes remain visible during the player's
+blink; jetpacks follow the body blink. Climbing, whipping, exits, invisible players
+and replacing one back item with the other follow the inspected source branches.
+The exit body also retains the source facing-dependent mirror.
+
+`render_depth_test.lua` exercises actual gameplay pickups and compares 18 rendered
+compositions against independently loaded archived sprites. The completed checks
+fail on pre-fix gameplay for both missing capes and missing jetpacks, and the full
+native smoke suite passes after the repair. This extends presentation coverage;
+it does not resolve the executable-oracle limits above.

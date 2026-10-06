@@ -54,6 +54,7 @@ function Item.collect(kind, run, player, game)
         end
         run.equipment[kind] = true
         player.equipment[kind] = true
+        if kind == "cape" then player.capeFrame = 0 end
         Item.announce(kind, run, game)
         return
     end

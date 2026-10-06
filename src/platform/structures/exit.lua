@@ -59,6 +59,8 @@ function Definition.drawPlayer(game)
     local frame = math.min(15, math.floor(game.exiting*0.5))
     frames[frame] = frames[frame] or Assets.image("Character/Main Dude", "sPExit", frame)
     love.graphics.setColor(1,1,1,1)
-    love.graphics.draw(frames[frame], math.floor(game.player.x), math.floor(game.player.y), 0, 1, 1, 8, 8)
+    love.graphics.draw(frames[frame], math.floor(game.player.x), math.floor(game.player.y), 0,
+        game.player.facing == 1 and -1 or 1, 1, 8, 8)
+    require("src.platform.pickups.jetpack").drawWorn(game.player, true)
 end
 return Definition

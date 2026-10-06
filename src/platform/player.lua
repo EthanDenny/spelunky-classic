@@ -1,6 +1,8 @@
 local SpriteData = require("src.platform.player_sprite_data")
 local WhipMask = require("src.platform.whip_mask")
 local Ball = require("src.platform.items.ball")
+local Cape = require("src.platform.pickups.cape")
+local Jetpack = require("src.platform.pickups.jetpack")
 
 local Player = {}
 Player.__index = Player
@@ -166,6 +168,7 @@ function Player:reset()
     self.fallTimer = 0
     self.parachuteOpen = false
     self.capeOpen = false
+    self.capeFrame = 0
     self.jetpackFuel = 0
 end
 
@@ -1245,6 +1248,7 @@ function Player:step(world, input)
     end
     world.time = (world.time or 0) + 1
     self.tick = world.time
+    Cape.stepWorn(self)
     self.currentInput = input
     local jumpPressed = self:pressed(input, "jump")
     local jumpReleased = self:released(input, "jump")
@@ -1369,9 +1373,11 @@ end
 function Player:drawBody()
     local sprite, image = self:getAnimationFrame()
     local scaleX = self.facing == -1 and 1 or -1
+    Jetpack.drawWorn(self, false)
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.draw(image, math.floor(self.x), math.floor(self.y), 0,
         scaleX, 1, sprite.data.originX, sprite.data.originY)
+    Jetpack.drawWorn(self, true)
 end
 
 function Player:draw()

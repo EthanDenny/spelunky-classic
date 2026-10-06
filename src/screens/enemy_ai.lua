@@ -1238,6 +1238,7 @@ function EnemyAI:drawScenarioWorld(scenario, x, y, width)
         end)
     end
     if scenario.player then
+        require("src.platform.pickups.cape").submitWorn(queue, scenario.player)
         if scenario.player.invincibleTimer == 0
             or math.floor(scenario.player.invincibleTimer / 2) % 2 == 1 then
             queue:add(Depth.PLAYER, function() scenario.player:drawBody() end)

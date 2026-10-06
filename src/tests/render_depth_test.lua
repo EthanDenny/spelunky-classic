@@ -8,7 +8,7 @@ local Player = require("src.platform.player")
 
 local Test = {}
 
-local function assertDarkLighting(app)
+local function emptyRenderGame(app)
     local game = require("src.screens.full_level_playtest").new(app)
     game:loadAssets()
     game:generateLevel(17)
@@ -27,6 +27,109 @@ local function assertDarkLighting(app)
     for _, row in ipairs(game.level.tiles) do
         for x in ipairs(row) do row[x] = { kind = "empty" } end
     end
+    game.level._dynamicCells = {}
+    game.world = require("src.platform.generated_world").fromLevel(game.level)
+    game.world.game = game
+    return game
+end
+
+local function assertWornEquipment(app)
+    local root = "original-game-reference/source/extracted/spelunky/Sprites/"
+    local images = {}
+    local function sourceSprite(group, name, frame, x, y, mirrored)
+        local path = root..group.."/"..name
+        local xml = assert(love.filesystem.read(path..".xml"))
+        local ox, oy = xml:match('<origin x="(%d+)" y="(%d+)"')
+        local file = path..".images/image "..frame..".png"
+        images[file] = images[file] or love.graphics.newImage(file)
+        love.graphics.draw(images[file], x, y, 0, mirrored and -1 or 1, 1, tonumber(ox), tonumber(oy))
+    end
+    local view = { x = 0, y = 0, width = 320, height = 240,
+        scale = 1, logicalWidth = 320, logicalHeight = 240 }
+    for _, case in ipairs({
+        { "cape", 1, "standing", "sStandLeft", "sCapeDR", 0, -4, -2 },
+        { "cape", -1, "running", "sRunLeft", "sCapeLeft", 3, 4, -2, moving = true },
+        { "cape", 1, "falling", "sFallLeft", "sCapeUR", 1, -4, -2, open = true },
+        { "cape", -1, "falling", "sFallLeft", "sCapeUL", 1, 4, -2, open = true },
+        { "cape", 1, "climbing", "sClimbUp", "sCapeBack", 0, 0, 4, front = true },
+        { "cape", -1, "climbing", "sAttackLeft", "sCapeDL", 0, 4, -2, whipping = true },
+        { "cape", 1, "exiting", "sPExit", "sCapeBack", 0, 0, 4, front = true },
+        { "cape", 1, "standing", "sStandLeft", "sCapeDR", 0, -4, -2, blink = true },
+        { "cape", 1, "standing", "sStandLeft", "sCapeDR", 0, -4, -2, hidden = true },
+        { "jetpack", 1, "standing", "sStandLeft", "sJetpackRight", 0, -4, -1 },
+        { "jetpack", -1, "ducking", "sDuckLeft", "sJetpackLeft", 0, 4, -1 },
+        { "jetpack", 1, "climbing", "sClimbUp", "sJetpackBack", 0, 0, 0, front = true },
+        { "jetpack", -1, "climbing", "sAttackLeft", "sJetpackLeft", 0, 4, -1, whipping = true },
+        { "jetpack", 1, "exiting", "sPExit", "sJetpackBack", 0, 0, 0, front = true },
+        { "jetpack", 1, "standing", "sStandLeft", "sJetpackRight", 0, -4, -1, blink = true },
+        { "jetpack", 1, "standing", "sStandLeft", "sJetpackRight", 0, -4, -1, hidden = true },
+        { "jetpack", 1, "standing", "sStandLeft", "sJetpackRight", 0, -4, -1, replaces = "cape" },
+        { "cape", 1, "standing", "sStandLeft", "sCapeDR", 0, -4, -2, replaces = "jetpack" },
+    }) do
+        local game = emptyRenderGame(app)
+        game.player.visible = true
+        local function pickup(kind)
+            game.player.state = "ducking"
+            game:spawnEntity(kind, game.player.x+4, game.player.y+4)
+            game:handleActionPressed({ down = true, attack = true })
+            assert(game.player.equipment[kind], "Gameplay pickup must equip "..kind)
+        end
+        if case.replaces then pickup(case.replaces) end
+        pickup(case[1])
+        game.player.state, game.player.vx, game.player.capeOpen = "falling", case.moving and 2 or 0, case.open
+        for _ = 1, 3 do game:simulationStepBody({}) end
+        game.items = {}
+        game.player.x, game.player.y = 400, 300
+        game.cameraX, game.cameraY = 240, 180
+        game.player.facing, game.player.state, game.player.spriteName = case[2], case[3], case[4]
+        game.player.animationFrame, game.player.vx = 3, case.moving and 2 or 0
+        game.player.capeOpen, game.player.whipping = case.open, case.whipping
+        game.player.invincibleTimer, game.player.visible = case.blink and 4 or 0, not case.hidden
+        game.exiting = case[3] == "exiting" and 6 or nil
+        local actual, expected = love.graphics.newCanvas(320, 240), love.graphics.newCanvas(320, 240)
+        love.graphics.push("all")
+        love.graphics.origin()
+        love.graphics.setScissor()
+        love.graphics.setCanvas({ actual, stencil = true })
+        game:drawWorld(view)
+        love.graphics.setCanvas(expected)
+        love.graphics.clear(0.6, 0.4, 0.2, 1)
+        love.graphics.origin()
+        love.graphics.setScissor()
+        love.graphics.setColor(1, 1, 1, 1)
+        local function gear()
+            if not case.hidden and (case[1] == "cape" or not case.blink) then
+                sourceSprite("Items/Saleable", case[5], case[6], 160+case[7], 120+case[8])
+            end
+        end
+        if not case.front then gear() end
+        if not case.hidden and not case.blink then
+            local frame = (case[4] == "sPExit" or case.whipping
+                or case[4] == "sRunLeft" or case[4] == "sClimbUp") and 3 or 0
+            sourceSprite("Character/Main Dude", case[4], frame, 160, 120, case[2] == 1)
+        end
+        if case.front then gear() end
+        love.graphics.pop()
+        local pixels, reference = actual:newImageData(), expected:newImageData()
+        for y = 96, 143 do
+            for x = 136, 183 do
+                local r, g, b, a = pixels:getPixel(x, y)
+                local er, eg, eb, ea = reference:getPixel(x, y)
+                assert(math.abs(r-er) < 0.01 and math.abs(g-eg) < 0.01 and math.abs(b-eb) < 0.01
+                    and math.abs(a-ea) < 0.01, case[1].." "..case[3]
+                        ..(case.hidden and " hidden" or case.blink and " blinking" or case.replaces and " replacing "..case.replaces or "")
+                        .." worn sprite must match Classic's "..case[5]
+                        .." pose/layer at "..x..","..y.." (actual "..r..","..g..","..b
+                        .."; expected "..er..","..eg..","..eb..")")
+            end
+        end
+        actual:release()
+        expected:release()
+    end
+end
+
+local function assertDarkLighting(app)
+    local game = emptyRenderGame(app)
     local logicalMask
     for _, scale in ipairs({ 1, 2, 3 }) do
         local view = { x = 7, y = 9, width = 320*scale, height = 240*scale,
@@ -417,6 +520,7 @@ function Test.run(app)
     end)
     love.graphics.draw = drawImage
     assert(heldOk, heldError)
+    assertWornEquipment(app)
     assertDarkLighting(app)
 end
 

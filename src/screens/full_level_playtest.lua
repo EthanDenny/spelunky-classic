@@ -695,6 +695,7 @@ function FullLevelPlaytest:simulationStepBody(input)
     self.run:update()
     if self.exiting then
         self.exiting = self.exiting+1
+        require("src.platform.pickups.cape").stepWorn(self.player)
         self.world.time = self.world.time+1
         for _, enemy in ipairs(self.enemies) do enemy:step(self.world, self.player, self) end
         Sight.update(self.world, self.player, self.enemies, self)
@@ -1104,6 +1105,7 @@ function FullLevelPlaytest:drawWorld(viewport)
     if self.traps then self.traps:submit(queue) end
     if self.tools then self.tools:submit(queue, self.player) end
     Kali.submit(self, queue)
+    require("src.platform.pickups.cape").submitWorn(queue, self.player)
 
     if self.player.visible ~= false and not (self.player.invincibleTimer > 0 and math.floor(self.player.invincibleTimer / 2) % 2 == 0) then
         queue:add(Depth.entity("player", self.player.state),
