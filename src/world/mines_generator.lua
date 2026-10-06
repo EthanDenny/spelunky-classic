@@ -506,12 +506,12 @@ local function applyWallSprites(level, rng)
 
                 if not up then
                     tile.style = down and "cave_up" or "cave_up2"
-                    level.decorations[#level.decorations + 1] = {
+                    if level.graphicsHigh then level.decorations[#level.decorations + 1] = {
                         kind = "cave_top",
                         variant = rng:integer(1, 3) < 3 and 1 or 2,
                         x = x,
                         y = y - 1,
-                    }
+                    } end
                 elseif not down then
                     tile.style = "brick_down"
                 end
@@ -562,6 +562,7 @@ function MinesGenerator.generate(seed, options)
     local level = {
         area = "mines",
         seed = seed,
+        graphicsHigh = options.graphicsHigh ~= false,
         levelNumber = math.max(1, math.min(4, options.levelNumber or 1)),
         absoluteLevel = math.max(1, math.min(4, options.levelNumber or 1)),
         width = LEVEL_WIDTH,

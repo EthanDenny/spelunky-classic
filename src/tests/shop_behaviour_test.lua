@@ -344,6 +344,15 @@ function Test.run()
             pay(game)
             assert(game.run.money == 40000 and game.player.health == 5 and damsel.forSale and not damsel.held,
                 "A level-two kiss costs $10000, adds a heart, and leaves the damsel for sale")
+            local sounds = {}
+            game.sounds.play = function(_, name) sounds[#sounds+1] = name end
+            for _ = 1, 12 do damsel:step(game.world, game.player, game) end
+            assert(#sounds == 0 and damsel.state == "kiss", "The kiss sound waits for animation frame seven")
+            damsel:step(game.world, game.player, game)
+            assert(sounds[1] == "kiss" and game.effects.particles[1].kind == "heart",
+                "The kiss animation emits its heart and source sound together")
+            for _ = 1, 6 do damsel:step(game.world, game.player, game) end
+            assert(damsel.state == "slave", "Animation end returns the purchased kiss to the slave state")
         end },
         { "buying a damsel costs three kisses", function()
             local game = fixture("Kissing")

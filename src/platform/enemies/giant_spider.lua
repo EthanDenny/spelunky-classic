@@ -74,6 +74,17 @@ local function advanceAnimation(spider, context)
     end
 end
 
+function GiantSpider.alarm(spider, world, player)
+    if spider.timer > 0 then
+        spider.timer = spider.timer-1
+        if spider.timer == 0 and spider.spriteName ~= "sGiantSpiderSquirt" then
+            spider.state = "bounce"
+            setSprite(spider, "sGiantSpiderJump")
+            if Physics.probe(world, spider, "y", 1) then launch(spider, player, 2, 5) end
+        end
+    end
+end
+
 function GiantSpider.step(spider, world, player, context)
     if spider.state ~= "hang" then spider.whipped = math.max(0, (spider.whipped or 0)-1) end
     if spider.state == "hang" then
@@ -95,14 +106,6 @@ function GiantSpider.step(spider, world, player, context)
         return
     end
 
-    if spider.timer > 0 then
-        spider.timer = spider.timer-1
-        if spider.timer == 0 and spider.spriteName ~= "sGiantSpiderSquirt" then
-            spider.state = "bounce"
-            setSprite(spider, "sGiantSpiderJump")
-            if Physics.probe(world, spider, "y", 1) then launch(spider, player, 2, 5) end
-        end
-    end
     Physics.move(world, spider, "x", spider.vx)
     Physics.move(world, spider, "y", spider.vy)
     spider.vy = math.min(10, spider.vy+0.3)
@@ -171,6 +174,7 @@ local Spider = {
     creatureConfig = { hp = 10, width = 32 },
     creatureVerticalBounds = { -16, 0 },
     stepCreature = GiantSpider.step,
+    alarm = GiantSpider.alarm,
     drawCreature = GiantSpider.draw,
     initializeCreature = GiantSpider.initialize,
 }

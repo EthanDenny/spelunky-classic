@@ -28,7 +28,16 @@ function Damsel.creatureStep(self, world, player, game)
     self.definition.bodyStep(world, self, player, game)
     if self.vy > 2 then Damsel.onThrown(self) return end
     if self.forSale then
-        if self.kissTimer and self.kissTimer > 0 then self.kissTimer = self.kissTimer-1 end
+        if self.state == "kiss" then
+            if self.animation % 10 == 7 and game then
+                game.effects:add("heart", self.x+self.facing*8, self.y-16)
+                game.sounds:play("kiss")
+            end
+            if self.animation >= 10 then self.state = "slave" end
+        else
+            self.facing = player.x < self.x and -1 or 1
+            self.animation = self.animation % 1
+        end
         return
     end
     if self.state == "run" then
@@ -111,6 +120,7 @@ local sprites = {}
 function Damsel.collisionSprite(body)
     local name = "sDamselLeft"
     if body.state == "exiting" then name = "sDamselExit2"
+    elseif body.state == "kiss" then name = "sDamselKissL"
     elseif body.state == "yell" then name = "sDamselYellL"
     elseif body.state == "run" then name = "sDamselRunL"
     elseif body.corpse then name = "sDamselDieL"
@@ -119,9 +129,10 @@ function Damsel.collisionSprite(body)
 end
 
 function Damsel.drawCreature(body, renderer)
-    if body.state == "exiting" or body.state == "yell" or body.state == "run" then
+    if body.state == "exiting" or body.state == "yell" or body.state == "run" or body.state == "kiss" then
         local name = Damsel.collisionSprite(body)
-        local count = body.state == "exiting" and 17 or body.state == "yell" and 10 or 4
+        local count = body.state == "exiting" and 17
+            or (body.state == "yell" or body.state == "kiss") and 10 or 4
         local frame = math.floor(body.animation) % count
         local key = name .. frame
         sprites[key] = sprites[key] or Assets.image("Character/Damsel", name, frame)

@@ -102,6 +102,7 @@ function Effects:add(kind, x, y, vx, vy)
 end
 
 function Effects:explosion(x, y)
+    if self.settings and not self.settings.graphicsHigh then return end
     for _ = 1, 3 do
         self:add("flame", x, y,
             self.random:random() * 4 - self.random:random() * 4,
@@ -227,7 +228,8 @@ function Effects:update(world)
                 table.remove(self.particles, index)
             else
                 particle.life = particle.life - 1
-                if spec.trail and particle.age % 4 == 1 and #self.trails < 12 then
+                if spec.trail and (not self.settings or self.settings.graphicsHigh)
+                    and particle.age % 4 == 1 and #self.trails < 12 then
                     self.trails[#self.trails + 1] = {
                         x = particle.x, y = particle.y, age = 0,
                     }

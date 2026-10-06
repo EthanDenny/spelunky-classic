@@ -187,6 +187,11 @@ function ClassicControls:label(action)
     return string.upper(loveKeys(code)[1])
 end
 
+function ClassicControls:promptLabel(action)
+    if self.settings.gamepadOn and self.gamepad[action] then return "B" .. self.gamepad[action] end
+    return self:label(action)
+end
+
 function ClassicControls:playerInput(consumeJumpEdges)
     local input = {
         left = self:held("left"), right = self:held("right"),

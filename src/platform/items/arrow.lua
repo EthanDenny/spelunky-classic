@@ -122,7 +122,7 @@ Definition.projectile = {
     nextGravity = 0.6,
 }
 
-function Definition.update(system, arrow, enemies, items, player)
+function Definition.updateProjectile(system, arrow, enemies, items, player)
     Definition.updateTrapProjectile(system, arrow, player, enemies, items)
 end
 

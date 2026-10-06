@@ -175,6 +175,7 @@ end
 
 function Creature:step(world, player, context)
     if not (self.alive or self.corpse) then return end
+    if self.spec.alarm then self.spec.alarm(self, world, player) end
     if self.spec.updateExit and self.spec.updateExit(self) then return end
     if not require("src.platform.activity").enemy(world, self) then return end
     if self.held then

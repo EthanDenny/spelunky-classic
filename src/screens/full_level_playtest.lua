@@ -174,7 +174,8 @@ function FullLevelPlaytest:generateLevel(seed)
     self.seed = seed
     self.run = self.run or RunState.new(seed)
     self.level = MinesGenerator.generate(seed, { levelNumber = self.levelNumber,
-        run = self.run, forceDark = self.forceDarkLevels })
+        run = self.run, forceDark = self.forceDarkLevels,
+        graphicsHigh = self.app.controls.settings.graphicsHigh })
     self.level.selectedSubtype = MinesLevelSelection.choices[self.subtypeIndex].key
     if self.app.playtestLog then
         self.app.playtestLog:generatedLevel(self.screenName, self.level, self.levelNumber)
@@ -231,6 +232,7 @@ function FullLevelPlaytest:buildSimulation()
     self.items = {}
     self.collectibles = {}
     self.effects = Effects.new(self.seed)
+    self.effects.settings, self.tools.effects.settings = self.app.controls.settings, self.app.controls.settings
     self.effects.sounds = self.sounds
     self.tools.effects.sounds = self.sounds
     self.tools.onRopeHit = function(_, enemy)
@@ -827,6 +829,7 @@ function FullLevelPlaytest:simulationStepBody(input)
         end
     end
 
+    require("src.platform.enemies.enemy_sight").update(self.world, self.player, self.enemies, self)
     self.projectiles:update(self:combatActors(), self.player, self.items)
 
     if self.player.health < previousHealth then

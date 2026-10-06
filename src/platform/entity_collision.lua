@@ -38,12 +38,14 @@ local function pose(target, player)
     local definition = target.definition
     if definition and definition.collisionSprite then return definition.collisionSprite(target) end
     if not definition or not (definition.carryable or definition.pickup) then return nil end
-    local sprite = definition.sprite
+    local sprite = target.facing and target.facing < 0 and definition.leftSprite or definition.sprite
     local metadata = EntitySprites[target.kind]
     local name = sprite and sprite.name or metadata and metadata.sourceSprite
     if not name then return nil end
     local anchor = definition.treasureAnchor
-    return name, 0, target.x-(anchor and anchor[1] or 0),
+    local strength = target.held and target.bowStrength or 0
+    local frame = definition.bow and (strength >= 10 and 3 or strength > 6 and 2 or strength > 2 and 1 or 0) or 0
+    return name, frame, target.x-(anchor and anchor[1] or 0),
         target.y-(anchor and anchor[2] or 0), false
 end
 

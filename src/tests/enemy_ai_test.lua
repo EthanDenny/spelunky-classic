@@ -274,7 +274,9 @@ function Test.run(app)
                 and whip.enemy.state ~= Enemy.STATES.stunned then sawRecovery = true end
         end
         assert(sawPause and sawCharge and sawHit and sawStun and sawRecovery,
-            "Caveman replays must show a ledge pause, animated charge, contact, animated stun, and recovery")
+            ("Caveman replay: pause=%s charge=%s hit=%s stun=%s recovery=%s")
+                :format(tostring(sawPause), tostring(sawCharge), tostring(sawHit),
+                    tostring(sawStun), tostring(sawRecovery)))
         for _, scenario in ipairs(viewer.scenarios) do
             assert(scenario.runs > 1, "Every caveman scenario must repeat automatically")
         end

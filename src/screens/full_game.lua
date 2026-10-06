@@ -15,6 +15,7 @@ function FullGame.new(app)
 end
 
 function FullGame:enter()
+    self.app.progress = self.app.progress or require("src.game.progress").load()
     local width, height, flags = love.window.getMode()
     local x, y, display = love.window.getPosition()
     flags.x, flags.y, flags.display, flags.centered = x, y, display, false
@@ -36,6 +37,7 @@ function FullGame:enter()
 end
 
 function FullGame:leave()
+    if self.app.progress then self.app.progress:save() end
     if self.music then self.music:stop() end
     self.transition = nil
     local previous = self.previousWindow
@@ -78,7 +80,7 @@ function FullGame:advanceLevel()
 end
 
 function FullGame:simulationStepBody(input)
-    if self.transition then self.transition:step(self) return end
+    if self.transition then self.transition:step(self, input) return end
     if not self.player:isDead() then FullLevel.simulationStepBody(self, input) end
     if self.player:isDead() then
         self.app:showScreen("menu")
@@ -110,8 +112,10 @@ end
 function FullGame:keypressed(key, scancode, isRepeat)
     if isRepeat or self.player:isDead() then return end
     if self.transition then
+        if self.app.controls:matches("up", key) then self.transition:pressDirection(1, self)
+        elseif self.app.controls:matches("down", key) then self.transition:pressDirection(-1, self) end
         if (key == "escape" or self.app.controls:matches("attack", key))
-            and self.transition:pressAction() then
+            and self.transition:pressAction(key == "escape", self) then
             -- oDamselKiss.Room End awards one heart, including an early skip.
             self.rescues = self.transition.rescued and 1 or 0
             self.transition = nil

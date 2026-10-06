@@ -137,8 +137,8 @@ function Shop.pay(game)
                     game.run.money = game.run.money - price
                     player.health = player.health + 1
                     player.maxHealth = math.max(player.maxHealth, player.health)
-                    damsel.kissTimer = 12
-                    game.sounds:play("kiss")
+                    if damsel.state ~= "kiss" then damsel.animation = damsel.animation % 1 end
+                    damsel.state = "kiss"
                     notice(game, "NOW AIN'T SHE SWEET!")
                 else notice(game, "YOU NEED $" .. price .. "!\nGET OUTTA HERE, DEADBEAT!") end
                 break
@@ -229,7 +229,7 @@ function Shop.update(game)
             or held.definition and held.definition.buyMessage
         if template then
             notice(game, string.format(template, Shop.price(game, held))
-                .. "\nPRESS " .. game.app.controls:label("pay") .. " TO PURCHASE.")
+                .. "\nPRESS " .. game.app.controls:promptLabel("pay") .. " TO PURCHASE.")
         end
     end
     if keeper and keeper.state == "idle" and not wanted then
@@ -240,7 +240,7 @@ function Shop.update(game)
             local text = keeper.shopType == "Ankh" and "I HAVE SOMETHING SPECIAL..."
                 or "WELCOME TO " .. keeper.spec.name(keeper) .. "'S "
                     .. (shops[keeper.shopType] or "SUPPLY SHOP") .. "!"
-            local key = game.app.controls:label("pay")
+            local key = game.app.controls:promptLabel("pay")
             if keeper.shopType == "Craps" then
                 text = text .. "\nPRESS " .. key .. " TO BET $" .. (1000 + game.level.absoluteLevel * 500) .. "."
             elseif keeper.shopType == "Kissing" then

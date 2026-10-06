@@ -218,6 +218,15 @@ function Test.run(app)
 
     resetRoom()
     app.controls = remapped
+    resetRoom()
+    assert(#room.level.decorations == 0, "Low graphics omits the source's cave fringe tiles")
+    room.tools:explode(120, 120)
+    for _, particle in ipairs(room.tools.effects.particles) do
+        assert(particle.kind ~= "flame", "Low graphics suppresses bomb flames")
+    end
+    room.effects:blood(100, 60, 1)
+    for _ = 1, 5 do room.effects:update(room.world) end
+    assert(#room.effects.trails == 0, "Low graphics suppresses blood trails")
     local remaining = room.run.ropes
     room:keypressed("s")
     assert(room.run.ropes == remaining, "The original rope key must stop working after a remap")

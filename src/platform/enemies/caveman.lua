@@ -31,18 +31,10 @@ local Caveman = {
     },
 }
 
-local function canSee(self, world, player)
-    if not player or player:isDead() then return false end
-    local dx = player.x - self.x
-    if dx * self.facing <= 0 or math.abs(dx) >= 100
-        or math.abs(player.y - self.y) > 16 then return false end
-    for offset = 4, math.abs(dx) - 4, 4 do
-        if world:solidAtPoint(self.x + self.facing * offset, self.y - 8) then
-            return false
-        end
-    end
-    return true
-end
+local Physics = require("src.platform.physical_body")
+local Sight = require("src.platform.enemies.enemy_sight")
+
+function Caveman.initialize(body) body.vx = 2.5 end
 
 function Caveman.step(self, world, player)
     local states = self.STATES
@@ -57,49 +49,49 @@ function Caveman.step(self, world, player)
         end
         return
     end
-
+    Physics.move(world, self, "x", self.vx)
+    Physics.move(world, self, "y", self.vy)
+    self.vy = math.min(10, self.vy+0.6)
+    local ground = Physics.probe(world, self, "y", 1)
+    local top = Physics.probe(world, self, "y", -1)
+    local left = Physics.probe(world, self, "x", -1)
+    local right = Physics.probe(world, self, "x", 1)
+    if ground then self.vy = 0 end
+    local look = self.state == states.idle or self.state == states.walk
     if self.state == states.idle then
-        self.vx = 0
-        if world:groundBelow(self) then self.timer = self.timer - 1 end
-        if self.timer <= 0 then
+        if ground and (world:solidAtPoint(self.x-9, self.y-16)
+            or world:solidAtPoint(self.x+8, self.y-16)) then
+            self.vy, self.vx = -6, self.facing
+            self.timer = self.timer-10
+        end
+        if self.vy < 0 and top then self.vy = 0 end
+        if ground and self.timer > 0 then self.timer = self.timer-1 end
+        if self.timer < 1 then
             self.facing = self.random(0, 1) == 0 and -1 or 1
             self:setState(states.walk)
         end
     elseif self.state == states.walk then
-        if world:collidesSolid(self, self.x + self.facing, self.y) then
-            self.facing = -self.facing
-        end
-        local supportX = self.x + (self.facing < 0 and -9 or 8)
+        if left or right then self.facing = -self.facing end
+        local supportX = self.x+(self.facing < 0 and -9 or 8)
         if not world:solidAtPoint(supportX, self.y) then
+            self:setState(states.idle, self.random(20, 50))
+        end
+        self.vx = self.facing*1.5
+        if self.random(1, 100) == 1 then
             self.vx = 0
             self:setState(states.idle, self.random(20, 50))
-        else
-            self.vx = self.facing * 1.5
-            if self.random(1, 100) == 1 then
-                self.vx = 0
-                self:setState(states.idle, self.random(20, 50))
-            end
         end
     elseif self.state == states.attack then
-        if world:collidesSolid(self, self.x + self.facing, self.y) then
-            self.facing = -self.facing
-        end
-        self.vx = self.facing * 3
+        if left or right then self.facing = -self.facing end
+        self.vx = self.facing*3
     end
-
-    if self.state == states.idle or self.state == states.walk then
-        self.sightTimer = self.sightTimer - 1
-        if self.sightTimer <= 0 then
-            self.sightTimer = 5
-            if canSee(self, world, player) then
-                self:setState(states.attack)
-                self.vx = self.facing * 3
-                self.justAlerted = true
-            end
-        end
+    if look then
+        if self.sightTimer > 0 then self.sightTimer = self.sightTimer-1
+        else Sight.spawn(world, self); self.sightTimer = 5 end
     end
-    local hitWall = self:updateGroundPhysics(world)
-    if hitWall and self.state == states.attack then self.facing = -self.facing end
+    if self.vx > 0 then self.vx = self.vx-0.1 end
+    if self.vx < 0 then self.vx = self.vx+0.1 end
+    if math.abs(self.vx) < 0.5 then self.vx = 0 end
 end
 
 function Caveman.animation(self)
@@ -137,14 +129,13 @@ end
 
 Caveman.creatureStep = Caveman.step
 
-local Physics = require("src.platform.physical_body")
 local Assets = require("src.platform.object_assets")
 local sprites = {}
 function Caveman.initializeCreature(body)
     body.heavy = true
     body.definition = Traits.body({ hold = { standing = 4, ducking = 6 } })
     body.physicsOriginY = -8
-    body.timer, body.facing = 0, 1
+    body.timer, body.facing, body.vx = 0, 1, 2.5
 end
 
 function Caveman.stunnedStep(body, world, player, game)

@@ -652,13 +652,37 @@ function Test.run()
                 assert(#game.effects.particles == 3, "An arrow hit emits three blood particles")
             end
         end },
-        { "generated cavemen use the source facing and charge rules", function()
+        { "caveman sight travels before alerting the nearby group", function()
             local game = fixture()
             game.player.x = 160
             local caveman = game:spawnEntity("caveman", 80, 112)
             caveman.state, caveman.facing, caveman.sightTimer = "walk", 1, 0
+            local companion = game:spawnEntity("caveman", 120, 112)
+            companion.state, companion.facing, companion.sightTimer, companion.vx = "walk", -1, 100, 0
             caveman:step(game.world, game.player, game)
-            assert(caveman.state == "attack" and caveman.vx == 3)
+            assert(caveman.state == "walk", "Seeing a nearby player does not alert before the sight object arrives")
+            for _ = 1, 12 do
+                game.world.time = game.world.time+1
+                caveman:step(game.world, game.player, game)
+                companion:step(game.world, game.player, game)
+                require("src.platform.enemies.enemy_sight").update(game.world, game.player, game.enemies, game)
+            end
+            assert(caveman.state == "attack" and companion.state == "attack"
+                and math.abs(caveman.vx-2.9) < 0.000001,
+                "A sight collision alerts even the caveman facing away; source friction follows charge acceleration")
+        end },
+        { "spider alarms continue outside the active camera", function()
+            for _, kind in ipairs({ "spider", "giant_spider" }) do
+                local game = fixture()
+                local spider = game:spawnEntity(kind, 600, 112, { hanging = false })
+                spider.state = kind == "spider" and "RECOVER" or "recover"
+                spider.timer, spider.vx, spider.vy = 1, 0, 0
+                game.world.activeView = { x = 0, y = 0, width = 320, height = 240 }
+                spider:step(game.world, game.player, game)
+                assert(spider.state == (kind == "spider" and "BOUNCE" or "bounce")
+                    and spider.x == 600 and spider.vy < 0,
+                    "The offscreen alarm launches a grounded spider while its Step movement remains paused")
+            end
         end },
         { "falling enemies impale and lodge without crediting a kill", function()
             local game = fixture()

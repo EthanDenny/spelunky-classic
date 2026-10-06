@@ -81,6 +81,10 @@ local function useExit(app, game, inspect)
 end
 
 function Test.run(app)
+    local Progress = require("src.game.progress")
+    local savedProgress = love.filesystem.read("progress.cfg")
+    local previousProgress = app.progress
+    app.progress = Progress.new()
     local controls = app.controls
     local hardwareIsDown = love.keyboard.isDown
     local randomState = love.math.getRandomState()
@@ -253,10 +257,50 @@ function Test.run(app)
         assert(game.completed and game.levelNumber == 4 and app.currentScreenName == "menu",
             "The current playable Mines run returns to the menu after the fourth completion summary")
         assert(not game.music.source:isPlaying(), "Completion must stop level music")
+        assert(Progress.load().tunnel1 == 100000, "The first Mines completion saves the source's delayed tunnel request")
+
+        game = start(app)
+        game.levelNumber = 4
+        game:generateLevel(17)
+        game.run.money = 50000
+        useExit(app, game, function(transition)
+            assert(transition.tunnel and transition.tunnel.talk == 1 and transition.actorStopped,
+                "The next Mines completion stops the player for the Tunnel Man introduction")
+            assert(transition.tunnel.donate == 100, "UP also adjusts the selection before the donation dialogue starts")
+            app:keypressed("x", "x", false)
+            assert(transition.tunnel.talk == 2, "ACTION opens the donation request")
+            app:keypressed("up", "up", false)
+            for _ = 1, 20 do game:simulationStepBody({ up = true }) end
+            assert(transition.tunnel.donate == 200, "Held UP waits twenty ticks after its initial hundred-dollar step")
+            for _ = 1, 81 do game:simulationStepBody({ up = true }) end
+            assert(transition.tunnel.donate == 9200, "Holding UP accelerates to thousand-dollar steps after one hundred ticks")
+            app:keypressed("x", "x", false)
+            assert(transition.tunnel.talk == 3 and game.run.money == 40800
+                and app.progress.tunnel1 == 90800, "A partial donation deducts money and remaining tunnel work exactly once")
+        end)
+        assert(Progress.load().tunnel1 == 90800, "Leaving the run persists the partial shortcut donation")
+
+        app.progress.tunnel1 = 900
+        game = start(app)
+        game.levelNumber = 4
+        game:generateLevel(17)
+        game.run.money = 1000
+        useExit(app, game, function(transition)
+            app:keypressed("x", "x", false)
+            for _ = 1, 12 do app:keypressed("up", "up", false) end
+            assert(transition.tunnel.donate == 900, "Donation selection clamps to the remaining cost")
+            app:keypressed("x", "x", false)
+            assert(transition.tunnel.talk == 5 and game.run.money == 100 and app.progress.tunnel1 == 0,
+                "Completing the donation unlocks the Jungle shortcut without overspending")
+        end)
+        assert(Progress.load().tunnel1 == 0, "A completed shortcut survives a progress reload")
     end)
     love.keyboard.isDown = hardwareIsDown
     love.math.setRandomState(randomState)
     if app.currentScreenName == "full_game" then app:showScreen("menu") end
+    if savedProgress then assert(love.filesystem.write("progress.cfg", savedProgress))
+    else love.filesystem.remove("progress.cfg") end
+    app.progress = previousProgress
     lab.levelNumber, lab.subtypeIndex, lab.run = labLevel, labSubtype, labRun
     app.controls = controls
     app.screens.menu.selectedIndex = menuSelection

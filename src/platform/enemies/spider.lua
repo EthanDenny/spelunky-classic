@@ -51,6 +51,17 @@ local function hop(self, player, alarm)
     self.vx = self.facing*2.5
 end
 
+function Spider.alarm(self, world, player)
+    local states = self.STATES
+    if self.timer > 0 then
+        self.timer = self.timer-1
+        if self.timer == 0 then
+            self:setState(states.bounce)
+            if Physics.probe(world, self, "y", 1) then hop(self, player, true) end
+        end
+    end
+end
+
 function Spider.step(self, world, player)
     local states = self.STATES
     if self.state == states.hang then
@@ -62,13 +73,6 @@ function Spider.step(self, world, player)
             self:setState(states.idle, 0)
         end
         return
-    end
-    if self.timer > 0 then
-        self.timer = self.timer-1
-        if self.timer == 0 then
-            self:setState(states.bounce)
-            if Physics.probe(world, self, "y", 1) then hop(self, player, true) end
-        end
     end
     Physics.move(world, self, "x", self.vx)
     Physics.move(world, self, "y", self.vy)

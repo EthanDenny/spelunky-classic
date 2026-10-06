@@ -268,6 +268,9 @@ function Test.run(app)
     local oldGraphicsDraw = love.graphics.draw
     local oldInvincibleTimer = screen.player.invincibleTimer
     local liveOrder = {}
+    local oldDecorations = screen.level.decorations
+    screen.level.decorations = { { kind = "cave_top", variant = 1,
+        x = math.floor(screen.player.x/16), y = math.floor(screen.player.y/16)-1 } }
     screen.enemies = { snake, bat }
     snake.draw = function() liveOrder[#liveOrder + 1] = "snake" end
     bat.draw = function() liveOrder[#liveOrder + 1] = "bat" end
@@ -289,6 +292,7 @@ function Test.run(app)
             scale = 1, logicalWidth = 320, logicalHeight = 240 })
     end)
     screen.enemies = oldEnemies
+    screen.level.decorations = oldDecorations
     snake.draw, bat.draw = oldSnakeDraw, oldBatDraw
     screen.player.drawBody, screen.effects.draw = oldPlayerDraw, oldEffectsDraw
     screen.player.invincibleTimer = oldInvincibleTimer

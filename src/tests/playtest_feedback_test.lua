@@ -240,24 +240,15 @@ function Test.run(app)
     screen.player.whipping = false
     screen.enemies, screen.effects = previousEnemies, previousEffects
 
-    assert(#screen.level.decorations > 0, "The draw-order probe needs cave-top decorations")
     local draw = love.graphics.draw
-    local drawPlayer = screen.player.drawBody
-    local playerDrawn, decorationAfterPlayer, bloodySpikesDrawn = false, false, false
+    local bloodySpikesDrawn = false
     local collectSkeleton, skeletonImage = false, nil
     local bloodySpike = { kind = "spikes", x = 2, y = 2, bloody = true }
     screen.level.entities[#screen.level.entities + 1] = bloodySpike
     love.graphics.draw = function(image, ...)
-        if image == screen.renderer.images.bg_cave_top and playerDrawn then
-            decorationAfterPlayer = true
-        end
         if image == screen.spikeBloodImage then bloodySpikesDrawn = true end
         if collectSkeleton then skeletonImage = image end
         return draw(image, ...)
-    end
-    screen.player.drawBody = function(self, ...)
-        playerDrawn = true
-        return drawPlayer(self, ...)
     end
     local ok, err = pcall(function()
         screen:drawWorld({ x = 0, y = 0, width = 320, height = 240,
@@ -268,11 +259,8 @@ function Test.run(app)
         skeleton:draw(screen.renderer)
     end)
     love.graphics.draw = draw
-    screen.player.drawBody = nil
     screen.level.entities[#screen.level.entities] = nil
     assert(ok, err)
-    assert(decorationAfterPlayer,
-        "Cave-top tile decorations must draw in front of the player (depth 3 versus 50)")
     assert(skeletonImage and skeletonImage ~= screen.renderer.entitySprites.skeleton.image,
         "Awakened skeletons must draw a skeleton sprite, not the static bones image")
     assert(bloodySpikesDrawn, "Impaling spikes must display the source's blood-stained sprite")

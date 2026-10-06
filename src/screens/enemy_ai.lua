@@ -243,6 +243,7 @@ local CAVEMAN_SCENARIOS = {
             local caveman = Enemy.new("caveman", 6 * 16, 7 * 16,
                 { facing = 1, seed = 53 })
             caveman:setState(Enemy.STATES.idle, 110)
+            caveman.vx = 0
             return world, caveman, makePlayer(4 * 16 + 8, assets)
         end,
     },
@@ -467,6 +468,7 @@ local ROPE_SCENARIOS = {
             local world = ropeWorld(true)
             local caveman = Enemy.new("caveman", 6 * 16 + 8, 88, { seed = 97 })
             caveman:setState(Enemy.STATES.idle, 90)
+            caveman.vx = 0
             return world, caveman, makePlayer(caveman.x, assets)
         end,
     },
@@ -886,6 +888,7 @@ function EnemyAI:stepScenario(scenario)
         local previousState = enemy.state
         local previousProjectiles = scenario.projectiles and #scenario.projectiles.projectiles or 0
         enemy:step(scenario.world, player, { projectiles = scenario.projectiles })
+        require("src.platform.enemies.enemy_sight").update(scenario.world, player, { enemy })
         if enemy.justAlerted then
             if enemy.kind == "caveman" then
                 scenario.event = "CAVEMAN ALERT"

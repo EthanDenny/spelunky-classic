@@ -134,11 +134,12 @@ function Enemy:updateAnimation()
     if self.spec.afterAnimation then self.spec.afterAnimation(self) end
 end
 
-function Enemy:step(world, player)
+function Enemy:step(world, player, context)
     if not self.alive then return end
+    if self.spec.alarm then self.spec.alarm(self, world, player) end
     if not require("src.platform.activity").enemy(world, self) then return end
     self.justAlerted = false
-    self.spec.step(self, world, player)
+    self.spec.step(self, world, player, context)
     if self.hp <= 0 or world:solidAtPoint(self.x, self.y-8) then
         self.hp, self.alive, self.state = 0, false, Enemy.STATES.dead
     end
