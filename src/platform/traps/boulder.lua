@@ -72,7 +72,7 @@ function Boulder.move(self, boulder, time, player)
                         if #destroyed > 0 then
                             self.world:cleanBoulderTerrain(tileX*16, tileY*16, 16)
                             slowBoulder(boulder)
-                            if self.crunchSound then self.crunchSound:clone():play() end
+                            self:playSound("crunch", self.crunchSound)
                         end
                     end
                 end
@@ -94,7 +94,7 @@ function Boulder.move(self, boulder, time, player)
                             self.world:cleanBoulderTerrain(block.x, block.y, block.width)
                             self.world:removeDynamicSolid(block)
                             slowBoulder(boulder)
-                            if self.crunchSound then self.crunchSound:clone():play() end
+                            self:playSound("crunch", self.crunchSound)
                         end
                     end
                 end

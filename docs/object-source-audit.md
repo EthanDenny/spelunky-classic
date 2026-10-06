@@ -676,3 +676,43 @@ compositions against independently loaded archived sprites. The completed checks
 fail on pre-fix gameplay for both missing capes and missing jetpacks, and the full
 native smoke suite passes after the repair. This extends presentation coverage;
 it does not resolve the executable-oracle limits above.
+
+### Mines sound-event follow-up
+
+Audited executable `playSound`/sound-stop branches in the bundled Mines objects,
+player, item-use/bow scripts and platform engine, excluding commented code and
+later-area events. Restored accepted whip, melee, stomp and item/rope hit cues;
+rejected hits stay silent. Damsel bullets use her vocal cue, melee uses Hit then
+Damsel, and pots/skulls hitting her only play their break cue. Ordinary caveman
+and shopkeeper deaths use CavemanDie once; smaller enemies have no separate death
+voice. Crushed NPCs/corpses emit their source vocal cue and are removed. Enemy
+impalement adds no Hit; player spikes use Thud then Die. Player hurt/death audio
+now comes from the accepted reaction rather than a later health-change guess.
+
+Registered the caveman alert, push, block-landing and jetpack cues. Jetpack uses
+a three-tick alarm; climbing uses the eight-tick alternating alarm, beginning
+with Climb2 and allowing pending alarms to fire after movement stops. Exit entry
+plays Steps. Containers own their opening sound: crate/flare crate Pickup, normal
+chest ChestOpen, bomb chest Trap, locked chest ChestOpen and broken pot Break.
+Armed bow charging stops on firing or dropping. Damsel cries preserve the source's
+pan changes; ghost creation includes Kali-spawned ghosts. Giant spider cues occur
+at conversion and grounded bounce, including a randomly cancelled bounce; its
+alarm launch and small-spider jumps add no cue. Blasted skulls play Break.
+
+The scenario viewer uses the same adapter and actor events, eliminating its
+extra spider sounds, wrong giant-spider WAV and repeated explosion callback
+sound. Its mute stops active voices, including item and Kali scenario voices.
+
+`mines_audio_test.lua` checks 58 sound-event cases by observing native LÖVE source playback while executing
+production actors, item actions, projectiles, tools, screen phases and audio
+adapters. Regressions fail on the pre-fix code for missing/wrong/duplicate cues.
+The native suite also exercises Mines, Kali and Full game lifecycle behavior.
+Existing unrelated numeric/physics tests retain their role; obsolete play-only
+sound stubs in the bow lifecycle fixtures now use the production adapter.
+
+This establishes inspected cue selection, trigger and silence coverage, not
+perceptual or executable-certified sound parity. Original SuperSound DLL mixing,
+overlap, pan curves and exact GameMaker event scheduling still need original
+runtime comparison; the unavailable executable oracle described above remains
+a limitation. Water/lava and later-area sound branches are outside generated
+Mines. Disabled walking footsteps and flare-button ignition code remain disabled.

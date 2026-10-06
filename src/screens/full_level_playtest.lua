@@ -82,15 +82,12 @@ function FullLevelPlaytest.new(app)
         showRoomPath = false,
         deathTimer = 0,
         exitReady = false,
-        hitSound = nil,
         spikeBloodImage = nil,
         throwSound = nil,
         sounds = ClassicSounds.new(),
         actionHeld = false,
         payHeld = false,
         payQueued = false,
-        climbSoundTick = 0,
-        climbSoundToggle = false,
         tools = nil,
         traps = nil,
         hud = nil,
@@ -110,7 +107,6 @@ function FullLevelPlaytest:loadAssets()
     self.renderer = self.renderer or self.app.renderer
     self.renderer:loadAssets()
     Enemy.loadAssets()
-    self.hitSound = self.hitSound or ClassicSounds.load("hit")
     self.throwSound = self.throwSound or ClassicSounds.load("throw")
     self.spikeBloodImage = Spikes.bloodImage()
     self.hud = self.hud or OriginalHUD.new(self.renderer)
@@ -152,7 +148,7 @@ function FullLevelPlaytest:configureProjectiles()
             end
             self.effects:blood(enemy.x, enemy.y - 8, 1)
         end
-        self.sounds:play("hit")
+        self.sounds:play(enemy and enemy.kind == "damsel" and "damsel" or "hit")
     end
     self.projectiles.onHitItem = function(item)
         if item.kind == "jar" then
@@ -210,20 +206,20 @@ function FullLevelPlaytest:buildSimulation()
     local spawnX, spawnY = GeneratedWorld.spawnPoint(self.level)
     self.player = Player.new(spawnX, spawnY)
     self.player.playtestLog = self.app.playtestLog
+    self.player.sounds = self.sounds
     self.run:applyToPlayer(self.player)
     self.player.state = Player.STATES.standing
-    self.climbSoundTick = 0
-    self.climbSoundToggle = false
     self.player.spriteName = "sStandLeft"
     local soundVolume = self.app.controls.settings.soundVol
     self.sounds.settings = self.app.controls.settings
-    if self.hitSound then ClassicSounds.configure(self.hitSound, soundVolume) end
     if self.throwSound then ClassicSounds.configure(self.throwSound, soundVolume) end
     self.player:loadAssets(soundVolume)
     self.tools = ToolSystem.new(self.world, Player.TICK_RATE)
+    self.tools.sounds = self.sounds
     self.tools:loadAssets(soundVolume)
     self.traps = TrapSystem.new(self.world, self.level, self.renderer)
     self.traps:loadAssets(soundVolume)
+    self.traps.sounds = self.sounds
     self.world.game, self.tools.game, self.traps.game = self, self, self
     self.tools.onExplosion = function(_, x, y, radius, explosion)
         self.traps:explode(x, y, radius, explosion)
@@ -238,7 +234,6 @@ function FullLevelPlaytest:buildSimulation()
     self.tools.effects.sounds = self.sounds
     self.tools.onRopeHit = function(_, enemy)
         if enemy.kind ~= "skeleton" then self.effects:blood(enemy.x, enemy.y - 8, 1) end
-        if self.hitSound then self.hitSound:clone():play() end
     end
     Effects.loadAssets()
     self.hiddenEntities = {}
@@ -386,7 +381,6 @@ function FullLevelPlaytest:checkWhip()
             if hit and enemy.kind ~= "damsel" and not (enemy.spec and enemy.spec.bloodless) then
                 self.effects:blood(enemy.x, enemy.y-8, 1)
             end
-            if self.hitSound then self.hitSound:clone():play() end
         end
     end
     for _, item in ipairs(self.items) do
@@ -410,6 +404,7 @@ function FullLevelPlaytest:openContainer(item)
         self.sounds:play("break_item")
     elseif effect == "smoke" then
         self.effects:add("poof", x, y)
+        self.sounds:play("pickup")
     elseif effect == "unlock" then
         self.effects:add("poof", x, y, -0.4)
         self.effects:add("poof", x, y, 0.4)
@@ -647,7 +642,6 @@ function FullLevelPlaytest:resolveItemPlayerContact(item)
     end
     if not player:hurt(item.x, 2, item.kind, 20, "rock", item.vx) then return end
     self.effects:blood(player.x, player.y, 3)
-    self.sounds:play("hurt")
     self:dropHeldItemFromHurt()
 end
 
@@ -695,6 +689,7 @@ function FullLevelPlaytest:simulationStepBody(input)
     self.run:update()
     if self.exiting then
         self.exiting = self.exiting+1
+        self.player:updateSoundAlarms()
         require("src.platform.pickups.cape").stepWorn(self.player)
         self.world.time = self.world.time+1
         for _, enemy in ipairs(self.enemies) do enemy:step(self.world, self.player, self) end
@@ -747,17 +742,6 @@ function FullLevelPlaytest:simulationStepBody(input)
             or previousState == Player.STATES.hanging or previousState == Player.STATES.climbing) then
         self.sounds:play("jump")
     end
-    if self.player.state == Player.STATES.climbing and (input.up or input.down)
-        and math.abs(self.player.y - previousY) > 0.05 then
-        self.climbSoundTick = self.climbSoundTick - 1
-        if self.climbSoundTick <= 0 then
-            self.sounds:play(self.climbSoundToggle and "climb2" or "climb1")
-            self.climbSoundToggle = not self.climbSoundToggle
-            self.climbSoundTick = 8
-        end
-    else
-        self.climbSoundTick = 0
-    end
     self:applyEnvironment(input)
     if self.heldItem and self.heldItem.definition.unlocks then
         self.heldItem:updateHeldPosition(self.player)
@@ -796,7 +780,6 @@ function FullLevelPlaytest:simulationStepBody(input)
 
     for _, enemy in ipairs(self.enemies) do
         if enemy.alive or enemy.corpse then
-            local oldState, oldVy = enemy.state, enemy.vy
             Spikes.checkActor(self, enemy)
             enemy:step(self.world, self.player, self)
             if enemy.kind ~= "spider" and enemy.kind ~= "giant_spider" and enemy.kind ~= "ghost"
@@ -805,22 +788,16 @@ function FullLevelPlaytest:simulationStepBody(input)
                 enemy.vx, enemy.vy = 0, 0
                 if enemy.kind == "shopkeeper" and enemy.alive then Shopkeeper.provoke(enemy) end
             end
-            if enemy.kind == "bat" and oldState == "HANG" and enemy.state ~= oldState then
-                self.sounds:play("bat")
-            elseif enemy.kind == "giant_spider" and oldState == "hang"
-                and enemy.state ~= oldState then
-                self.sounds:play("giant_spider")
-            elseif enemy.kind == "giant_spider" and oldVy >= 0 and enemy.vy < -1
-                and enemy.state == "bounce" then
-                self.sounds:play("spider_jump")
-            end
             local contact = enemy:resolvePlayerContact(self.player, previousY, self)
             if contact == "throw" then self:dropHeldItemFromHurt() end
             if enemy.kind == "damsel" then require("src.platform.enemies.damsel").checkExit(enemy, self) end
         end
         if not enemy.alive and not enemy.deathCounted and not enemy.rescued then
             enemy.deathCounted = true
-            if enemy.kind == "caveman" then self.sounds:play("caveman_die") end
+            if enemy.spec.deathSound and not enemy.sacrificed and not enemy.deathSoundPlayed then
+                self.sounds:play(enemy.spec.deathSound)
+                enemy.deathSoundPlayed = true
+            end
             if enemy.countsAsKill ~= false then self.run.kills = self.run.kills + 1 end
             if self.recordKill then self:recordKill(enemy.kind) end
             local blood = enemy.spec.deathBlood or 0
@@ -836,7 +813,6 @@ function FullLevelPlaytest:simulationStepBody(input)
     self.projectiles:update(self:combatActors(), self.player, self.items)
 
     if self.player.health < previousHealth then
-        self.sounds:play("hurt")
         self:dropHeldItemFromHurt()
     end
     Simulation.stepItems(self, function(item) self:resolveItemPlayerContact(item) end)
@@ -887,7 +863,6 @@ function FullLevelPlaytest:simulationStepBody(input)
         self.ghostSpawned = true
         local x = self.cameraX + (self.player.x > self.world.width*8 and viewport.logicalWidth+8 or -32)
         self:spawnEntity("ghost", x+8, self.cameraY+math.floor(viewport.logicalHeight/2)+16)
-        self.sounds:play("ghost")
     end
     if self.player:isDead() then self.deathTimer = 75 end
     if self.player.y > self.world.height * self.world.tileSize + 32 then

@@ -22,7 +22,7 @@ function ArrowTrap.fire(self, trap, direction)
     arrow.vx, arrow.direction, arrow.facing = direction*8, direction, direction
     self.projectiles[#self.projectiles+1] = arrow
     trap.fired = true
-    if self.arrowSound then self.arrowSound:clone():play() end
+    self:playSound("arrowtrap", self.arrowSound)
 end
 
 function ArrowTrap.update(self, trap, player, enemies, items, movingTargets)

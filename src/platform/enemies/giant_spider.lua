@@ -102,6 +102,7 @@ function GiantSpider.step(spider, world, player, context)
             spider.state, spider.timer = "idle", 0
             spider.squirtTimer = spider.rng:random(100, 1000)
             setSprite(spider, "sGiantSpiderFlip", 0.8)
+            if context and context.sounds then context.sounds:play("giant_spider") end
         end
         return
     end
@@ -152,6 +153,7 @@ function GiantSpider.step(spider, world, player, context)
         setSprite(spider, "sGiantSpiderJump")
         if grounded then
             launch(spider, player, 3, 6)
+            if context and context.sounds then context.sounds:play("spider_jump") end
             if spider.rng:random(1, 4) == 1 then
                 spider.state, spider.vx, spider.vy = "idle", 0, 0
             end

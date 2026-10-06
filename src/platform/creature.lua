@@ -122,6 +122,7 @@ function Creature:damage(amount, sourceX, hit)
     if self.spec.damage then
         local damaged = self.spec.damage(self, amount, sourceX, hit)
         if self.hp <= 0 and self.spec.sacrifice then self.corpse = true end
+        if damaged then ActorBody.playHit(self, hit) end
         return damaged
     end
     self.hp = self.hp - (amount or 1)
@@ -142,6 +143,7 @@ function Creature:damage(amount, sourceX, hit)
     if (self.alive or self.corpse) and hit then
         self.vx, self.vy = hit.vx or self.vx, hit.vy or self.vy
     end
+    ActorBody.playHit(self, hit)
     return true
 end
 
@@ -161,7 +163,7 @@ end
 function Creature:throw(player, input, world)
     self.y = self.y - 4
     Holdable.throw(self, player, input, world)
-    if self.spec.onThrown then self.spec.onThrown(self) end
+    if self.spec.onThrown then self.spec.onThrown(self, true) end
 end
 
 function Creature:updateAI(world, player, context)
@@ -170,7 +172,10 @@ end
 
 function Creature:checkEmbedded(world, context)
     if self.held or self.rescued or self.kind == "ghost" then return end
-    if world:solidAtPoint(self.x, self.y-8) then
+    local offset = (self.corpse or self.stunned > 0) and self.spec.stunnedCrushOffset or 8
+    if world:solidAtPoint(self.x, self.y-offset) then
+        if self.sounds and self.spec.crushSound then self.sounds:play(self.spec.crushSound) end
+        self.deathSoundPlayed = true
         self.hp, self.alive, self.corpse = 0, false, false
         if context and self.spec.sacrifice then context.effects:blood(self.x, self.y-8, 3) end
     end
@@ -203,6 +208,7 @@ function Creature:step(world, player, context)
     if self.corpse then
         if self.impaled then return end
         self.definition.bodyStep(world, self, player, context)
+        self:checkEmbedded(world, context)
         return
     end
     if self.spec.stepCreature then
@@ -220,6 +226,7 @@ function Creature:step(world, player, context)
             self.stunned = self.stunned - 1
             self:groundPhysics(world)
         end
+        self:checkEmbedded(world, context)
         return
     end
     if self.state == "stunned" then self.state = self.spec.recoveryState or "idle" end

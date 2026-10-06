@@ -1,5 +1,6 @@
 local Assets = require("src.platform.object_assets")
 local Ghost = {
+    createSound = "ghost",
     creatureConfig = { hp = 1, speed = 1 },
     creatureInsetX = 4, creatureInsetY = 8, creatureHalfWidth = 4,
     creatureVerticalBounds = { -16, 0 }, depth = 0,
@@ -41,7 +42,7 @@ function Ghost.resolvePlayerContact(body, player, _, game)
     player.visible, player.invincibleTimer = false, 9999
     body.state, body.spriteName, body.animation = "disappear", "sGhostDisappear", 0
     if game then
-        game.sounds:play("die")
+        if not player.sounds then game.sounds:play("die") end
         game.sounds:play("ghost")
         for _ = 1, 3 do game.effects:add("bone", player.x, player.y,
             game.effects.random:random(-4,4), -game.effects.random:random(1,3)) end

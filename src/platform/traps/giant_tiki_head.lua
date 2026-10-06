@@ -6,7 +6,7 @@ function Head.update(system, trap)
     if trap.cooldown <= 0 then
         trap.state = "fired"
         system:spawnBoulder(trap)
-        if system.thumpSound then system.thumpSound:clone():play() end
+        system:playSound("thump", system.thumpSound)
     end
 end
 

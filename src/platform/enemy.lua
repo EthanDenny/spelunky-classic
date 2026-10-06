@@ -170,6 +170,7 @@ function Enemy:damage(amount, sourceX, hit)
     if self.alive and hit then
         self.vx, self.vy = hit.vx or self.vx, hit.vy or self.vy
     end
+    ActorBody.playHit(self, hit)
     return true
 end
 

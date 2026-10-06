@@ -4,6 +4,7 @@
 -- to respond when the supporting tile disappears.
 local Treasure = {}
 Treasure.__index = Treasure
+local ActorBody = require("src.platform.actor_body")
 local PhysicalBody = require("src.platform.physical_body")
 local ItemDefinitions = require("src.platform.item_definitions")
 
@@ -57,6 +58,7 @@ function Treasure:damage(amount, _, hit)
         self.alive = false
         if self.definition.onDeath and self.game then self.definition.onDeath(self, self.game) end
     end
+    ActorBody.playHit(self, hit)
     return true
 end
 

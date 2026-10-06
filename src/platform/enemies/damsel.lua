@@ -51,7 +51,7 @@ function Damsel.creatureStep(self, world, player, game)
         self.timer = self.timer-1
         if self.timer <= 0 then
             self.state, self.animation = "yell", 0
-            if game then game.sounds:play("damsel") end
+            if game then game.sounds:play("damsel", player.x < self.x and -1 or player.x > self.x and 1 or 0) end
         end
     end
 end
@@ -67,6 +67,7 @@ function Damsel.melee(body, game, damage)
         if body.forSale then require("src.platform.shop").anger(game, body.x, body.y, "YOU'LL PAY FOR YOUR CRIMES!") end
     else return false end
     body.cooldown = 10
+    game.sounds:play("hit")
     game.sounds:play("damsel")
     return true
 end
@@ -115,7 +116,8 @@ function Damsel.stunnedStep(self, world, player, game)
     end
 end
 
-function Damsel.onThrown(self)
+function Damsel.onThrown(self, released)
+    if self.sounds and (released or self.state ~= "stunned") then self.sounds:play("damsel", 0) end
     self.state = "stunned"
     self.stunned = 120
 end
@@ -163,5 +165,6 @@ end
 function Damsel.depth(state) return state == "exiting" and 1000 or 100 end
 
 Damsel.deathBlood = 0
+Damsel.crushSound = "damsel"
 
 return Damsel

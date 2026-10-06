@@ -10,6 +10,7 @@ local function moveVertical(world, block)
         local nextY = block.y + direction
         if world:solidRect(block.x, nextY, block.x + block.width,
             nextY + block.height, block) then
+            if block.vy > 0.6 and world.game then world.game.sounds:play("thud") end
             block.vy = 0
             return
         end

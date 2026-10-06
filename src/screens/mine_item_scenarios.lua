@@ -1,5 +1,4 @@
 local Simulation = require("src.platform.object_simulation")
-local ClassicSounds = require("src.audio.classic_sounds")
 local Enemy = require("src.platform.enemy")
 local FullLevelPlaytest = require("src.screens.full_level_playtest")
 local Item = require("src.platform.item")
@@ -11,7 +10,6 @@ local ToolSystem = require("src.platform.tool_system")
 local Depth = require("src.render.classic_depth")
 
 local MineItemScenarios = {}
-local sounds = ClassicSounds.new()
 
 local CARRYABLES = {
     "rock", "skull", "arrow", "die", "jar", "crate", "chest", "locked_chest",
@@ -97,9 +95,11 @@ function MineItemScenarios.reset(scenario, renderer, viewer)
     game.traps = TrapSystem.new(game.world, game.level)
     game.tools = ToolSystem.new(game.world, game.player.TICK_RATE)
     game.tools:loadAssets()
-    game.sounds = { play = function(_, cue)
-        if viewer.soundEnabled then sounds:play(cue) end
-    end }
+    game.tools.explosionSound = nil
+    game.sounds = viewer:scenarioAudio()
+    game.player.sounds = game.sounds
+    game.tools.sounds, game.traps.sounds = game.sounds, game.sounds
+    game.effects.sounds, game.tools.effects.sounds = game.sounds, game.sounds
     game:configureProjectiles()
     local player = game.player
     local kind = definition.mineItemKind

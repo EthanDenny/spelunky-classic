@@ -52,9 +52,15 @@ function Body.moveVertical(self, world, amount, usePlatforms, clearRemainder)
     end
 end
 
+function Body.playHit(self, hit)
+    if self.sounds and hit and (hit.kind == "whip" or hit.kind == "stomp") then
+        self.sounds:play("hit")
+    end
+end
+
 function Body.stomp(self, player, fixedBounce, rearmJump)
     self:damage((math.floor((player.fallTimer or 0)/16)+1)
-        * (player.equipment and player.equipment.spike_shoes and 3 or 1), player.x)
+        * (player.equipment and player.equipment.spike_shoes and 3 or 1), player.x, { kind = "stomp" })
     player.vy = fixedBounce and -6 or -6-0.2*player.vy
     player.fallTimer = 0
     if rearmJump then player.jumpTime, player.jumpReleased = 10, true end

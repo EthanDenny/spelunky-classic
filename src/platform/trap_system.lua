@@ -50,6 +50,11 @@ function TrapSystem:loadAssets(soundVolume)
     self.crunchSound = require("src.audio.classic_sounds").load("crunch", soundVolume)
 end
 
+function TrapSystem:playSound(cue, source)
+    if self.sounds then self.sounds:play(cue)
+    elseif source then source:clone():play() end
+end
+
 TrapSystem.fireArrow = ArrowTrap.fire
 TrapSystem.updateArrowTrap = ArrowTrap.update
 TrapSystem.spawnBoulder = Boulder.spawn

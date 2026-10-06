@@ -345,4 +345,8 @@ Shopkeeper.depth = 60
 
 Shopkeeper.deathBlood = 0
 
+Shopkeeper.deathSound = "caveman_die"
+Shopkeeper.crushSound = "caveman_die"
+Shopkeeper.stunnedCrushOffset = 4
+
 return Shopkeeper

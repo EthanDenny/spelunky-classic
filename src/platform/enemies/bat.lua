@@ -30,6 +30,7 @@ function Bat.step(self, world, player)
     local dist = target and math.sqrt(dx*dx+dy*dy) or math.huge
     if self.state == self.STATES.hang then
         if target and ((dist < 90 and player.y > self.y) or not self:hasCeiling(world)) then
+            if self.sounds then self.sounds:play("bat") end
             self.justAlerted = true
             self:setState(self.STATES.attack)
         end

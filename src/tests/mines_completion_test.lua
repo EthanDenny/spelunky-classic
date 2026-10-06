@@ -18,7 +18,7 @@ local function fixture()
     game.world.level = game.level
     game.player = Player.new(80, 104)
     game.player.state = Player.STATES.standing
-    game.renderer, game.sounds = { entitySprites = {} }, { play = function() end }
+    game.renderer, game.sounds = { entitySprites = {} }, require("src.audio.classic_sounds").new()
     game.effects = Effects.new(17)
     game.tools = Tools.new(game.world)
     game.projectiles = Projectiles.new(game.world)

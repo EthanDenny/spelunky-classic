@@ -30,7 +30,7 @@ local function fixture(style)
     game.tools = Tools.new(game.world)
     game.traps = Traps.new(game.world, game.level)
     game.renderer = { entitySprites = {} }
-    game.sounds = { play = function() end }
+    game.sounds = require("src.audio.classic_sounds").new()
     local keeper = Creature.new({ kind = "shopkeeper", x = 8, y = 6,
         properties = { shopType = style or "General" } }, nil, { seed = 17 })
     game.enemies = { keeper }

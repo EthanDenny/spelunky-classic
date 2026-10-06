@@ -109,6 +109,9 @@ function Player.new(x, y)
         parachuteOpen = false,
         capeOpen = false,
         jetpackFuel = 0,
+        jetpackSoundTimer = 0,
+        climbSoundTimer = 0,
+        climbSoundToggle = false,
     }, Player)
 end
 
@@ -170,6 +173,7 @@ function Player:reset()
     self.capeOpen = false
     self.capeFrame = 0
     self.jetpackFuel = 0
+    self.jetpackSoundTimer, self.climbSoundTimer, self.climbSoundToggle = 0, 0, false
 end
 
 function Player:isDead()
@@ -191,6 +195,7 @@ end
 
 function Player:kill(cause, vx, vy)
     if self:isDead() and self.state == Player.STATES.dead then return false end
+    if self.sounds then self.sounds:play("die") end
     self.health = 0
     self.invincibleTimer = 0
     self.vx = vx == nil and self.vx or vx
@@ -224,6 +229,7 @@ function Player:hurt(sourceX, amount, cause, stunDuration, reaction, impactVx)
         return false
     end
     local previousHealth = self.health
+    if self.sounds then self.sounds:play("hurt") end
     self.health = math.max(0, self.health - (amount or 1))
     if not directImpact then self.invincibleTimer = 30 end
     self.vx = directImpact and impactVx or (self.x < sourceX and -6 or 6)
@@ -255,6 +261,8 @@ end
 function Player:landHard()
     -- oPlayer1 measures descending steps, not peak speed. A long drop
     -- subtracts life and bounces vertically without horizontal knockback.
+    if self.sounds then self.sounds:play("thud")
+    elseif self.thudSound then self.thudSound:clone():play() end
     local duration = self.fallTimer
     local damage = duration > 48 and 10 or (duration > 32 and 2 or 1)
     local previousHealth = self.health
@@ -269,7 +277,6 @@ function Player:landHard()
         self:setState(Player.STATES.stunned)
         self:refreshStatus()
     end
-    if self.thudSound then self.thudSound:clone():play() end
     if self.playtestLog then self.playtestLog:record("player_hurt", {
         amount = damage, cause = "fall", healthBefore = previousHealth,
         healthAfter = self.health, x = self.x, y = self.y, tick = self.tick,
@@ -636,9 +643,11 @@ function Player:updateClimbing(world, input, jumpPressed)
 
     if input.up and world:climbableAtPoint(self.x, self.y - 8) then
         self.ay = self.ay - 0.6
+        if self.climbSoundTimer < 1 then self.climbSoundTimer = 8 end
     elseif input.down then
         if world:climbableAtPoint(self.x, self.y + 8) then
             self.ay = self.ay + 0.6
+            if self.climbSoundTimer < 1 then self.climbSoundTimer = 8 end
         else
             self:setState(Player.STATES.falling)
         end
@@ -943,6 +952,7 @@ function Player:updateNormal(world, input, jumpPressed, jumpReleased)
         self.ay = self.ay - 2
         self.vy = -1
         self.jetpackFuel = self.jetpackFuel - 1
+        if self.jetpackSoundTimer < 1 then self.jetpackSoundTimer = 3 end
         self.state = Player.STATES.jumping
         self.jumpReleased = false
         self.jumpTime = 0
@@ -1229,9 +1239,24 @@ function Player:updateBody(world)
     -- contact invulnerability, and consumes the keeper's single wallHurt charge.
     if (self.wallHurt or 0) > 0 and (self:collisionProbe(world, "x", -1)
         or self:collisionProbe(world, "x", 1) or self:collisionProbe(world, "y", 1)) then
+        if self.sounds then self.sounds:play("hurt") end
         self.wallHurt = self.wallHurt - 1
         self.health = math.max(0, self.health - 1)
         if self.health == 0 then self:kill("shopkeeper", self.vx, self.vy) end
+    end
+end
+
+function Player:updateSoundAlarms()
+    if self.jetpackSoundTimer > 0 then
+        self.jetpackSoundTimer = self.jetpackSoundTimer-1
+        if self.jetpackSoundTimer == 0 and self.sounds then self.sounds:play("jetpack") end
+    end
+    if self.climbSoundTimer > 0 then
+        self.climbSoundTimer = self.climbSoundTimer-1
+        if self.climbSoundTimer == 0 then
+            if self.sounds then self.sounds:play(self.climbSoundToggle and "climb1" or "climb2") end
+            self.climbSoundToggle = not self.climbSoundToggle
+        end
     end
 end
 
@@ -1249,6 +1274,7 @@ function Player:step(world, input)
     world.time = (world.time or 0) + 1
     self.tick = world.time
     Cape.stepWorn(self)
+    self:updateSoundAlarms()
     self.currentInput = input
     local jumpPressed = self:pressed(input, "jump")
     local jumpReleased = self:released(input, "jump")

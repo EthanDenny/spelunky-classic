@@ -40,6 +40,8 @@ function Factory.create(game, entity, options)
     if body.spec and body.spec.facePlayerOnSpawn then
         body.spec.facePlayerOnSpawn(body, game.player, entity.properties and entity.properties.facing)
     end
+    body.sounds = game.sounds
+    if body.spec and body.spec.createSound and game.sounds then game.sounds:play(body.spec.createSound) end
     game[group][#game[group]+1] = body
     return body
 end

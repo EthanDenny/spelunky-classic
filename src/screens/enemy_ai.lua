@@ -1,3 +1,4 @@
+local ClassicSounds = require("src.audio.classic_sounds")
 local Simulation = require("src.platform.object_simulation")
 local Effects = require("src.platform.effects")
 local Enemy = require("src.platform.enemy")
@@ -680,7 +681,7 @@ function EnemyAI.new(app)
         pageIndex = 1,
         scenarios = {},
         images = {},
-        sounds = {},
+        sounds = ClassicSounds.new(app.controls.settings),
         accumulator = 0,
         scrollY = 0,
         sidebarScrollY = 0,
@@ -707,27 +708,22 @@ function EnemyAI:loadAssets()
     self.tikiArmRight = love.graphics.newQuad(0, 0, 16, 16, self.images.tikiArms:getDimensions())
     self.backgroundQuad = love.graphics.newQuad(0, 0, 14 * 16, 9 * 16,
         self.images.background:getDimensions())
-    self.sounds.hit = love.audio.newSource("original-game-reference/sound/hit.wav", "static")
-    self.sounds.hurt = love.audio.newSource("original-game-reference/sound/hurt.wav", "static")
-    self.sounds.bat = love.audio.newSource("original-game-reference/sound/bat.wav", "static")
-    self.sounds.alert = love.audio.newSource("original-game-reference/sound/alert.wav", "static")
-    self.sounds.spider = love.audio.newSource("original-game-reference/sound/spiderjump.wav", "static")
-    self.sounds.giant = love.audio.newSource("original-game-reference/sound/gspiderjump.wav", "static")
-    self.sounds.throw = love.audio.newSource("original-game-reference/sound/throw.wav", "static")
-    self.sounds.explosion = love.audio.newSource("original-game-reference/sound/explosion.wav", "static")
     Enemy.loadAssets()
     Effects.loadAssets()
     self.itemRenderer = self.app.renderer
     self.itemRenderer:loadAssets()
 end
 
-function EnemyAI:playScenarioSound(name)
-    if not self.soundEnabled then return end
-    local source = self.sounds[name]
-    if source then
-        source:stop()
-        source:play()
-    end
+function EnemyAI:playScenarioSound(name, pan)
+    if self.soundEnabled then self.sounds:play(name, pan) end
+end
+
+function EnemyAI:scenarioAudio()
+    return {
+        play = function(_, cue, pan) self:playScenarioSound(cue, pan) end,
+        isPlaying = function(_, cue) return self.sounds:isPlaying(cue) end,
+        stop = function(_, cue) self.sounds:stop(cue) end,
+    }
 end
 
 function EnemyAI:resetScenario(scenario)
@@ -777,13 +773,9 @@ function EnemyAI:resetScenario(scenario)
                 scenario.eventTick = scenario.tick
                 scenario.effects:blood(target.x, target.y - 8,
                     target.alive and 1 or (target.kind == "snake" and 4 or 1))
-                self:playScenarioSound("hit")
             end
         else
             scenario.bombsRemaining = 1
-            scenario.tools.onExplosion = function()
-                self:playScenarioSound("explosion")
-            end
         end
     end
     scenario.effects = Effects.new(scenario.definition.seed)
@@ -792,12 +784,16 @@ function EnemyAI:resetScenario(scenario)
     scenario.projectiles = scenario.definition.projectiles
         and ProjectileSystem.new(scenario.world)
         or scenario.itemGame and scenario.itemGame.projectiles or nil
+    scenario.soundContext = { projectiles = scenario.projectiles, sounds = self:scenarioAudio() }
+    if scenario.enemy then scenario.enemy.sounds = scenario.soundContext.sounds end
+    if scenario.tools then scenario.tools.sounds = scenario.soundContext.sounds end
+    if scenario.traps then scenario.traps.sounds = scenario.soundContext.sounds end
+    if scenario.player then scenario.player.sounds = scenario.soundContext.sounds end
     if scenario.player and not self.playerAssets then
         self.playerAssets = {
             images = scenario.player.images,
             whipImages = scenario.player.whipImages,
         }
-        self.sounds.whip = scenario.player.whipSound
     end
     if scenario.player then
         -- Scenario playback owns audio, so muting can stop every active sound.
@@ -841,7 +837,7 @@ end
 function EnemyAI:toggleSound()
     self.soundEnabled = not self.soundEnabled
     if not self.soundEnabled then
-        for _, source in pairs(self.sounds) do source:stop() end
+        self.sounds:stopAll()
     end
 end
 
@@ -887,33 +883,25 @@ function EnemyAI:stepScenario(scenario)
     if enemy and enemy.alive then
         local previousState = enemy.state
         local previousProjectiles = scenario.projectiles and #scenario.projectiles.projectiles or 0
-        enemy:step(scenario.world, player, { projectiles = scenario.projectiles })
-        require("src.platform.enemies.enemy_sight").update(scenario.world, player, { enemy })
+        enemy:step(scenario.world, player, scenario.soundContext)
+        require("src.platform.enemies.enemy_sight").update(scenario.world, player, { enemy }, scenario.soundContext)
         if enemy.justAlerted then
             if enemy.kind == "caveman" then
                 scenario.event = "CAVEMAN ALERT"
-                self:playScenarioSound("alert")
             elseif enemy.kind == "spider" then
                 scenario.event = "SPIDER DROP"
             elseif enemy.kind == "skeleton" then
                 scenario.event = "BONES STIR"
             else
                 scenario.event = "BAT ALERT"
-                self:playScenarioSound("bat")
             end
         elseif enemy.kind == "giant_spider" and previousState == "hang"
             and enemy.state ~= "hang" then
             scenario.event = "GIANT DROP"
-            self:playScenarioSound("giant")
         elseif enemy.kind == "bat" and previousState ~= Enemy.STATES.hang
             and enemy.state == Enemy.STATES.hang then
             scenario.event = "REHANG"
             scenario.eventTick = scenario.tick
-        end
-        if (enemy.kind == "spider" or enemy.kind == "giant_spider")
-            and enemy.state ~= previousState
-            and (enemy.state == Enemy.STATES.bounce or enemy.state == "bounce") then
-            self:playScenarioSound(enemy.kind == "spider" and "spider" or "giant")
         end
         if scenario.projectiles and #scenario.projectiles.projectiles > previousProjectiles then
             scenario.event = "WEB FIRED"
@@ -922,13 +910,12 @@ function EnemyAI:stepScenario(scenario)
         if player then
             if Simulation.whipContact(player, enemy) then
                 local _, whipX = player:getWhipSprite()
-                enemy:damage(1, whipX+8, { kind = "whip", phase = player:getWhipPhase() })
-                if enemy.kind ~= "skeleton" then
+                local hit = enemy:damage(1, whipX+8, { kind = "whip", phase = player:getWhipPhase() })
+                if hit and enemy.kind ~= "skeleton" then
                     scenario.effects:blood(enemy.x, enemy.y - 8, 1)
                 end
                 scenario.event = "WHIP HIT"
                 scenario.eventTick = scenario.tick
-                self:playScenarioSound("hit")
             end
             if enemy.alive and enemy:resolvePlayerContact(player, previousPlayerY) == "hurt" then
                 scenario.event = "PLAYER HIT"
@@ -936,10 +923,13 @@ function EnemyAI:stepScenario(scenario)
                 if enemy.kind == "caveman" then
                     scenario.effects:blood(player.x, player.y - 8, 1)
                 end
-                self:playScenarioSound("hurt")
             end
         end
         if not enemy.alive then
+            if enemy.spec.deathSound and not enemy.deathSoundPlayed then
+                scenario.soundContext.sounds:play(enemy.spec.deathSound)
+                enemy.deathSoundPlayed = true
+            end
             if enemy.kind == "skeleton" then
                 scenario.effects:skeletonBreak(enemy.x, enemy.y - 8)
             else

@@ -24,7 +24,7 @@ local function start(app)
     local soundVolume = 10^(-2/3)
     game.sounds:play("jump")
     for _, source in ipairs({ game.sounds.sources.jump, game.player.whipSound,
-        game.player.thudSound, game.hitSound, game.throwSound, game.tools.explosionSound,
+        game.player.thudSound, game.throwSound, game.tools.explosionSound,
         game.traps.arrowSound, game.traps.thumpSound, game.traps.crunchSound }) do
         assert(math.abs(source:getVolume()-soundVolume) < 0.000001,
             "All Full game sound paths must apply the configured Classic attenuation")

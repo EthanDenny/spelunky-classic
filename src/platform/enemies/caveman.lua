@@ -208,4 +208,8 @@ Caveman.depth = 60
 
 Caveman.deathBlood = 0
 
+Caveman.deathSound = "caveman_die"
+Caveman.crushSound = "caveman_die"
+Caveman.stunnedCrushOffset = 4
+
 return Caveman

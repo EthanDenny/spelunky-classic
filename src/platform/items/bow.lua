@@ -47,6 +47,7 @@ function Definition.updateBow(context, input)
     item.bowArmed = false
     item.bowStrength = 0
     context.sounds:play("arrowtrap")
+    context.sounds:stop("bowpull")
 end
 
 function Definition.recoverArrows(context)

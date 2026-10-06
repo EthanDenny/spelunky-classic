@@ -309,6 +309,8 @@ function World:tryPush(player, direction, block)
         return false
     end
     block.x = destinationX
+    local sounds = self.game and self.game.sounds
+    if sounds and not sounds:isPlaying("push") then sounds:play("push") end
     return true
 end
 

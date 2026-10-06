@@ -46,6 +46,7 @@ function Definition.begin(game)
         or player:isDead() or player:isStunned() or player.whipping
         or not game.world:groundBelow(player) then return false end
     Definition.prepare(game)
+    game.sounds:play("steps")
     game.exiting = 0
     player.invincibleTimer = 999
     player.state, player.vx, player.vy = "exiting", 0, 0

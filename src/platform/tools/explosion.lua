@@ -36,7 +36,8 @@ function Explosion.spawn(self, x, y)
     end
     self.explosions[#self.explosions+1] = explosion
     self.effects:explosion(x, y)
-    if self.explosionSound then self.explosionSound:clone():play() end
+    if self.explosionSound then self.explosionSound:clone():play()
+    elseif self.sounds then self.sounds:play("explosion") end
     if self.onExplosion then self:onExplosion(x, y, 24, explosion) end
 end
 
@@ -55,7 +56,10 @@ local function blastItem(self, explosion, item)
     if item.kind == "arrow" or item.kind == "jar" or item.kind == "skull" then
         if item.kind == "jar" and self.game then
             self.game:openContainer(item)
-        elseif item.kind == "skull" then self.effects:skullBreak(item.x, item.y) end
+        elseif item.kind == "skull" then
+            self.effects:skullBreak(item.x, item.y)
+            if self.sounds then self.sounds:play("break_item") end
+        end
         item.alive, item.visible, item.opened = false, false, true
     elseif item.kind == "bomb" then
         item.timer = Timing.scaledTicks(self.effects.random:random(4,8), self.tickRate)

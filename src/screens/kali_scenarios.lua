@@ -5,10 +5,8 @@ local RunState = require("src.game.run_state")
 local Tools = require("src.platform.tool_system")
 local Traps = require("src.platform.trap_system")
 local Projectiles = require("src.platform.projectile_system")
-local Sounds = require("src.audio.classic_sounds")
 
 local KaliScenarios = {}
-local sounds = Sounds.new()
 local toolAssets
 
 local CASES = {
@@ -100,9 +98,10 @@ function KaliScenarios.reset(scenario, renderer, viewer)
     end
     game.tools.assets = toolAssets
     game.tools.explosionSound = nil
-    game.sounds = { play = function(_, cue)
-        if viewer.soundEnabled then sounds:play(cue) end
-    end }
+    game.sounds = viewer:scenarioAudio()
+    game.player.sounds = game.sounds
+    game.tools.sounds, game.traps.sounds = game.sounds, game.sounds
+    game.effects.sounds, game.tools.effects.sounds = game.sounds, game.sounds
     game:configureProjectiles()
     game.getViewport = viewport
     game.cameraWidth, game.cameraHeight = world.width*16, world.height*16
@@ -130,7 +129,6 @@ function KaliScenarios.step(scenario, viewer)
         if spec.key == "chain" then game.world:remove("solid", 7, 7)
         else
             game.tools:explode(120, 104)
-            viewer:playScenarioSound("explosion")
         end
     end
     if spec.key == "chain" and scenario.tick > 30 and scenario.tick < 90 then input.right = true end

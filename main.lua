@@ -57,6 +57,7 @@ local function runSmokeTest()
     require("src.tests.dynamic_world_test").run()
     require("src.tests.gameplay_systems_test").run(app)
     require("src.tests.playtest_log_test").run(app)
+    require("src.tests.mines_audio_test").run(app)
     require("src.tests.full_game_test").run(app)
 
     local screenNames = {

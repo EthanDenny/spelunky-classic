@@ -34,6 +34,7 @@ function ItemBody.resolveEnemyContacts(body, enemies, context)
             body.hitEnemies[enemy] = true
         end
         if damaged then
+            if context and context.sounds then context.sounds:play("hit") end
             if definition.onEnemyHit then definition.onEnemyHit(body, enemy, context)
             elseif context and context.effects then context.effects:blood(enemy.x, enemy.y-8, 1) end
         end

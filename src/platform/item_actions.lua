@@ -174,7 +174,6 @@ function ItemActions.use(context, item, input)
             item.held = false
         end
         context:openContainer(item)
-        context.sounds:play("pickup")
         return true
     end
     if item.weapon and not input.down then
@@ -186,6 +185,7 @@ function ItemActions.use(context, item, input)
             return true
         end
     end
+    if item.bowArmed then context.sounds:stop("bowpull") end
     if item.weapon then item:dropWeapon(context.player)
     else item:throw(context.player, input, context.world) end
     context.heldItem = nil

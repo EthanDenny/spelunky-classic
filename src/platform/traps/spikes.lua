@@ -11,6 +11,7 @@ function Spikes.check(self)
             and y + 8 > top and y - 4 < top + 16 then
             spike.bloody = true
             self.effects:blood(x, y, 3)
+            self.sounds:play("thud")
             self.player:kill("spikes", 0, 0)
             return
         end

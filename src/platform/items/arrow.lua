@@ -62,7 +62,6 @@ function Definition.hitPlayer(arrow, player, game)
     arrow.alive, arrow.opened = false, true
     if game then
         game.effects:blood(player.x, player.y, 3)
-        game.sounds:play("hurt")
         game:dropHeldItemFromHurt()
     end
     return true
