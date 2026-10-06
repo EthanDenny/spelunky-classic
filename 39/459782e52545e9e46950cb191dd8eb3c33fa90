@@ -1,0 +1,130 @@
+src/platform/trap_system.lua
+  s_a149baf2181030::t_4362320ba6cb83 53-57
+src/platform/enemy.lua
+  s_a149baf2181030::t_e8de0c76f58473 173
+src/screens/enemy_ai.lua
+  s_a149baf2181030::t_4362320ba6cb83 790
+  s_a149baf2181030::t_d2bfd30af4f4c7 721-726,787
+  s_a149baf2181030::t_0669ac159b9eaf 1,684,717-720,788-789,791,840,886-887,913-914,929-932
+src/tests/mines_audio_test.lua
+  s_a149baf2181030::t_5b7a5c15194118 102
+  s_a149baf2181030::t_4362320ba6cb83 7,255-283
+  s_a149baf2181030::t_d2bfd30af4f4c7 359
+  s_a149baf2181030::t_dba5b1f7af0911 139-152
+  s_a149baf2181030::t_f2a4fadacc5322 313-327
+  s_a149baf2181030::t_ee037b6be82123 153-159,291,300,354-358,360-374,377-378,384
+  s_a149baf2181030::t_6377d039c3d79b 1-6,9-57,60-67,70-71,73-91,106-118,120-131,133-138,160-178,189-195,198,204-254,284,292,301,309,329,337,340-342,345-346,353,375,385-402
+  s_a149baf2181030::t_135f2f28b05823 8,199-202
+  s_a149baf2181030::t_e8de0c76f58473 58-59,72,92-101,103-105
+  s_a149baf2181030::t_96c33300d4ebb1 179-188
+  s_a149baf2181030::t_ee512913a14b6a 68-69,119,132,196-197,203,285-290,293-299,302-308,310-312,328,330-336,338-339,343-344,347-352,376,379-383
+src/platform/enemies/shopkeeper.lua
+  s_a149baf2181030::t_ee037b6be82123 350
+  s_a149baf2181030::t_7084540be14f5e 348-349,351
+src/platform/treasure.lua
+  s_a149baf2181030::t_e8de0c76f58473 7,61
+src/screens/kali_scenarios.lua
+  s_a149baf2181030::t_d2bfd30af4f4c7 101
+  s_a149baf2181030::t_4362320ba6cb83 103
+  s_a149baf2181030::t_6c311ad4edc585 102,104
+src/tests/mines_completion_test.lua
+  s_a149baf2181030::t_372fa4d6cda3aa 21
+docs/object-source-audit.md
+  s_a149baf2181030::t_ee037b6be82123 679-705,707-718
+  s_a149baf2181030::t_c641f5c62a4922 706
+src/screens/full_level_playtest.lua
+  s_a149baf2181030::t_dba5b1f7af0911 692
+  s_a149baf2181030::t_4362320ba6cb83 222
+  s_a149baf2181030::t_bb2297795047a9 151,209,218,407,797-800
+src/platform/enemies/damsel.lua
+  s_a149baf2181030::t_f2a4fadacc5322 119-120
+  s_a149baf2181030::t_91711f479b20dd 54,70,168
+src/audio/classic_sounds.lua
+  s_a149baf2181030::t_f2a4fadacc5322 42-46
+  s_f3e4cb92cc68a2::t_6622bf5ec5cbd3 6-7,31,34,41,47-69
+src/screens/mine_item_scenarios.lua
+  s_a149baf2181030::t_d2bfd30af4f4c7 99
+  s_a149baf2181030::t_4362320ba6cb83 101
+  s_a149baf2181030::t_978203d753d159 98,100,102
+src/platform/enemies/caveman.lua
+  s_a149baf2181030::t_ee037b6be82123 213
+  s_a149baf2181030::t_70b7156bebfb96 211-212,214
+src/platform/actor_body.lua
+  s_a149baf2181030::t_e8de0c76f58473 55-60
+  s_a149baf2181030::t_7a758588b81409 63
+src/platform/traps/arrow_trap_behavior.lua
+  s_a149baf2181030::t_4362320ba6cb83 25
+src/platform/traps/giant_tiki_head.lua
+  s_a149baf2181030::t_4362320ba6cb83 9
+src/platform/traps/boulder.lua
+  s_a149baf2181030::t_4362320ba6cb83 75,97
+src/platform/creature.lua
+  s_a149baf2181030::t_e8de0c76f58473 125,146
+  s_a149baf2181030::t_ee037b6be82123 175
+  s_a149baf2181030::t_dba5b1f7af0911 176-178,211,229
+  s_a149baf2181030::t_b62e69b25b7da6 166
+main.lua
+  s_a149baf2181030::t_6377d039c3d79b 60
+src/platform/enemies/bat.lua
+  s_a149baf2181030::t_0c3c0927737cc2 33
+src/platform/enemies/ghost.lua
+  s_a149baf2181030::t_03648381a97401 3,45
+src/platform/enemies/giant_spider.lua
+  s_a149baf2181030::t_28535b9920b4aa 105,156
+src/platform/entity_body.lua
+  s_a149baf2181030::t_6770fb4d41e81e 43-44
+src/platform/item_actions.lua
+  s_f3e4cb92cc68a2::t_08b694c14369f7 188
+src/platform/item_body.lua
+  s_a149baf2181030::t_7aa4bbf225ecfd 37
+src/platform/items/bow.lua
+  s_a149baf2181030::t_b1dc02bd0c1934 50
+src/platform/player.lua
+  s_f3e4cb92cc68a2::t_de0304dc16d650 112-114,176,198,232,264-265,646,650,955,1242,1249-1262,1277
+src/platform/structures/exit.lua
+  s_a149baf2181030::t_e22f049b15fd74 49
+src/platform/tiles/push_block.lua
+  s_a149baf2181030::t_9688265d6e9ae3 13
+src/platform/tools/explosion.lua
+  s_f3e4cb92cc68a2::t_59545666ef56bc 39-40,59-62
+src/platform/traps/spikes.lua
+  s_a149baf2181030::t_caa58a8d920d85 14
+src/platform/world.lua
+  s_a149baf2181030::t_9e9f3613a4b702 312-313
+src/tests/full_game_test.lua
+  s_1c03dfeb8d211d::t_1887b58a2dd880 27
+src/tests/shop_behaviour_test.lua
+  s_f3e4cb92cc68a2::t_25f32c979ee72a 33
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "39459782e52545e9e46950cb191dd8eb3c33fa90",
+  "prompts": {},
+  "sessions": {
+    "s_1c03dfeb8d211d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1114b-8c84-7b92-8707-04bbb6787867",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "Ethan Denny <ethandenny@protonmail.com>"
+    },
+    "s_a149baf2181030": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0fdc3-ae05-7e41-a96b-bd7a333b41c3",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Ethan Denny <ethandenny@protonmail.com>"
+    },
+    "s_f3e4cb92cc68a2": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a10eeb-378d-7841-9714-0065bc6ce33f",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Ethan Denny <ethandenny@protonmail.com>"
+    }
+  }
+}
