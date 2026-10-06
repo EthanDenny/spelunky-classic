@@ -12,11 +12,35 @@ end
 
 function Test.run(app)
     do
+        local world = flatWorld()
+        local snake = Enemy.new("snake", 80, 160, { seed = 7 })
+        snake.random = function(_, maximum) return maximum end
+        snake:step(world)
+        assert(snake.x == 83 and snake.vx == 2.5 and snake.state == Enemy.STATES.walk,
+            "Snake creation moves at 2.5 before its zero-counter idle transition")
+        snake:step(world)
+        assert(snake.x == 86 and snake.vx == 1,
+            "Snake movement consumes the previous tick velocity before WALK chooses its speed")
+    end
+
+    do
+        local world = flatWorld()
+        local skeleton = Enemy.new("skeleton", 80, 160)
+        skeleton:setState(Enemy.STATES.walk)
+        skeleton:step(world)
+        assert(skeleton.x == 80 and skeleton.vx == 1 and skeleton.vy == 0,
+            "Skeleton WALK selects velocity after movement and clears gravity on support")
+        skeleton:step(world)
+        assert(skeleton.x == 81, "The skeleton applies its selected velocity on the next tick")
+    end
+
+    do
         local world = World.new(16, 14, 16)
         world:fill("solid", 5, 10, 4, 1)
         local snake = Enemy.new("snake", 5 * 16 + 8, 10 * 16,
             { facing = -1, seed = 7 })
         snake.random = function(_, maximum) return maximum end
+        snake.vx = 0
         snake:setState(Enemy.STATES.walk)
         snake:step(world)
         snake:step(world)
@@ -38,7 +62,8 @@ function Test.run(app)
             local snake = Enemy.new("snake", 6 * 16 + 8, 7 * 16,
                 { facing = wallSide, seed = 44 })
             snake.random = function(_, maximum) return maximum end
-            snake:setState(Enemy.STATES.walk)
+            snake.vx = 0
+        snake:setState(Enemy.STATES.walk)
             snake:step(world)
             assert(snake.x == 6 * 16 + 8 and snake.vx == 0
                 and snake.facing == -wallSide,
@@ -56,6 +81,9 @@ function Test.run(app)
         assert(bat.state == Enemy.STATES.attack and bat.justAlerted,
             "A hanging bat must attack a living player below it within 90 pixels")
         local oldY = bat.y
+        bat:step(world, player)
+        assert(bat.y == oldY and bat.vy > 0,
+            "Bat steering selects the next tick's velocity after moving")
         bat:step(world, player)
         assert(bat.y > oldY,
             "An attacking bat must steer toward a player below it")
@@ -77,12 +105,22 @@ function Test.run(app)
 
     do
         local world = flatWorld()
+        local player = Player.new(100, 80)
+        local spider = Enemy.new("spider", 80, 80, { hanging = false })
+        spider.random = function(minimum) return minimum end
+        for tick = 1, 6 do world.time = tick; spider:step(world, player) end
+        assert(spider.state == Enemy.STATES.bounce and spider.y < 160,
+            "Spider Alarm 0 enters BOUNCE after five recovery ticks even while airborne")
+    end
+
+    do
+        local world = flatWorld()
         world:set("solid", 8, 4)
         local spider = Enemy.new("spider", 8 * 16 + 8, 5 * 16 + 16, { seed = 5 })
         local player = Player.new(spider.x, 10 * 16 - 8)
         player.state = Player.STATES.standing
         spider:step(world, player)
-        assert(spider.state == Enemy.STATES.recover and spider.justAlerted,
+        assert(spider.state == Enemy.STATES.idle and spider.justAlerted,
             "A ceiling spider must drop when the player passes directly beneath it")
         local startY = spider.y
         for _ = 1, 45 do spider:step(world, player) end
@@ -261,7 +299,8 @@ function Test.run(app)
                 and #whip.effects.particles == 4 then sawSpiderWhip = true end
         end
         assert(sawDrop and sawFlip and sawFlipEnd and sawBounce and sawSpiderWhip,
-            "Spider replays must show one complete flip, hops, and a whip kill")
+            string.format("Spider replays must show drop=%s, flip=%s, flip end=%s, bounce=%s, whip=%s",
+                tostring(sawDrop), tostring(sawFlip), tostring(sawFlipEnd), tostring(sawBounce), tostring(sawSpiderWhip)))
         for _, scenario in ipairs(viewer.scenarios) do
             assert(scenario.runs > 1, "Every spider scenario must repeat automatically")
         end

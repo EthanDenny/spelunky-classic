@@ -283,7 +283,7 @@ function Player:isStunned()
     return self.stunTimer > 0 or self.state == Player.STATES.stunned
 end
 
-function Player:loadAssets()
+function Player:loadAssets(soundVolume)
     if self.images then return end
     self.images = {}
     for name, data in pairs(SpriteData) do
@@ -301,8 +301,8 @@ function Player:loadAssets()
         image:setFilter("nearest", "nearest")
         self.whipImages[name] = image
     end
-    self.whipSound = love.audio.newSource("original-game-reference/sound/whip.wav", "static")
-    self.thudSound = love.audio.newSource("original-game-reference/sound/thud.wav", "static")
+    self.whipSound = require("src.audio.classic_sounds").load("whip", soundVolume)
+    self.thudSound = require("src.audio.classic_sounds").load("thud", soundVolume)
 end
 
 function Player:startWhip()
@@ -532,6 +532,30 @@ function Player:moveVertical(world, distance, ignorePlatforms)
         self.y = nextY
     end
     return landed, hitCeiling
+end
+
+function Player:moveWithSlopes(world, ignorePlatforms, blockedTop)
+    if not self:isGroundState() or self.vx == 0 then
+        self:moveHorizontal(world, self.vx)
+        self:moveVertical(world, self.vy, ignorePlatforms)
+        return
+    end
+    local x, y = self.x, self.y
+    -- characterStepEvent uses its cached colTop throughout the lift loop.
+    local lift = blockedTop and 0 or 5
+    self.y = self.y-lift
+    local highY = self.y
+    local dx = self:quantizedPixels(self.vx)
+    local dy = self:quantizedPixels(self.vy+lift)
+    self:moveHorizontal(world, self.vx)
+    self:moveVertical(world, self.vy+lift, ignorePlatforms)
+    local distance = math.sqrt((self.x-x)^2+(self.y-y)^2)
+    if distance > math.abs(dx) then
+        self.x, self.y = x, highY
+        local ratio = math.abs(dx)/distance*0.9
+        self:moveHorizontal(world, gameMakerRound(dx*ratio))
+        self:moveVertical(world, gameMakerRound(dy*ratio+lift), ignorePlatforms)
+    end
 end
 
 function Player:enterClimb(world, input)
@@ -1081,8 +1105,7 @@ function Player:updateNormal(world, input, jumpPressed, jumpReleased)
     if approximatelyZero(self.vx) then self.vx = 0 end
     if approximatelyZero(self.vy) then self.vy = 0 end
 
-    self:moveHorizontal(world, self.vx)
-    self:moveVertical(world, self.vy, input.down)
+    self:moveWithSlopes(world, input.down, colTop)
 
 end
 

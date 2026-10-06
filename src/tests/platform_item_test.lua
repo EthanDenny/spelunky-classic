@@ -589,9 +589,9 @@ function Test.run()
     local stillTrap = TrapSystem.new(stillWorld, { entities = {
         { kind = "arrow_trap_right", x = 2, y = 3 },
     } })
-    stillTrap:update(Player.new(8, 8), {
-        Enemy.new("snake", 80, 56, { seed = 13 }),
-    }, {}, {})
+    local stillSnake = Enemy.new("snake", 80, 56, { seed = 13 })
+    stillSnake.vx, stillSnake.vy = 0, 0
+    stillTrap:update(Player.new(8, 8), { stillSnake }, {}, {})
     assert(not stillTrap.traps[1].fired,
         "A motion-sensing arrow trap must ignore an unmoving enemy")
 end

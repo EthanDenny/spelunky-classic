@@ -1,3 +1,4 @@
+local Physics = require("src.platform.physical_body")
 local Skeleton = {
     initialTimer = 20,
     initialFacing = 1,
@@ -48,17 +49,23 @@ function Skeleton.step(self, world, player)
     elseif self.state == states.rise then
         if player then self.facing = player.x < self.x and -1 or 1 end
         return
-    elseif self.state == states.idle then
+    end
+    Physics.move(world, self, "x", self.vx)
+    Physics.move(world, self, "y", self.vy)
+    self.vy = math.min(10, self.vy+0.6)
+    if Physics.probe(world, self, "y", 1) then self.vy = 0 end
+    if self.state == states.idle then
         self.vx = 0
         if self.timer > 0 then self.timer = self.timer - 1 end
         if self.timer == 0 then self:setState(states.walk) end
     elseif self.state == states.walk then
-        local leftWall = world:collidesSolid(self, self.x - 1, self.y)
-        local rightWall = world:collidesSolid(self, self.x + 1, self.y)
-        if leftWall ~= rightWall then self.facing = -self.facing end
+        local wedged = Physics.probe(world, self, "x", -1, 4)
+            and Physics.probe(world, self, "x", 1, 4)
+        if not wedged and (Physics.probe(world, self, "x", -1)
+            or Physics.probe(world, self, "x", 1)) then self.facing = -self.facing end
         self.vx = self.facing
     end
-    self:updateGroundPhysics(world)
+    if world:collidesSolid(self, self.x, self.y) then self.y = self.y-2 end
 end
 
 function Skeleton.animation(self)

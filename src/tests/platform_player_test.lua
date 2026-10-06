@@ -28,6 +28,17 @@ local function close(actual, expected, message)
 end
 
 function Test.run()
+    do
+        local world = World.new(20, 12, 16)
+        world:fill("solid", 0, 7, 20, 1)
+        world:addDynamicSolid({ kind = "push_block", x = 88, y = 110, width = 16, height = 16 })
+        local player = Player.new(82, 104)
+        player.state, player.vx, player.runHeld = Player.STATES.running, 6, 100
+        player:step(world, { right = true, sprint = true })
+        assert(player.x == 87 and player.y == 102,
+            "Ground movement climbs a two-pixel solid offset and applies Classic's slope speed reduction")
+    end
+
     -- Independent Classic 1.1 contracts, exercised through a simulation step.
     -- Report every mismatch so a source audit can establish the pre-fix failures.
     local sourceCases = {

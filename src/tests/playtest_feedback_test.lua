@@ -179,8 +179,12 @@ function Test.run(app)
         "A just-thrown object must remain harmless during its safe period")
     fallingRock.safeTimer = 0
     collisionGame:resolveItemPlayerContact(fallingRock)
-    assert(collisionGame.player.health < health,
-        "A fast falling rock overlapping the player must hurt them")
+    assert(collisionGame.player.health == health,
+        "Classic ignores vertical rock speed for player damage")
+    fallingRock.vx = 5
+    collisionGame:resolveItemPlayerContact(fallingRock)
+    assert(collisionGame.player.health == health-2,
+        "A rock faster than four horizontally still deals two hearts")
     collisionGame.player = Player.new(96, 80)
     local slowRock = Item.new({ kind = "rock", x = 6, y = 5 })
     slowRock.vy = 3

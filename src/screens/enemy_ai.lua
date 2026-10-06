@@ -135,6 +135,7 @@ local SNAKE_SCENARIOS = {
             local world = makeWorld()
             local snake = Enemy.new("snake", 6 * 16, 7 * 16, { facing = -1, seed = 33 })
             snake:setState(Enemy.STATES.idle, 110)
+            snake.vx = 0
             return world, snake, makePlayer(4 * 16 + 8, assets)
         end,
     },
@@ -153,6 +154,7 @@ local SNAKE_SCENARIOS = {
             end
             local snake = Enemy.new("snake", 6 * 16 + 8, 7 * 16, { facing = -1, seed = 44 })
             snake:setState(Enemy.STATES.idle, 0)
+            snake.vx = 0
             return world, snake
         end,
     },
@@ -261,13 +263,13 @@ local SPIDER_SCENARIOS = {
     },
     {
         title = "Lost ceiling",
-        description = "Without a solid ceiling, the spider drops and begins hopping.",
+        description = "Without a ceiling, the spider drops and hops toward a nearby player.",
         duration = 115,
         seed = 62,
         build = function()
             local world = makeWorld()
             local spider = Enemy.new("spider", 6 * 16 + 8, 4 * 16, { seed = 62 })
-            return world, spider
+            return world, spider, makePlayer(spider.x)
         end,
     },
     {
@@ -279,7 +281,7 @@ local SPIDER_SCENARIOS = {
         seed = 63,
         build = function(assets)
             local world = makeWorld()
-            world:set("solid", 6, 5)
+            world:set("solid", 5, 5)
             local spider = Enemy.new("spider", 6 * 16, 7 * 16, { seed = 63 })
             return world, spider, makePlayer(4 * 16 + 8, assets)
         end,
@@ -453,6 +455,7 @@ local ROPE_SCENARIOS = {
             local world = ropeWorld(true)
             local snake = Enemy.new("snake", 6 * 16 + 8, 88, { seed = 96 })
             snake:setState(Enemy.STATES.idle, 90)
+            snake.vx = 0
             return world, snake, makePlayer(snake.x, assets)
         end,
     },
@@ -519,6 +522,7 @@ local BOMB_SCENARIOS = {
             world:fill("solid", 7, 5, 1, 2)
             local snake = Enemy.new("snake", 8 * 16 + 8, 7 * 16, { seed = 103 })
             snake:setState(Enemy.STATES.idle, 160)
+            snake.vx = 0
             local player = makePlayer(4 * 16 + 8, assets)
             player.equipment.paste = true
             return world, snake, player
@@ -608,6 +612,7 @@ local BOULDER_STATUE_SCENARIOS = {
         build = function(assets)
             local snake = Enemy.new("snake", 6 * 16 + 8, 10 * 16, { seed = 107 })
             snake:setState(Enemy.STATES.idle, 150)
+            snake.vx = 0
             return boulderWorld(), snake, boulderPlayer(assets),
                 { entities = {} }, { x = 9 * 16, y = 5 * 16 }
         end,

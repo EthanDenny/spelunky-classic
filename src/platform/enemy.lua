@@ -139,7 +139,7 @@ function Enemy:step(world, player)
     if not require("src.platform.activity").enemy(world, self) then return end
     self.justAlerted = false
     self.spec.step(self, world, player)
-    if world:solidAtPoint(self.x, self.y-8) then
+    if self.hp <= 0 or world:solidAtPoint(self.x, self.y-8) then
         self.hp, self.alive, self.state = 0, false, Enemy.STATES.dead
     end
     self:updateAnimation()

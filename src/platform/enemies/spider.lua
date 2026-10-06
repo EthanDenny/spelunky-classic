@@ -27,7 +27,8 @@ local Spider = {
 
 function Spider.initialize(self, options)
     if options.hanging == false then
-        self:setState(self.STATES.recover, 8)
+        self:setState(self.STATES.idle, 0)
+        self.flipOnDrop = true
     end
 end
 
@@ -40,44 +41,55 @@ function Spider.verticalBounds(self)
     return -11, 0
 end
 
-local function hop(self, player)
-    self:setState(self.STATES.bounce)
+local Physics = require("src.platform.physical_body")
+local Collision = require("src.platform.entity_collision")
+
+local function hop(self, player, alarm)
     self.vy = -self.random(2, 5)
-    self.facing = player and player.x < self.x and -1 or 1
-    self.vx = self.facing * 2.5
+    local origin = alarm and self.x-8 or self.x
+    self.facing = player and player.x < origin and -1 or 1
+    self.vx = self.facing*2.5
 end
 
 function Spider.step(self, world, player)
     local states = self.STATES
-    local playerAlive = player and not player:isDead()
-    local dx = playerAlive and player.x - self.x or 0
-    local dy = playerAlive and player.y - (self.y - 6) or 0
-    local dist = playerAlive and math.sqrt(dx * dx + dy * dy) or math.huge
     if self.state == states.hang then
-        self.vx, self.vy = 0, 0
-        local directlyBelow = playerAlive and player.y > self.y and math.abs(dx) < 8
-        if not self:hasCeiling(world) or (directlyBelow and dist < 90) then
-            self.justAlerted = true
-            self.flipOnDrop = true
-            self:setState(states.recover, self.random(5, 20))
+        if world:solidAtPoint(self.x, self.y-12) then self.hp = 0; return end
+        local below = player and player.y > self.y-16 and math.abs(player.x-self.x) < 8
+        if not world:solidAtPoint(self.x-8, self.y-32)
+            or below and Collision.distance(self, player, player) < 90 then
+            self.justAlerted, self.flipOnDrop = true, true
+            self:setState(states.idle, 0)
         end
         return
     end
-
-    self.timer = math.max(0, self.timer - 1)
-    local _, verticalHit = self:updateGroundPhysics(world)
-    local grounded = verticalHit == "floor" or world:groundBelow(self) ~= nil
-    if self.state == states.recover then
-        if grounded then self.vx = 0 end
-        if grounded and self.timer <= 0 then hop(self, player) end
-    elseif self.state == states.bounce and grounded then
-        if playerAlive and dist < 90 and self.random(1, 4) ~= 1 then
-            hop(self, player)
-        else
-            self.vx, self.vy = 0, 0
-            self:setState(states.recover, self.random(5, 20))
+    if self.timer > 0 then
+        self.timer = self.timer-1
+        if self.timer == 0 then
+            self:setState(states.bounce)
+            if Physics.probe(world, self, "y", 1) then hop(self, player, true) end
         end
     end
+    Physics.move(world, self, "x", self.vx)
+    Physics.move(world, self, "y", self.vy)
+    self.vy = math.min(10, self.vy+0.2)
+    if Physics.probe(world, self, "x", 1) then self.vx = 1 end
+    if Physics.probe(world, self, "x", -1) then self.vx = -1 end
+    local ground = Physics.probe(world, self, "y", 1)
+    if self.state == states.idle then
+        self:setState(states.recover, self.random(5, 20))
+    elseif self.state == states.recover then
+        if ground then self.vx = 0 end
+    elseif self.state == states.bounce and player and Collision.distance(self, player, player) < 90 then
+        if ground then
+            hop(self, player)
+            if self.random(1, 4) == 1 then
+                self:setState(states.idle)
+                self.vx, self.vy = 0, 0
+            end
+        end
+    else self:setState(states.idle) end
+    if Physics.probe(world, self, "y", -1) then self.vy = 1 end
 end
 
 function Spider.animation(self)

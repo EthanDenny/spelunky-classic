@@ -21,6 +21,14 @@ local function start(app)
     assert(game.music.source:getType() == "stream" and game.music.source:getPitch() == 1
         and math.abs(game.music.source:getVolume()-0.01) < 0.000001,
         "Mines music must stream at normal pitch with the configured Classic volume")
+    local soundVolume = 10^(-2/3)
+    game.sounds:play("jump")
+    for _, source in ipairs({ game.sounds.sources.jump, game.player.whipSound,
+        game.player.thudSound, game.hitSound, game.throwSound, game.tools.explosionSound,
+        game.traps.arrowSound, game.traps.thumpSound, game.traps.crunchSound }) do
+        assert(math.abs(source:getVolume()-soundVolume) < 0.000001,
+            "All Full game sound paths must apply the configured Classic attenuation")
+    end
     assert(love.audio.getVolume() == 0, "Music must preserve the smoke suite's global mute")
     local fullscreen, mode = love.window.getFullscreen()
     assert(fullscreen and mode == "exclusive", "Full game must enter real exclusive fullscreen")
@@ -225,9 +233,10 @@ function Test.run(app)
         game:generateLevel(721466261)
         local layouts = {}
         for depth = 1, 4 do
-            assert(game.level.dark == (depth == 1),
-                "The Full game lighting playtest must force only 1-1 dark")
             if depth == 1 then
+                assert(not game.level.dark, "Normal 1-1 must not use the temporary forced-dark override")
+            end
+            if game.level.dark then
                 local crate
                 for _, item in ipairs(game.items) do
                     if item.kind == "flare_crate" then crate = item break end

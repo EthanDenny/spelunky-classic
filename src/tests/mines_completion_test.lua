@@ -139,6 +139,23 @@ function Test.run()
             end
             assert(game.shakeTicks == 0, "Screen shake consumes one duration tick per gameplay step")
         end },
+        { "unlocking requires the carried key to touch the chest", function()
+            for _, side in ipairs({ -1, 1 }) do
+                local game = fixture()
+                game.player.facing = side
+                local key = game:spawnEntity("key", 80, 104)
+                key:pickup(game.player, game.run)
+                game.heldItem = key
+                local chest = game:spawnEntity("locked_chest", 80-side*14, 104)
+                game:simulationStepBody({})
+                assert(not chest.opened and game.heldItem == key,
+                    "A chest near the player but behind the carried key stays locked")
+                chest.x, chest.y = key.x, key.y
+                game:simulationStepBody({})
+                assert(chest.opened and not game.heldItem and not key.alive,
+                    "Contact with the held key consumes it and opens the chest")
+            end
+        end },
         { "Up and Action opens the glowing flare crate into three live flares", function()
             local game = fixture()
             local crate = game:spawnEntity("flare_crate", game.player.x, game.player.y)

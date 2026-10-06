@@ -1,3 +1,5 @@
+local Assets = require("src.platform.object_assets")
+local Font = require("src.ui.original_small_font")
 local OriginalHUD = {}
 OriginalHUD.__index = OriginalHUD
 
@@ -30,8 +32,14 @@ local HELD_SLOT_ITEMS = {
 }
 
 local EQUIPMENT_ORDER = {
-    "spectacles", "compass", "parachute", "paste", "gloves", "mitt", "cape",
-    "jetpack", "spike_shoes", "spring_shoes", "udjat_eye", "kapala",
+    { "udjat_eye", "sUdjatEyeIcon", "Items/Saleable" },
+    { "ankh", "sAnkhIcon", "Items/Saleable" },
+    { "crown", "sCrownIcon", "Items/Saleable" },
+    { "kapala", "sKapalaIcon" }, { "spectacles", "sSpectaclesIcon" },
+    { "gloves", "sGlovesIcon" }, { "mitt", "sMittIcon" },
+    { "spring_shoes", "sSpringShoesIcon" }, { "spike_shoes", "sSpikeShoesIcon" },
+    { "cape", "sCapeIcon" }, { "jetpack", "sJetpackIcon" },
+    { "compass", "sCompassIcon" }, { "parachute", "sParachuteIcon" },
 }
 
 local function loadImage(path)
@@ -64,6 +72,17 @@ function OriginalHUD:loadAssets()
             .. "sCompass" .. direction .. ".images/image 0.png")
     end
 
+    for _, entry in ipairs(EQUIPMENT_ORDER) do
+        self.images[entry[1]] = {}
+        for frame = 0, entry[1] == "kapala" and 4 or 0 do
+            self.images[entry[1]][frame+1] = Assets.image(entry[3] or "HUD", entry[2], frame)
+        end
+    end
+    self.images.udjatBlink = Assets.image("Items/Saleable", "sUdjatEyeIcon2")
+    self.images.arrowIcon = Assets.image("HUD", "sArrowIcon")
+    for _, direction in ipairs({ "LL", "LR", "Down", "Left", "Right" }) do
+        self.images["compassSmall" .. direction] = Assets.image("Items/Saleable", "sCompassSmall" .. direction)
+    end
     self.glyphs = {}
     local fontRoot = "original-game-reference/source/extracted/config/Sprites/sFont.images/"
     for frame = 0, 58 do
@@ -71,7 +90,7 @@ function OriginalHUD:loadAssets()
     end
 end
 
-function OriginalHUD:drawCompass(compass)
+function OriginalHUD:drawCompass(compass, messageTimer)
     if not compass then return end
     local exitX = compass.exitX - compass.cameraX
     local exitY = compass.exitY - compass.cameraY
@@ -87,7 +106,16 @@ function OriginalHUD:drawCompass(compass)
     elseif exitX > width - 16 then
         image, x, y = self.images.compassRight, width - 16, exitY
     end
-    if image then love.graphics.draw(image, math.floor(x), math.floor(y)) end
+    if image then
+        if (messageTimer or 0) > 0 then
+            for _, direction in ipairs({ "LL", "LR", "Down", "Left", "Right" }) do
+                if image == self.images["compass" .. direction] then
+                    image = self.images["compassSmall" .. direction]; break
+                end
+            end
+        end
+        love.graphics.draw(image, math.floor(x), math.floor(y))
+    end
 end
 
 function OriginalHUD:drawText(value, x, y)
@@ -118,23 +146,19 @@ function OriginalHUD:drawHeldItem(item)
         layout.heldY + 8 - metadata.originY)
 end
 
-function OriginalHUD:drawEquipment(equipment)
-    local x, y = 32, 25
-    for _, kind in ipairs(EQUIPMENT_ORDER) do
+function OriginalHUD:drawEquipment(equipment, blood, udjatBlink)
+    local x = 28
+    for _, entry in ipairs(EQUIPMENT_ORDER) do
+        local kind = entry[1]
         if equipment and equipment[kind] then
-            local sprite = self.renderer.entitySprites[kind]
-            if sprite then
-                local metadata = sprite.metadata
-                love.graphics.draw(sprite.image, x + 8 - metadata.originX,
-                    y + 8 - metadata.originY)
-            else
-                love.graphics.setColor(0.95, 0.78, 0.28, 1)
-                love.graphics.rectangle("line", x + 2, y + 2, 11, 11)
-                love.graphics.setColor(1, 1, 1, 1)
-            end
-            x = x + 16
+            local frame = kind == "kapala" and math.min(4, math.ceil((blood or 0)/2)) or 0
+            local image = kind == "udjat_eye" and udjatBlink and self.images.udjatBlink
+                or self.images[kind][frame+1]
+            love.graphics.draw(image, x, 24)
+            x = x+20
         end
     end
+    return x
 end
 
 function OriginalHUD:draw(state)
@@ -156,8 +180,15 @@ function OriginalHUD:draw(state)
     self:drawText(state.money or 0, layout.moneyX + 16, layout.top)
 
     self:drawHeldItem(state.heldItem)
-    self:drawEquipment(state.equipment)
-    self:drawCompass(state.compass)
+    local nextX = self:drawEquipment(state.equipment, state.blood, state.udjatBlink)
+    if state.heldItem and state.heldItem.kind == "bow" then
+        for index = 0, (state.arrows or 0)-1 do love.graphics.draw(self.images.arrowIcon, nextX+index*4, 24) end
+    end
+    self:drawCompass(state.compass, state.messageTimer)
+    if (state.pendingMoney or 0) > 0 then
+        love.graphics.setColor(1, 1, 0, 1)
+        Font.draw("+"..state.pendingMoney, layout.moneyX, 24)
+    end
     love.graphics.setColor(1, 1, 1, 1)
 end
 

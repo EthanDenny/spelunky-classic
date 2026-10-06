@@ -19,41 +19,41 @@ local Bat = {
     },
 }
 
+local Physics = require("src.platform.physical_body")
+
 function Bat.step(self, world, player)
-    local states = self.STATES
-    local playerAlive = player and not player:isDead()
-    local dx = playerAlive and player.x - self.x or 0
-    local dy = playerAlive and player.y - (self.y - 8) or 0
-    local dist = playerAlive and math.sqrt(dx * dx + dy * dy) or math.huge
-    if self.state == states.hang then
-        self.vx, self.vy = 0, 0
-        if not self:hasCeiling(world)
-            or (playerAlive and dist < 90 and player.y > self.y) then
+    Physics.move(world, self, "x", self.vx)
+    Physics.move(world, self, "y", self.vy)
+    local target = player and not player:isDead() and not player.swimming
+    local dx = target and player.x-self.x or 0
+    local dy = target and player.y-(self.y-8) or 0
+    local dist = target and math.sqrt(dx*dx+dy*dy) or math.huge
+    if self.state == self.STATES.hang then
+        if target and ((dist < 90 and player.y > self.y) or not self:hasCeiling(world)) then
             self.justAlerted = true
-            self:setState(states.attack)
+            self:setState(self.STATES.attack)
         end
         return
     end
-
-    if playerAlive and dist < 160 then
+    if target and dist < 160 then
         local length = math.max(0.001, dist)
-        self.vx = dx / length
-        self.vy = dy / length
+        local vx, vy = dx/length, dy/length
+        if (dx > 0 and Physics.probe(world, self, "x", 1))
+            or (dx < 0 and Physics.probe(world, self, "x", -1)) then
+            vx, vy = 0, dy < 0 and -1 or 1
+        end
+        if ((dy < 0 and Physics.probe(world, self, "y", -1))
+            or (dy > 0 and Physics.probe(world, self, "y", 1)))
+            and math.abs(player.x-(self.x-8)) > 8 then
+            vx, vy = dx < 0 and -1 or 1, 0
+        end
+        if world:cellAt("water", self.x, self.y) and vy > 0 then vx, vy = 0, -1 end
+        if not world:cellAt("water", self.x-8, self.y-4) or player.y < self.y-16 then
+            self.vx, self.vy = vx, vy
+        end
         self.facing = dx < 0 and -1 or 1
-    else
-        self.vx, self.vy = 0, -1
-    end
-
-    local hitWall = self:moveHorizontal(world, self.vx)
-    local verticalHit = self:moveVertical(world, self.vy, false)
-    if hitWall then self.vx = 0 end
-    if verticalHit == "floor" then self.vy = -1 end
-    if (not playerAlive or dist >= 160) and self:hasCeiling(world) then
-        self:setState(states.hang)
-        self.vx, self.vy = 0, 0
-    elseif verticalHit == "ceiling" and playerAlive and dist < 160 then
-        self.vy = 1
-    end
+    elseif self:hasCeiling(world) then self:setState(self.STATES.hang)
+    else self.vx, self.vy = 0, -1 end
 end
 
 function Bat.animation(self)

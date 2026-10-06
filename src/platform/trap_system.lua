@@ -39,15 +39,15 @@ function TrapSystem.new(world, level, renderer)
     return self
 end
 
-function TrapSystem:loadAssets()
+function TrapSystem:loadAssets(soundVolume)
     if self.assets then return end
     self.assets = {}
     Arrow.loadTrapAssets(self.assets)
     Boulder.loadAssets(self.assets)
     Head.loadAssets(self.assets)
-    self.arrowSound = love.audio.newSource("original-game-reference/sound/arrowtrap.wav", "static")
-    self.thumpSound = love.audio.newSource("original-game-reference/sound/thump.wav", "static")
-    self.crunchSound = love.audio.newSource("original-game-reference/sound/crunch.wav", "static")
+    self.arrowSound = require("src.audio.classic_sounds").load("arrowtrap", soundVolume)
+    self.thumpSound = require("src.audio.classic_sounds").load("thump", soundVolume)
+    self.crunchSound = require("src.audio.classic_sounds").load("crunch", soundVolume)
 end
 
 TrapSystem.fireArrow = ArrowTrap.fire

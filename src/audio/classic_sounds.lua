@@ -15,18 +15,28 @@ local CUES = {
     small_explode = "smallexplode", thump = "thump",
 }
 
-function ClassicSounds.new()
-    return setmetatable({ sources = {} }, ClassicSounds)
+function ClassicSounds.configure(source, volume)
+    source:setVolume(10^((2000+8000*((volume or 15)/18)-10000)/2000))
+    return source
+end
+
+function ClassicSounds.load(filename, volume)
+    return ClassicSounds.configure(love.audio.newSource(
+        "original-game-reference/sound/" .. filename .. ".wav", "static"), volume)
+end
+
+function ClassicSounds.new(settings)
+    return setmetatable({ sources = {}, settings = settings }, ClassicSounds)
 end
 
 function ClassicSounds:play(cue)
     local filename = assert(CUES[cue], "Unknown Classic sound cue: " .. tostring(cue))
     local source = self.sources[cue]
     if not source then
-        source = love.audio.newSource("original-game-reference/sound/" .. filename .. ".wav", "static")
+        source = ClassicSounds.load(filename)
         self.sources[cue] = source
     end
-    source:clone():play()
+    ClassicSounds.configure(source, self.settings and self.settings.soundVol):clone():play()
 end
 
 return ClassicSounds

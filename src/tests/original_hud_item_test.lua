@@ -50,6 +50,28 @@ function Test.run(app)
     end, debug.traceback)
     love.graphics.draw = originalDraw
     assert(ok, err)
+    local canvas = love.graphics.newCanvas(128, 64)
+    love.graphics.push("all")
+    love.graphics.setCanvas(canvas)
+    love.graphics.clear(0, 0, 0, 0)
+    love.graphics.setColor(1, 1, 1, 1)
+    hud:drawEquipment({ udjat_eye = true, kapala = true, spectacles = true }, 3)
+    love.graphics.pop()
+    local rendered = canvas:newImageData()
+    for index, source in ipairs({ "Items/Saleable/sUdjatEyeIcon", "HUD/sKapalaIcon", "HUD/sSpectaclesIcon" }) do
+        local frame = index == 2 and 2 or 0
+        local expected = love.image.newImageData("original-game-reference/source/extracted/spelunky/Sprites/"
+            ..source..".images/image "..frame..".png")
+        for y = 0, expected:getHeight()-1 do
+            for x = 0, expected:getWidth()-1 do
+                local r, g, b, a = rendered:getPixel(28+(index-1)*20+x, 24+y)
+                local er, eg, eb, ea = expected:getPixel(x, y)
+                assert(math.abs(a-ea) < 0.01 and (ea == 0 or math.abs(r-er) < 0.01
+                    and math.abs(g-eg) < 0.01 and math.abs(b-eb) < 0.01),
+                    "Equipment uses the source icon, Kapala fill, order and 20-pixel positions")
+            end
+        end
+    end
 end
 
 return Test

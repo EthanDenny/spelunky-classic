@@ -19,13 +19,13 @@ function ToolSystem.new(world, tickRate)
     }, ToolSystem)
 end
 
-function ToolSystem:loadAssets()
+function ToolSystem:loadAssets(soundVolume)
     if self.assets then return end
     self.assets = {}
     Bomb.loadAssets(self.assets)
     Rope.loadAssets(self.assets)
     Explosion.loadAssets(self.assets)
-    self.explosionSound = love.audio.newSource("original-game-reference/sound/explosion.wav", "static")
+    self.explosionSound = require("src.audio.classic_sounds").load("explosion", soundVolume)
     Effects.loadAssets()
 end
 

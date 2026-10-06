@@ -109,10 +109,8 @@ function FullLevelPlaytest:loadAssets()
     self.renderer = self.renderer or self.app.renderer
     self.renderer:loadAssets()
     Enemy.loadAssets()
-    self.hitSound = self.hitSound
-        or love.audio.newSource("original-game-reference/sound/hit.wav", "static")
-    self.throwSound = self.throwSound
-        or love.audio.newSource("original-game-reference/sound/throw.wav", "static")
+    self.hitSound = self.hitSound or ClassicSounds.load("hit")
+    self.throwSound = self.throwSound or ClassicSounds.load("throw")
     self.spikeBloodImage = Spikes.bloodImage()
     self.hud = self.hud or OriginalHUD.new(self.renderer)
     self.hud:loadAssets()
@@ -215,11 +213,15 @@ function FullLevelPlaytest:buildSimulation()
     self.climbSoundTick = 0
     self.climbSoundToggle = false
     self.player.spriteName = "sStandLeft"
-    self.player:loadAssets()
+    local soundVolume = self.app.controls.settings.soundVol
+    self.sounds.settings = self.app.controls.settings
+    if self.hitSound then ClassicSounds.configure(self.hitSound, soundVolume) end
+    if self.throwSound then ClassicSounds.configure(self.throwSound, soundVolume) end
+    self.player:loadAssets(soundVolume)
     self.tools = ToolSystem.new(self.world, Player.TICK_RATE)
-    self.tools:loadAssets()
+    self.tools:loadAssets(soundVolume)
     self.traps = TrapSystem.new(self.world, self.level, self.renderer)
-    self.traps:loadAssets()
+    self.traps:loadAssets(soundVolume)
     self.world.game, self.tools.game, self.traps.game = self, self, self
     self.tools.onExplosion = function(_, x, y, radius)
         self.traps:explode(x, y, radius)
@@ -570,12 +572,11 @@ function FullLevelPlaytest:openNearbyContainer()
     for _, item in ipairs(self.items) do
         if item.definition.unlockWith and self.heldItem
             and self.heldItem.definition.unlocks == item.kind
-            and not item.held and not item.opened and math.abs(item.x - self.player.x) < 15
-            and math.abs(item.y - self.player.y) < 15 then
+            and not item.held and not item.opened
+            and require("src.platform.entity_collision").touching(self.heldItem, item, self.player) then
             self.heldItem.held = false
-            self.heldItem.opened = true
-            self.heldItem.x, self.heldItem.y = -1000, -1000
-            self.heldItem = nil
+            self.heldItem.opened, self.heldItem.alive = true, false
+            self.heldItem, self.cycleItemKind = nil, nil
             self.run.hasKey = true
             return self:openContainer(item)
         end
@@ -637,11 +638,8 @@ function FullLevelPlaytest:resolveItemPlayerContact(item)
     local top, bottom = player:getVerticalBounds()
     if not item:overlapsRectangle(player.x - halfWidth, player.y + top,
         player.x + halfWidth, player.y + bottom) then return end
-    -- Falling ordinary carryables are an additional requested hazard.
-    local rockHit = item.kind == "rock" and math.abs(item.vx) > 4
-    local fallHit = item.vy > 4
-    if not (rockHit or fallHit) then return end
-    local damage = (rockHit or item.kind == "rock") and 2 or 1
+    if item.kind ~= "rock" or math.abs(item.vx) <= 4 then return end
+    local damage = 2
     if not player:hurt(item.x, damage, item.kind, 20) then return end
     self.effects:blood(player.x, player.y, 3)
     self.sounds:play("hurt")
@@ -1145,6 +1143,8 @@ function FullLevelPlaytest:drawPlayerHUD(viewport)
         money = self.run.money,
         heldItem = self.cycleItemKind and { kind = self.cycleItemKind } or self.heldItem or self.heldNpc,
         equipment = self.run.equipment,
+        blood = self.run.blood, arrows = self.run.arrows, pendingMoney = self.run.pendingMoney,
+        messageTimer = self.run:currentMessage() and self.run:currentMessage().timer or 0,
         stickyBombs = self.run.equipment.paste,
         compass = self.run.equipment.compass and self.level.exit and {
             exitX = self.level.exit.x * 16,
