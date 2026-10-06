@@ -56,10 +56,16 @@ function EntityCollision.overlaps(target, player, left, top, right, bottom, boun
 end
 
 function EntityCollision.bounds(target, player)
-    local name, frame, x, y, mirrored = pose(target, player)
+    local name, frame, x, y, mirrored, angle = pose(target, player)
     if not name then return target:getBounds() end
-    local left, top, right, bottom = Collision.bounds(name, frame, x, y, mirrored)
+    local left, top, right, bottom = Collision.bounds(name, frame, x, y, mirrored, angle)
     return left, top, right+1, bottom+1
+end
+
+function EntityCollision.origin(target)
+    local name, _, x, y = pose(target)
+    if name then return x, y end
+    return target.x, target.y
 end
 
 function EntityCollision.touching(a, b, player)

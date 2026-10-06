@@ -32,7 +32,7 @@ local function hitCreature(item, enemy, context)
         enemy.state, enemy.stunned = "stunned", 120
         if enemy.hp <= 0 then enemy.alive, enemy.corpse, enemy.state = false, true, "dead" end
     elseif not invincible then
-        if stunOnly and (enemy.stunned > 0 or enemy.corpse) then
+        if stunOnly and (enemy.stunned > 0 or enemy.corpse and (enemy.vx ~= 0 or enemy.vy ~= 0)) then
             -- status 98 keeps its stun counter and vertical motion.
             enemy.vx = item.vx*0.3
         else
@@ -57,12 +57,11 @@ function Definition.updateLoose(item, world)
     -- oJar overrides its parent Step, including the parent enemy collision.
     item.skipEnemyHitOnce = true
     if item.opened or not Contact.moving(item, 2) then return end
-    Contact.scan(item, context:combatActors(), 3, function(enemy)
-        return enemy.alive or enemy.corpse
-    end, function(enemy)
-        hitCreature(item, enemy, context)
-        return true
-    end)
+    local actors = context:combatActors()
+    local enemy = Contact.find(item, actors, 3, false, true)
+    local damsel = Contact.find(item, actors, 3, true, true)
+    if enemy then hitCreature(item, enemy, context) end
+    if damsel then hitCreature(item, damsel, context) end
 end
 
 return Definition

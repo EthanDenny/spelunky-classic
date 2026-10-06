@@ -21,6 +21,14 @@ local function setState(body, state, vx, vy, stun)
     if state == "stunned" then body.counter, body.bounced = body.stunned, false end
 end
 
+function Shopkeeper.advanceAnimation(body)
+    body.animation = body.animation+(body.state == "attack" and 1 or 0.5)
+    if body.state == "throw" and body.animation >= 7 then
+        setState(body, "attack")
+        body.animation = 0
+    end
+end
+
 -- scrGetName's 32 equally likely welcome names.
 local NAMES = {
     "AHKMED", "TERRY", "SMITHY", "LEON", "ALI", "ELBERT", "KAO", "DUKE",
@@ -40,7 +48,7 @@ end
 function Shopkeeper.initialize(body, seed)
     body.heavy = true
     body.physicsOriginY = -8
-    body.definition = Traits.body({ hold = { standing = 4, ducking = 6 } })
+    body.definition = Traits.body({ hold = { standing = 4, ducking = 6 }, enemyBody = true })
     body.state = body.entity.properties and body.entity.properties.exitGuard and "patrol" or "idle"
     body.hasGun = true
     body.firing = 0
@@ -222,9 +230,6 @@ function Shopkeeper.step(body, world, player, context)
                 end
             end
         end
-    elseif body.state == "throw" then
-        body.animation = body.animation + 0.5
-        if body.animation >= 7 then setState(body, "attack"); body.animation = 0 end
     elseif body.state == "stunned" then
         Shopkeeper.dropGun(body, game)
         -- scrCheckCollisions retains the shorter stunned mask after recovery.
@@ -249,7 +254,7 @@ function Shopkeeper.step(body, world, player, context)
     if body.vx > 0 then body.vx = body.vx - 0.1 end
     if body.vx < 0 then body.vx = body.vx + 0.1 end
     if math.abs(body.vx) < 0.5 then body.vx = 0 end
-    if body.state ~= "throw" then body.animation = body.animation + (body.state == "attack" and 1 or 0.5) end
+    Shopkeeper.advanceAnimation(body)
 end
 
 function Shopkeeper.contact(body, player)

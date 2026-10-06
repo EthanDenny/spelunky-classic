@@ -137,7 +137,14 @@ end
 function Enemy:step(world, player, context)
     if not self.alive then return end
     if self.spec.alarm then self.spec.alarm(self, world, player) end
-    if not require("src.platform.activity").enemy(world, self) then return end
+    if not require("src.platform.activity").enemy(world, self) then
+        local name = self.animationName or self.spec.fallback
+        local animation = self.spec.animations[name]
+        local fps = self.spec.animationFps and self.spec.animationFps(self, animation, name) or animation.fps
+        self.animation = self.animation + fps/Enemy.TICK_RATE
+        if self.spec.afterAnimation then self.spec.afterAnimation(self) end
+        return
+    end
     self.justAlerted = false
     self.spec.step(self, world, player, context)
     if self.hp <= 0 or world:solidAtPoint(self.x, self.y-8) then

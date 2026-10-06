@@ -75,6 +75,11 @@ function Damsel.canDamage(body)
     return body.state ~= "exiting"
 end
 
+function Damsel.animationEnd(body)
+    if body.state == "kiss" and body.animation >= 10 then body.state = "slave"
+    elseif body.state == "yell" and body.animation >= 10 then body.state, body.timer = "idle", 200 end
+end
+
 function Damsel.rescue(body, game)
     if body.rescued or not body.alive then return false end
     body.rescued, body.held, body.state = true, false, "exiting"

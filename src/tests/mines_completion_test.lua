@@ -247,7 +247,8 @@ function Test.run()
                     example[1] .. (example[2] and " corpse" or "")
                         .. " must damage and stun its target after ACTION throws it")
                 assert(body.hp == hp and game.heldNpc == nil and game.heldItem == nil,
-                    "A released body must keep its own health and cannot hit itself")
+                    "A released body must keep its own health and cannot hit itself: " .. example[1]
+                        .. ", " .. tostring(example[2]) .. ", " .. tostring(body.hp) .. ", " .. tostring(hp))
             end
         end },
         { "opened chests can be picked up and thrown without producing more loot", function()
@@ -267,7 +268,7 @@ function Test.run()
         end },
         { "pots smash on creature contact even when the target cannot take damage", function()
             for _, example in ipairs({ { "caveman", false, 3 }, { "caveman", true, 3 },
-                { "caveman", "dead", -97 }, { "ghost", false, 1 },
+                { "caveman", "dead", -97 },
                 { "spider", false, 0 }, { "damsel", true, 3 } }) do
                 local game = fixture()
                 game.player.x = 400
@@ -286,6 +287,41 @@ function Test.run()
                         "A pot must restart the damsel's thrown state")
                 end
             end
+        end },
+        { "pot contact affects the nearest enemy even when a different enemy overlaps", function()
+            local game = fixture()
+            game.player.x = 400
+            local contact = game:spawnEntity("snake", 160, 80)
+            local nearest = game:spawnEntity("snake", 170, 88)
+            local jar = game:spawnEntity("jar", 152, 72)
+            jar.vx = 8
+            jar:update(game.world, game.player, game)
+            assert(jar.opened and contact.alive and not nearest.alive,
+                "The contact query and nearest-instance query must remain separate")
+        end },
+        { "ghosts let pots and bullets pass", function()
+            local game = fixture()
+            game.player.x = 400
+            local ghost = game:spawnEntity("ghost", 160, 80)
+            local jar = game:spawnEntity("jar", ghost.x-8, ghost.y-8)
+            jar.vx = 8
+            jar:update(game.world, game.player, game)
+            local bullet = game.projectiles:spawn("bullet", ghost.x-8, ghost.y-8, 8, 0, nil, { damage = 4 })
+            game.projectiles:update({ ghost }, game.player, {})
+            assert(not jar.opened and bullet.alive, "oGhost is outside the oEnemy hierarchy")
+        end },
+        { "settled corpses receive bullet damage and momentum", function()
+            local game = fixture()
+            game.player.x = 400
+            local corpse = game:spawnEntity("caveman", 160, 80)
+            corpse:damage(100)
+            corpse.vx, corpse.vy = 0, 0
+            local shot = game.projectiles:spawn("bullet", 152, 74, 8, 0, nil, { damage = 4 })
+            game.projectiles:update({ corpse }, game.player, {})
+            assert(not shot.alive and corpse.corpse and corpse.hp == -101
+                and corpse.vx == 8 and corpse.vy == -4,
+                "A dead caveman remains a bullet collision target and can be launched again: "
+                    .. tostring(shot.alive) .. ", " .. corpse.hp .. ", " .. corpse.vx .. ", " .. corpse.vy)
         end },
         { "pot throws smash on walls while gentle downward drops survive", function()
             for _, downward in ipairs({ false, true }) do
@@ -440,6 +476,29 @@ function Test.run()
                 "oExplosion does not release a carried damsel")
             assert(not skull.alive and bomb.timer >= 4 and bomb.timer <= 8
                 and not held.held and not game.heldItem and not game.world:has("web", 10, 4))
+        end },
+        { "overlapping blasts damage the player once per tick and push opened chests", function()
+            local game = fixture()
+            game.player.health, game.player.maxHealth = 40, 40
+            game.tools:explode(80, 104)
+            game.tools:explode(80, 104)
+            local chest = game:spawnEntity("chest", 80, 104)
+            chest.opened = true
+            chest.held, game.heldItem = true, chest
+            game.tools:update(game.player, {}, game.items)
+            assert(game.player.health == 30 and game.player.vx < 0 and game.player.stunTimer == 100,
+                "The player Step reacts once even when multiple explosions overlap")
+            assert(not chest.held and game.heldItem == nil and chest.vx ~= 0 and chest.vy ~= 0,
+                "An opened chest still inherits the loose-item explosion response")
+        end },
+        { "explosions can hit the rotated tip of an arrow", function()
+            local game = fixture()
+            game.player.x = 16
+            local arrow = game:spawnEntity("arrow", 100, 85)
+            arrow.arrowAngle = math.pi/2
+            game.tools:explode(100, 70)
+            game.tools:update(game.player, {}, game.items)
+            assert(not arrow.alive, "Rotated arrow pixels extend outside its unrotated broad-phase bounds")
         end },
         { "destroying an unfired trap releases its arrow without a blast", function()
             local game = fixture()
@@ -683,6 +742,26 @@ function Test.run()
                     and spider.x == 600 and spider.vy < 0,
                     "The offscreen alarm launches a grounded spider while its Step movement remains paused")
             end
+        end },
+        { "offscreen animation ends still finish flips and shopkeeper throws", function()
+            local game = fixture()
+            game.world.activeView = { x = 0, y = 0, width = 320, height = 240 }
+            local spider = game:spawnEntity("spider", 600, 112)
+            spider.animationName, spider.animation, spider.flipOnDrop = "flip", 8.7, true
+            spider:step(game.world, game.player, game)
+            assert(not spider.flipOnDrop and spider.x == 600,
+                "The ordinary spider's flip animation ends while movement is inactive")
+            local giant = game:spawnEntity("giant_spider", 600, 112)
+            giant.spriteName, giant.animation, giant.imageSpeed = "sGiantSpiderSquirt", 7.5, 0.8
+            giant.state = "squirt"
+            giant:step(game.world, game.player, game)
+            assert(giant.state == "idle" and giant.spriteName == "sGiantSpider" and giant.x == 600,
+                "The giant spider's squirt animation-end event runs offscreen")
+            local keeper = game:spawnEntity("shopkeeper", 600, 112)
+            keeper.state, keeper.animation = "throw", 6.5
+            keeper:step(game.world, game.player, game)
+            assert(keeper.state == "attack" and keeper.x == 600,
+                "A shopkeeper completes its throwing animation outside the camera")
         end },
         { "falling enemies impale and lodge without crediting a kill", function()
             local game = fixture()

@@ -160,12 +160,19 @@ end
 
 -- oItem passes part of its velocity to the enemy; the item itself keeps flying.
 function PhysicalBody.strikeEnemy(body, enemy)
-    if enemy.stunned and enemy.stunned > 0 then return false end
+    if enemy.invincible and enemy.invincible ~= 0 then return false end
+    if (enemy.kind == "caveman" or enemy.kind == "shopkeeper")
+        and (enemy.stunned and enemy.stunned > 0 or enemy.corpse
+            and (enemy.kind == "shopkeeper" or enemy.vx ~= 0 or enemy.vy ~= 0)) then
+        enemy.vx = body.vx*0.3
+        return false
+    end
     local fragile = body.definition and body.definition.flight == "fragile"
     local stunOnly = fragile and enemy.kind == "caveman"
     return enemy:damage(stunOnly and 0 or 1, body.x, {
         kind = "item", fragile = fragile, vx = body.vx * 0.3,
-        vy = enemy.kind == "caveman" and -6 or nil,
+        vy = (enemy.kind == "caveman" or enemy.kind == "shopkeeper" or enemy.kind == "damsel")
+            and -6 or enemy.vy,
     })
 end
 

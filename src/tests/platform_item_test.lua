@@ -225,7 +225,7 @@ function Test.run()
             rock.vx, rock.vy = 1.5, 1.5
             ItemBody.resolveEnemyContacts(rock, nil, game)
             assert(enemy.hp == 3, "Two slow components must not add up to a damaging throw")
-            rock.x, rock.vx, rock.vy = enemy.x - 9, 4, 0
+            rock.x, rock.vx, rock.vy = enemy.x - 11, 4, 0
             ItemBody.resolveEnemyContacts(rock, nil, game)
             assert(enemy.hp == 3, "The item's outer mask is outside its small source damage rectangle")
             rock.x = enemy.x

@@ -41,9 +41,23 @@ local function mask(sprite, frame)
     return result
 end
 
-function Collision.bounds(name, frame, x, y, mirrored)
+function Collision.bounds(name, frame, x, y, mirrored, angle)
     local spec = sprite(name)
     local pixels = mask(spec, frame)
+    if angle and math.abs(angle) > 0.000001 then
+        local cos, sin = math.cos(angle), math.sin(angle)
+        local left, top, right, bottom = math.huge, math.huge, -math.huge, -math.huge
+        for row = pixels.top, pixels.bottom-1 do
+            for column = pixels.left, pixels.right-1 do
+                local dx = (column-spec.originX+0.5)*(mirrored and -1 or 1)
+                local dy = row-spec.originY+0.5
+                local px, py = math.floor(x+dx*cos-dy*sin), math.floor(y+dx*sin+dy*cos)
+                left, top = math.min(left, px), math.min(top, py)
+                right, bottom = math.max(right, px), math.max(bottom, py)
+            end
+        end
+        return left, top, right, bottom
+    end
     if mirrored then
         return x+spec.originX-pixels.right, y-spec.originY+pixels.top,
             x+spec.originX-pixels.left-1, y-spec.originY+pixels.bottom-1

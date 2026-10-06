@@ -20,7 +20,7 @@ function Body.step(self, projectile, spec, enemies, player, items)
         end
     end
     for _, enemy in ipairs(enemies or {}) do
-        if (not projectile.safe or enemy.kind == "damsel") and enemy ~= projectile.owner
+        if (not projectile.safe or enemy.kind == "damsel") and enemy.kind ~= "ghost"
             and (enemy.alive or enemy.corpse)
             and not (enemy.kind == "damsel" and enemy.invincible == 1)
             and Collision.touching(projectile, enemy, player) then
@@ -33,7 +33,7 @@ function Body.step(self, projectile, spec, enemies, player, items)
             return
         end
     end
-    if player and projectile.owner ~= player and not player:isDead() and player.state ~= "exiting"
+    if player and not player:isDead() and player.state ~= "exiting"
         and Collision.touching(projectile, player, player) then
         if player:hurt(projectile.x, projectile.damage, "projectile", 20, "bullet", projectile.vx)
             and spec.impact and self.onImpact then self.onImpact("player", projectile, player) end

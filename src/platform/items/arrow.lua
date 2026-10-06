@@ -1,4 +1,3 @@
-local Contact = require("src.platform.body_contact")
 local Traits = require("src.platform.item_traits")
 
 local PhysicalBody = require("src.platform.physical_body")
@@ -78,22 +77,8 @@ function Definition.updateTrapProjectile(self, projectile, player, enemies, item
     Definition.updateLoose(projectile)
     PhysicalBody.stopInWeb(self.world, projectile)
     if Definition.hitPlayer(projectile, player, self.game) then return end
-    if Contact.moving(projectile, 2) then
-        local Sensor = require("src.platform.traps.arrow_trap_sensor")
-        Contact.scan(projectile, enemies, 2, function(enemy)
-            return enemy.alive and enemy.kind ~= "ghost" and not (enemy.invincible and enemy.invincible > 0)
-        end, function(enemy)
-            if PhysicalBody.strikeEnemy(projectile, enemy) and self.game then
-                self.game.effects:blood(enemy.x, enemy.y-8, 1)
-            end
-            projectile.alive = false
-            return true
-        end, function(body, enemy, reach)
-            return Sensor.overlaps(enemy, player, body.x-reach, body.y-reach,
-                body.x+reach+1, body.y+reach+1, true)
-        end)
-        if not projectile.alive then return end
-    end
+    require("src.platform.item_body").resolveEnemyContacts(projectile, enemies, self.game)
+    if projectile.opened then projectile.alive = false; return end
     if items and (projectile.vx ~= oldVx or PhysicalBody.probe(self.world, projectile, "x", -1)
         or PhysicalBody.probe(self.world, projectile, "x", 1)
         or PhysicalBody.probe(self.world, projectile, "y", 1)
@@ -115,12 +100,7 @@ function Definition.loadTrapAssets(assets)
     assets.arrowRight = Assets.image("Items/Weapons", "sArrowRight")
 end
 
-Definition.projectile = {
-    persistent = true,
-    solidBounds = 4,
-    materialize = materializeArrow,
-    nextGravity = 0.6,
-}
+Definition.projectile = {}
 
 function Definition.updateProjectile(system, arrow, enemies, items, player)
     Definition.updateTrapProjectile(system, arrow, player, enemies, items)

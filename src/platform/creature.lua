@@ -118,7 +118,7 @@ function Creature:web(duration)
 end
 
 function Creature:damage(amount, sourceX, hit)
-    if not self.alive or self.spec.canDamage and not self.spec.canDamage(self, hit) then return false end
+    if not (self.alive or self.corpse) or self.spec.canDamage and not self.spec.canDamage(self, hit) then return false end
     if self.spec.damage then
         local damaged = self.spec.damage(self, amount, sourceX, hit)
         if self.hp <= 0 and self.spec.sacrifice then self.corpse = true end
@@ -136,7 +136,7 @@ function Creature:damage(amount, sourceX, hit)
         self.corpse = self.spec.sacrifice ~= nil
         self.state = "dead"
     end
-    if self.alive and hit then
+    if (self.alive or self.corpse) and hit then
         self.vx, self.vy = hit.vx or self.vx, hit.vy or self.vy
     end
     return true
@@ -177,7 +177,12 @@ function Creature:step(world, player, context)
     if not (self.alive or self.corpse) then return end
     if self.spec.alarm then self.spec.alarm(self, world, player) end
     if self.spec.updateExit and self.spec.updateExit(self) then return end
-    if not require("src.platform.activity").enemy(world, self) then return end
+    if not require("src.platform.activity").enemy(world, self) then
+        if self.spec.advanceAnimation then self.spec.advanceAnimation(self)
+        else self.animation = self.animation+(self.spec.creatureAnimationPerTick or 0) end
+        if self.spec.animationEnd then self.spec.animationEnd(self) end
+        return
+    end
     if self.held then
         self:updateHeldPosition(player)
         self.animation = self.animation + 0.5

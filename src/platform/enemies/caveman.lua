@@ -133,7 +133,7 @@ local Assets = require("src.platform.object_assets")
 local sprites = {}
 function Caveman.initializeCreature(body)
     body.heavy = true
-    body.definition = Traits.body({ hold = { standing = 4, ducking = 6 } })
+    body.definition = Traits.body({ hold = { standing = 4, ducking = 6 }, enemyBody = true })
     body.physicsOriginY = -8
     body.timer, body.facing, body.vx = 0, 1, 2.5
 end

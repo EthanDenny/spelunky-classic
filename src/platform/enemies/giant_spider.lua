@@ -62,7 +62,7 @@ local function launch(spider, player, minimum, maximum)
     setSprite(spider, "sGiantSpider")
 end
 
-local function advanceAnimation(spider, context)
+function GiantSpider.advanceAnimation(spider)
     spider.animation = spider.animation + spider.imageSpeed
     if spider.spriteName == "sGiantSpiderFlip" and spider.animation >= SPRITES.sGiantSpiderFlip.count then
         setSprite(spider, "sGiantSpider", 0.4)
@@ -158,7 +158,7 @@ function GiantSpider.step(spider, world, player, context)
         end
     else spider.state = "idle" end
     if ceiling then spider.vy = 1 end
-    advanceAnimation(spider, context)
+    GiantSpider.advanceAnimation(spider)
 end
 
 function GiantSpider.draw(spider)
@@ -175,6 +175,7 @@ local Spider = {
     creatureVerticalBounds = { -16, 0 },
     stepCreature = GiantSpider.step,
     alarm = GiantSpider.alarm,
+    advanceAnimation = GiantSpider.advanceAnimation,
     drawCreature = GiantSpider.draw,
     initializeCreature = GiantSpider.initialize,
 }

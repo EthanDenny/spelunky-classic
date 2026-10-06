@@ -49,7 +49,7 @@ local function release(self, item)
 end
 
 local function blastItem(self, explosion, item)
-    if item.alive == false or item.opened or item.deployed
+    if item.alive == false or item.opened and item.kind ~= "chest" or item.deployed
         or not Collision.touching(explosion, item, self.game and self.game.player) then return end
     release(self, item)
     if item.kind == "arrow" or item.kind == "jar" or item.kind == "skull" then
@@ -71,6 +71,24 @@ end
 
 function Explosion.update(self, player, enemies, items)
     local skeletons = {}
+    local playerContact, nearest, distance
+    if not player:isDead() and player.state ~= "exiting" then
+        for _, explosion in ipairs(self.explosions) do
+            if explosion.alive then
+                playerContact = playerContact or Collision.overlaps(explosion, player,
+                    player.x-8, player.y-8, player.x+9, player.y+9, true)
+                local d = (explosion.x-player.x)^2+(explosion.y-player.y)^2
+                if not distance or d < distance then nearest, distance = explosion, d end
+            end
+        end
+    end
+    if playerContact then
+        local vx = (nearest.x < player.x and 1 or -1)*self.effects.random:random(4,6)
+        player.invincibleTimer = 0
+        player:hurt(nearest.x, 10, "explosion", 100)
+        player.vx, player.vy, player.burning = vx, -6, 50
+        self.effects:blood(player.x, player.y, 1)
+    end
     for _, explosion in ipairs(self.explosions) do
         if explosion.alive then
             local destroyed = blastTerrain(self, explosion)
@@ -80,17 +98,9 @@ function Explosion.update(self, player, enemies, items)
                 end
             end
             if self.onExplosion then self:onExplosion(explosion.x, explosion.y, 24, explosion) end
-            if not player:isDead() and player.state ~= "exiting"
-                and Collision.overlaps(explosion, player, player.x-8, player.y-8,
-                    player.x+9, player.y+9, true) then
-                local vx = (player.x < explosion.x and -1 or 1)*self.effects.random:random(4,6)
-                player.invincibleTimer = 0
-                player:hurt(explosion.x, 10, "explosion", 100)
-                player.vx, player.vy, player.burning = vx, -6, 50
-                self.effects:blood(player.x, player.y, 1)
-            end
             for _, enemy in ipairs(enemies or {}) do
-                if enemy.alive and not (enemy.invincible and enemy.invincible > 0)
+                if enemy.kind ~= "ghost" and (enemy.alive or enemy.corpse)
+                    and not (enemy.invincible and enemy.invincible ~= 0)
                     and Collision.touching(explosion, enemy, player) then
                     local vx = (enemy.x < explosion.x and -1 or 1)*self.effects.random:random(4,6)
                     if enemy:damage(enemy.kind == "damsel" and 100 or 30, explosion.x,

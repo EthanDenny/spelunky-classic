@@ -126,7 +126,7 @@ function Test.run(app)
     jarShots.onHitItem = function(item) item.opened = true end
     local jarBullet = jarShots:spawn("bullet", 70, 80, 12, 0, gunner,
         { damage = 4 })
-    jarShots:update({}, gunner, { jar })
+    jarShots:update({}, nil, { jar })
     assert(jar.opened and jarBullet.alive,
         "A bullet must break a jar without being consumed by it")
     local victim = Player.new(80, 80)
@@ -153,6 +153,18 @@ function Test.run(app)
     recovered.x, recovered.y = archer.x, archer.y
     assert(not ItemActions.recoverArrows(arrowContext) and run.arrows == priorArrows + 1,
         "A stuck arrow must not be recovered by the bow")
+
+    local arrowWorld = World.new(12, 12, 16)
+    arrowWorld:fill("solid", 6, 0, 1, 12)
+    local bowShots = ProjectileSystem.new(arrowWorld)
+    local looseArrows = {}
+    local flyingArrow = bowShots:spawn("arrow", 88, 80, 16, 0, archer, { gravity = 0.2 })
+    bowShots:update({}, archer, looseArrows)
+    assert(not flyingArrow.alive and #looseArrows == 1 and looseArrows[1].stuck,
+        "A bow arrow must become a loose, stuck item when it hits terrain")
+    looseArrows[1]:update(arrowWorld, archer)
+    assert(looseArrows[1].alive and looseArrows[1].vx == 0,
+        "A materialized bow arrow must continue through the normal loose-item lifecycle")
 
     local webWorld = World.new(12, 12, 16)
     local webShots = ProjectileSystem.new(webWorld)
