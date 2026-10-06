@@ -1,0 +1,23 @@
+src/platform/item_body.lua
+  s_a149baf2181030::t_e4f14433b699d0 1,21-35
+src/platform/lighting.lua
+  s_a149baf2181030::t_e4f14433b699d0 26-27
+src/platform/terrain_destruction.lua
+  s_a149baf2181030::t_e4f14433b699d0 14-15,18-19
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d32921a74e9d915fee0a7f614a0a1ec0756f4cf2",
+  "prompts": {},
+  "sessions": {
+    "s_a149baf2181030": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0fdc3-ae05-7e41-a96b-bd7a333b41c3",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Ethan Denny <ethandenny@protonmail.com>"
+    }
+  }
+}
