@@ -23,7 +23,8 @@ function Lighting.darkness(game)
     for _, entity in ipairs(game.level.entities) do
         if not entity.destroyed then
             if entity.kind == "lamp" or entity.kind == "lamp_red" then
-                source("lamp", entity.kind == "lamp_red" and "sLampRed" or "sLamp", (game.world.time or 0)*0.5, entity.x*16, entity.y*16)
+                source("lamp", entity.kind == "lamp_red" and "sLampRed" or "sLamp",
+                    (game.world.time or 0)*0.5, entity.x*16, entity.y*16)
             elseif entity.kind == "arrow_trap_left_lit" or entity.kind == "arrow_trap_right_lit" then
                 source(entity.kind, entity.kind == "arrow_trap_left_lit" and "sArrowTrapLeftLit"
                     or "sArrowTrapRightLit", game.world.time or 0, entity.x*16, entity.y*16, 48)

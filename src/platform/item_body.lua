@@ -1,6 +1,4 @@
--- Complete loose oItem behavior, shared by carryables, tools, and NPC bodies.
--- Owning an item body supplies impacts as well as terrain motion; collection
--- membership does not determine which objects can deal damage.
+-- Loose oItem physics and impacts shared by carryables, tools, and NPC bodies.
 local Physics = require("src.platform.physical_body")
 local Contact = require("src.platform.body_contact")
 local ItemBody = {}
@@ -20,22 +18,21 @@ function ItemBody.resolveEnemyContacts(body, enemies, context)
     end, function(enemy)
         -- Contact overrides may consume a hit without dealing damage.
         if definition.enemyContact and definition.enemyContact(body, enemy, context) then return true end
-        if Physics.strikeEnemy(body, enemy) then
-            if definition.impactOnce then
-                body.hitEnemies = body.hitEnemies or {}
-                body.hitEnemies[enemy] = true
-            end
-            if definition.onEnemyHit then definition.onEnemyHit(body, enemy, context)
-            elseif context and context.effects then context.effects:blood(enemy.x, enemy.y-8, 1) end
-            if definition.breakOnImpact then
-                body.justHit = true
-                if context and context.processItemImpact then context:processItemImpact(body) end
-                return true
-            elseif definition.consumeOnEnemyHit then
-                body.opened = true
-                body.x, body.y = -1000, -1000
-                return true
-            end
+        if not Physics.strikeEnemy(body, enemy) then return end
+        if definition.impactOnce then
+            body.hitEnemies = body.hitEnemies or {}
+            body.hitEnemies[enemy] = true
+        end
+        if definition.onEnemyHit then definition.onEnemyHit(body, enemy, context)
+        elseif context and context.effects then context.effects:blood(enemy.x, enemy.y-8, 1) end
+        if definition.breakOnImpact then
+            body.justHit = true
+            if context and context.processItemImpact then context:processItemImpact(body) end
+            return true
+        elseif definition.consumeOnEnemyHit then
+            body.opened = true
+            body.x, body.y = -1000, -1000
+            return true
         end
     end)
 end

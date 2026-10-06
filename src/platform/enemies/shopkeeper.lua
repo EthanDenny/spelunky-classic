@@ -244,8 +244,6 @@ function Shopkeeper.step(body, world, player, context)
             if body.stunned > 0 then body.stunned = body.stunned - 1
             elseif body.hp > 0 then setState(body, "attack") end
         end
-        -- Keep the keeper's custom bounce/recovery rules, but use the same
-        -- outgoing impact behavior as every other loose item body.
         ItemBody.resolveEnemyContacts(body, nil, game)
     end
     if body.vx > 0 then body.vx = body.vx - 0.1 end

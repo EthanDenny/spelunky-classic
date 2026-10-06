@@ -1,7 +1,6 @@
 local MinesVariants = {}
 
 -- scrInitLevel selects darkness before scrEntityGen, using the same RNG.
--- An explicit boolean is reserved for the Full game lighting playtest.
 function MinesVariants.apply(level, run, rng, forceDark)
     if forceDark ~= nil then
         level.dark = forceDark
