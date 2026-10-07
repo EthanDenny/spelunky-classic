@@ -1,0 +1,16 @@
+README.md
+  h_af2c90ed80580c 23-25,27-32,35-52
+README.md.save
+  h_af2c90ed80580c 1-554
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6bfaaf1ba783079b158413ab7f0bf1f129310552",
+  "prompts": {},
+  "humans": {
+    "h_af2c90ed80580c": {
+      "author": "Ethan Denny <ethandenny@protonmail.com>"
+    }
+  }
+}
