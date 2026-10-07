@@ -16,7 +16,7 @@ function Room.new(name, random, graphicsHigh)
         end
         layouts[name] = layout
     end
-    local self = { tiles = {}, fringes = {}, world = World.new(20, 15, 16) }
+    local self = { tiles = {}, panel = {}, fringes = {}, world = World.new(20, 15, 16) }
     for _, tile in ipairs(layouts[name]) do
         local sprite = tile.object:gsub("^o", "s")
         if tile.object == "oBrick" then
@@ -26,7 +26,8 @@ function Room.new(name, random, graphicsHigh)
             elseif contents < 30 then sprite = "sBrickGoldBig" end
             self.world:set("solid", tile.x/16, tile.y/16)
         end
-        self.tiles[#self.tiles+1] = { object = tile.object, sprite = sprite, x = tile.x, y = tile.y }
+        local layer = (tile.object == "oBlack" or tile.object:match("^oMenu")) and self.panel or self.tiles
+        layer[#layer+1] = { object = tile.object, sprite = sprite, x = tile.x, y = tile.y }
     end
     for _, tile in ipairs(self.tiles) do
         if tile.object == "oBrick" then
@@ -53,6 +54,11 @@ function Room.draw(self, drawSprite)
         for x = 0, 319, background:getWidth() do love.graphics.draw(background, x, y) end
     end
     for _, tile in ipairs(self.tiles) do drawSprite(tile.sprite, 0, tile.x, tile.y) end
+end
+
+function Room.drawPanel(self, drawSprite)
+    -- oBlack and oMenu children have depth 1, in front of depth-3 cave fringes.
+    for _, tile in ipairs(self.panel) do drawSprite(tile.sprite, 0, tile.x, tile.y) end
 end
 
 function Room.drawFringe(self)

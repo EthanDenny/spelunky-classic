@@ -652,6 +652,9 @@ blocked. The following are still open, rather than implied to be certified:
   order; original tie behavior needs an executable trace.
 - Scarab Destroy’s use of `other` and the lab-only visual skull fallback still
   need original-runtime verification. Generated Mines drop real carryable skulls.
+- Pot-released enemies retain the bounded nearby-free-space correction described
+  in the pot placement follow-up. Unobstructed spawn coordinates match the source;
+  embedded-spawn handling is a clone adaptation pending original collision traces.
 - The lab frontend retains its own dimensions, navigation and configuration UI.
   Full game intentionally forces fullscreen. Immediate death-to-menu remains
   the user’s explicit requirement, so Classic’s death-summary/high-score flow
@@ -716,3 +719,20 @@ overlap, pan curves and exact GameMaker event scheduling still need original
 runtime comparison; the unavailable executable oracle described above remains
 a limitation. Water/lava and later-area sound branches are outside generated
 Mines. Disabled walking footsteps and flare-button ignition code remain disabled.
+
+### Mines transition panel layering follow-up
+
+Cave fringes were drawn after the intermission's black tiles and summary frame,
+allowing terrain decorations to appear inside the box. `scrSetupWalls` creates
+the fringes at depth 3; `oBlack` and the `oMenu` children use depth 1. The transition
+renderer now draws the panel after the fringes, then the tally icons and text.
+Exposed cave-floor decorations keep their foreground placement over the actor.
+
+The Full game lifecycle owner now compares actual transition pixels with archived
+frame/fringe assets in both `rTransition1` and `rTransition1x`, at 1× and 2×.
+It checks the opaque panel interior and frame while preserving exposed fringes.
+The regression fails on the pre-fix renderer for decorations in the black panel;
+the repaired native lifecycle test passes, and both renders were inspected.
+The original executable oracle was retried and still cannot connect to the
+Parallels service. The engine, RNG, rasterization and sound-mixing limits above
+remain open.

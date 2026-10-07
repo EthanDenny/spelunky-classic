@@ -206,7 +206,6 @@ function Transition:draw(game, viewport)
     love.graphics.scale(viewport.scale)
     love.graphics.setColor(1, 1, 1, 1)
     Room.draw(self.room, drawSprite)
-    for _, icon in ipairs(self.icons) do drawSprite(icon.sprite, 0, icon.x, icon.y) end
     if self.ball then drawSprite("sBall", 0, self.ball.x, self.ball.y) end
     if not self.actorGone then
         local name = self.actorExit and "sPExit" or (self.kissPause > 0 or self.actorStopped) and "sStandLeft" or "sRunLeft"
@@ -224,6 +223,8 @@ function Transition:draw(game, viewport)
         if self.actorExit and game.run.equipment.jetpack then drawSprite("sJetpackBack", 0, self.actorX, 184) end
     end
     Room.drawFringe(self.room)
+    Room.drawPanel(self.room, drawSprite)
+    for _, icon in ipairs(self.icons) do drawSprite(icon.sprite, 0, icon.x, icon.y) end
     if self.ball then
         for link = 1, 4 do
             drawSprite("sChain", 0, self.ball.x+(self.actorX-self.ball.x)*link/4,

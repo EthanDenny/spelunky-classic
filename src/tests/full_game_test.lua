@@ -39,6 +39,61 @@ local function start(app)
     return game
 end
 
+local function assertSummaryRendering(game, summary)
+    local root = "original-game-reference/source/extracted/spelunky/"
+    local border = {}
+    for _, name in ipairs({ "sMenuLL", "sMenuBottom", "sMenuLR" }) do
+        border[name] = love.image.newImageData(root.."Sprites/Other/"..name..".images/image 0.png")
+    end
+    local fringe = love.image.newImageData(root.."Backgrounds/bgCaveTop.png")
+    for _, scale in ipairs({ 1, 2 }) do
+        local canvas = love.graphics.newCanvas(320*scale, 240*scale)
+        love.graphics.push("all")
+        love.graphics.origin()
+        love.graphics.setScissor()
+        love.graphics.setCanvas(canvas)
+        love.graphics.clear()
+        summary:draw(game, { x = 0, y = 0, width = 320*scale, height = 240*scale, scale = scale })
+        love.graphics.pop()
+        local pixels = canvas:newImageData()
+        for x = 16, 303 do
+            local sprite = border[x < 32 and "sMenuLL" or x >= 288 and "sMenuLR" or "sMenuBottom"]
+            for y = 0, 15 do
+                local er, eg, eb, ea = sprite:getPixel(x%16, y)
+                if ea == 1 then
+                    local r, g, b = pixels:getPixel(x*scale, (128+y)*scale)
+                    assert(math.abs(r-er) < 0.01 and math.abs(g-eg) < 0.01 and math.abs(b-eb) < 0.01,
+                        "Cave decorations must stay behind the source summary border at "..x..","..(128+y))
+                end
+            end
+        end
+        for y = 120, 127 do
+            for x = 32, 287 do
+                local r, g, b = pixels:getPixel(x*scale, y*scale)
+                assert(r == 0 and g == 0 and b == 0,
+                    "Cave decorations must stay behind the black summary interior at "..x..","..y)
+            end
+        end
+        local matchesFringe = false
+        -- The floor at (80,192) has a fringe at (80,176) in both source rooms.
+        for variant = 0, 1 do
+            local matches = true
+            for y = 0, 15 do
+                for x = 0, 15 do
+                    local r, g, b = pixels:getPixel((80+x)*scale, (176+y)*scale)
+                    local er, eg, eb, ea = fringe:getPixel(variant*16+x, y)
+                    if ea == 1 and (math.abs(r-er) > 0.01 or math.abs(g-eg) > 0.01 or math.abs(b-eb) > 0.01) then
+                        matches = false
+                    end
+                end
+            end
+            matchesFringe = matchesFringe or matches
+        end
+        assert(matchesFringe, "The exposed cave floor must retain its source fringe outside the summary box")
+        canvas:release()
+    end
+end
+
 local function useExit(app, game, inspect)
     local exit = game.level.exit
     game.player.x, game.player.y = exit.x*16+8, exit.y*16+8
@@ -196,6 +251,7 @@ function Test.run(app)
         game.heldNpc = damsel
         local oldRun = game.run
         useExit(app, game, function(summary)
+            assertSummaryRendering(game, summary)
             assert(summary.money == 100 and summary.moneyCount == 100 and summary.totalMoney == 50,
                 "The tally must show gross level loot separately from money after spending")
             assert(#summary.loot == 2 and #summary.kills == 1 and summary.rescued,
@@ -264,6 +320,7 @@ function Test.run(app)
         game:generateLevel(17)
         game.run.money = 50000
         useExit(app, game, function(transition)
+            assertSummaryRendering(game, transition)
             assert(transition.tunnel and transition.tunnel.talk == 1 and transition.actorStopped,
                 "The next Mines completion stops the player for the Tunnel Man introduction")
             assert(transition.tunnel.donate == 100, "UP also adjusts the selection before the donation dialogue starts")
