@@ -1,0 +1,23 @@
+src/screens/full_level_playtest.lua
+  s_a149baf2181030::t_6583a026742ea1 942,971,1204
+src/tests/mines_level_selection_test.lua
+  s_a149baf2181030::t_79a4e0d26da828 112-113,133
+README.md
+  s_a149baf2181030::t_222a71d5afc59b 15
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "269d3e80d220fe56e00f4514f005847c68cfb36f",
+  "prompts": {},
+  "sessions": {
+    "s_a149baf2181030": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0fdc3-ae05-7e41-a96b-bd7a333b41c3",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Ethan Denny <ethandenny@protonmail.com>"
+    }
+  }
+}
