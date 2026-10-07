@@ -939,7 +939,7 @@ function FullLevelPlaytest:keypressed(key, _, isRepeat)
         return
     end
     if self.mapPreview and key ~= "r" and key ~= "n" and key ~= "-"
-        and key ~= "=" and key ~= "[" and key ~= "]" and key ~= "b" then return end
+        and key ~= "=" and key ~= "t" and key ~= "b" then return end
     if (self.exiting or self.completed) and key ~= "r" and key ~= "n" then return end
     if controls:matches("pay", key) then
         self.payQueued = true
@@ -968,9 +968,7 @@ function FullLevelPlaytest:keypressed(key, _, isRepeat)
         self:changeDepth(-1)
     elseif key == "=" then
         self:changeDepth(1)
-    elseif key == "[" then
-        self:changeSubtype(-1)
-    elseif key == "]" then
+    elseif key == "t" then
         self:changeSubtype(1)
     elseif key == "b" then
         self.debugCollision = not self.debugCollision
@@ -1203,7 +1201,7 @@ function FullLevelPlaytest:draw()
     local controls = self.app.controls
     love.graphics.printf(
         string.format("%s/%s MOVE   %s RUN   %s JUMP   %s ACTION/PICK UP   %s BOMB   %s ROPE   %s PAY   %s/%s CLIMB\n"
-            .. "R RESET   N NEXT SEED   -/= DEPTH   [/] TYPE   B COLLIDERS   TAB MAP/PLAY   F2 ROOM PATH   ESC BACK",
+            .. "R RESET   N NEXT SEED   -/= DEPTH   T TYPE   B COLLIDERS   TAB MAP/PLAY   F2 ROOM PATH   ESC BACK",
             controls:label("left"), controls:label("right"), controls:label("run"),
             controls:label("jump"), controls:label("attack"), controls:label("bomb"),
             controls:label("rope"), controls:label("pay"), controls:label("up"), controls:label("down")),

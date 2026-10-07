@@ -109,6 +109,8 @@ local function assertMapPreview(app)
     canvas:release()
     app:keypressed("n", "n", false)
     assert(game.seed ~= level.seed, "Next seed must generate a new map while previewing")
+    app:keypressed("t", "t", false)
+    assertSelectedLevel(game.level, "standard")
     local nextTick = game.world.time
     app:update(1)
     assert(game.world.time == nextTick, "Generating a map must preserve the paused preview")
@@ -128,7 +130,7 @@ function Test.run(app)
     playtest.run = nil
     playtest:generateLevel(8675309)
     for _, subtype in ipairs({ "standard", "idol", "altar", "snake_pit", "shop", "dark" }) do
-        playtest:keypressed("]", "]", false)
+        playtest:keypressed("t", "t", false)
         assertSelectedLevel(playtest.level, subtype)
     end
     assert(playtest.levelNumber == 2, "Playtest must move to an eligible depth")
