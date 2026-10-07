@@ -1,0 +1,78 @@
+src/platform/item_actions.lua
+  s_a149baf2181030::t_8ac9f6141da931 130-132
+src/platform/source_random.lua
+  s_a149baf2181030::t_b70165a401f9e9 1-18
+src/platform/creature.lua
+  s_a149baf2181030::t_b70165a401f9e9 59,61
+src/platform/enemies/giant_spider.lua
+  s_a149baf2181030::t_b70165a401f9e9 47,53
+src/tests/generated_world_test.lua
+  s_a149baf2181030::t_f3e1103522223d 38-41
+src/platform/world.lua
+  s_a149baf2181030::t_b70165a401f9e9 106-112,181
+src/platform/item.lua
+  s_a149baf2181030::t_b70165a401f9e9 67,75
+src/platform/items/die.lua
+  s_a149baf2181030::t_b70165a401f9e9 25
+  s_a149baf2181030::t_ec1c073baccba5 14-15
+src/platform/tool_system.lua
+  s_a149baf2181030::t_b70165a401f9e9 9,16
+src/tests/mines_completion_test.lua
+  s_a149baf2181030::t_f3e1103522223d 84-97,113-174,206-222,236,1288
+  s_a149baf2181030::t_bc15e2c9f8fb22 223-235
+  s_a149baf2181030::t_972de66b15c076 23,98-112
+  s_a149baf2181030::t_921a6b41b39727 175-205
+  s_a149baf2181030::t_59d9f46767027c 60-83
+src/platform/enemy.lua
+  s_a149baf2181030::t_b70165a401f9e9 6,43,65
+src/platform/pickups/scarab.lua
+  s_a149baf2181030::t_ec1c073baccba5 19
+  s_a149baf2181030::t_7156b7ad24e049 41
+  s_a149baf2181030::t_b70165a401f9e9 7,35,37-39,62,65,69-72,79
+  s_a149baf2181030::t_94c4e7bab7bcc3 40
+src/world/mines_generator.lua
+  s_a149baf2181030::t_ec1c073baccba5 449
+  s_a149baf2181030::t_b70165a401f9e9 7,99-101,556,560
+src/screens/full_level_playtest.lua
+  s_a149baf2181030::t_b70165a401f9e9 166,176-177,219,233,261,401-403,406-410,417
+src/platform/treasure.lua
+  s_a149baf2181030::t_b70165a401f9e9 57
+src/tests/mines_audio_test.lua
+  s_a149baf2181030::t_4f739cfdb405ae 96,209
+src/tests/playtest_feedback_test.lua
+  s_a149baf2181030::t_f46e99d3f02d74 17,27,385,433
+  s_a149baf2181030::t_a5d61b6d2801dc 18-21,23-25,28-30,412
+docs/object-source-audit.md
+  s_a149baf2181030::t_033a009f533a09 744-799
+  s_a149baf2181030::t_5773a59001dd52 646-654,657-659
+src/platform/effects.lua
+  s_a149baf2181030::t_b70165a401f9e9 79,83
+src/platform/entity_body.lua
+  s_a149baf2181030::t_b70165a401f9e9 25,29-30,34
+src/platform/enemies/shopkeeper.lua
+  s_a149baf2181030::t_b70165a401f9e9 48,62
+src/tests/enemy_ai_test.lua
+  s_a149baf2181030::t_921a6b41b39727 126-132
+src/world/entity_generator.lua
+  s_a149baf2181030::t_ec1c073baccba5 197-199
+src/platform/tiles/ladder.lua
+  s_a149baf2181030::t_b70165a401f9e9 1
+src/screens/full_game.lua
+  s_a149baf2181030::t_b70165a401f9e9 53
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "1590f2335b67fba502385a46a485b2149801afba",
+  "prompts": {},
+  "sessions": {
+    "s_a149baf2181030": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0fdc3-ae05-7e41-a96b-bd7a333b41c3",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Ethan Denny <ethandenny@protonmail.com>"
+    }
+  }
+}
