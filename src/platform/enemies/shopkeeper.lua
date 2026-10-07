@@ -45,7 +45,7 @@ function Shopkeeper.provoke(body)
     setState(body, "attack")
 end
 
-function Shopkeeper.initialize(body, seed)
+function Shopkeeper.initialize(body, seed, random)
     body.heavy = true
     body.physicsOriginY = -8
     body.definition = Traits.body({ hold = { standing = 4, ducking = 6 }, enemyBody = true })
@@ -59,7 +59,7 @@ function Shopkeeper.initialize(body, seed)
     body.counter = 0
     body.whipCooldown = 0
     body.angered = false
-    body.random = love.math.newRandomGenerator(seed or 1)
+    body.random = random or require("src.platform.source_random").new(seed)
 end
 
 function Shopkeeper.onThrown(body)

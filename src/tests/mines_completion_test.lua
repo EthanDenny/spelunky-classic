@@ -20,7 +20,7 @@ local function fixture()
     game.player.state = Player.STATES.standing
     game.renderer, game.sounds = { entitySprites = {} }, require("src.audio.classic_sounds").new()
     game.effects = Effects.new(17)
-    game.tools = Tools.new(game.world)
+    game.tools = Tools.new(game.world, nil, game.effects.random)
     game.projectiles = Projectiles.new(game.world)
     game.traps = Traps.new(game.world, game.level)
     game.world.game, game.tools.game, game.traps.game = game, game, game
@@ -57,6 +57,183 @@ end
 
 function Test.run()
     local cases = {
+        { "generated scarabs and dice keep the random state from their creation event", function()
+            local Generator = require("src.world.mines_generator")
+            for _, kind in ipairs({ "scarab", "die" }) do
+                local level, entity, seed
+                for candidate = 1, 512 do
+                    level = Generator.generate(candidate, { levelNumber = 2, forceDark = true })
+                    for _, placed in ipairs(level.entities) do
+                        if placed.kind == kind then entity, seed = placed, candidate; break end
+                    end
+                    if entity then break end
+                end
+                assert(entity, "The generated Mines sample must contain a " .. kind)
+                local reference = Generator.generate(seed, { levelNumber = 2, forceDark = true })
+                local game = fixture()
+                game.effects = Effects.new(seed, level.random)
+                local body = require("src.platform.entity_body").create(game, entity, { placed = true })
+                local value = kind == "scarab" and body.counter or body.diceValue
+                assert(value >= (kind == "scarab" and 10 or 1)
+                    and value <= (kind == "scarab" and 30 or 6),
+                    "The placed body must retain a valid source creation roll")
+                assert(level.random:random() == reference.random:random(),
+                    "Building a generated " .. kind .. " must not repeat its creation random call")
+            end
+        end },
+        { "actor and dice creation share the gameplay random sequence", function()
+            local game = fixture()
+            local reference = love.math.newRandomGenerator(17)
+            local function rand(a, b) return a+math.floor(reference:random()*(b-a+1)) end
+            local scarab = game:spawnEntity("scarab", 200, 80)
+            assert(scarab.counter == rand(10, 30), "Scarab creation consumes the first shared rand")
+            local spider = game:spawnEntity("spider", 240, 104)
+            spider:step(game.world, game.player, game)
+            assert(spider.timer == rand(5, 20), "Spider recovery consumes the next shared rand")
+            local die = game:spawnEntity("die", 120, 80)
+            assert(die.diceValue == rand(1, 6), "Dice creation consumes the next shared rand")
+            game.effects:add("flame", 160, 80)
+            assert(game.effects.particles[1].gravity == rand(1, 6)*0.1,
+                "Particle creation continues the actors' random sequence")
+            local giant = game:spawnEntity("giant_spider", 200, 80)
+            giant:step(game.world, game.player, game)
+            assert(giant.squirtTimer == rand(100, 1000),
+                "The giant spider's conversion uses the shared sequence")
+            local shopkeeper = game:spawnEntity("shopkeeper", 280, 80)
+            require("src.platform.enemies.shopkeeper").dropGun(shopkeeper, game)
+            local gun = game.items[#game.items]
+            assert(gun.vy == rand(4, 6) and gun.vx == rand(4, 6),
+                "Shopkeeper gun-drop impulses consume the same rand sequence")
+            game.tools.effects:add("flame", 160, 80)
+            assert(game.tools.effects.particles[1].gravity == rand(1, 6)*0.1,
+                "Tool particles continue the same random sequence")
+            local nextScarab = game:spawnEntity("scarab", 220, 80)
+            assert(nextScarab.counter == rand(10, 30),
+                "Tool particle random consumption affects subsequent actors")
+        end },
+        { "gameplay random consumption carries into the next generated level", function()
+            local function nextTerrain(consume)
+                local game = FullLevel.new({ controls = Controls.fromContents(nil, nil),
+                    renderer = require("src.render.mines_renderer").new() })
+                game:loadAssets()
+                game:generateLevel(17)
+                if consume then
+                    for _ = 1, 20 do game:spawnEntity("scarab", 200, 80) end
+                end
+                game:advanceLevel()
+                local cells = {}
+                for _, row in ipairs(game.level.tiles) do
+                    for _, tile in ipairs(row) do cells[#cells+1] = tile.kind end
+                end
+                return table.concat(cells, ":")
+            end
+            local plain = nextTerrain(false)
+            assert(plain == nextTerrain(false), "Replaying the same seed and actions is deterministic")
+            assert(plain ~= nextTerrain(true),
+                "Random actor creation must affect subsequent generation through shared state")
+        end },
+        { "pot smash particles consume rand before the loot chain", function()
+            local game = fixture()
+            local reference = love.math.newRandomGenerator(17)
+            local function rand(a, b) return a+math.floor(reference:random()*(b-a+1)) end
+            local velocities = {}
+            for i = 1, 3 do velocities[i] = { rand(1, 3), -rand(0, 3) } end
+            local reward
+            for _, choice in ipairs({ { 3, "gold_chunk" }, { 6, "gold_nugget" },
+                { 12, "emerald_big" }, { 12, "sapphire_big" }, { 12, "ruby_big" },
+                { 6, "spider" }, { 12, "snake" } }) do
+                if rand(1, choice[1]) == 1 then reward = choice[2]; break end
+            end
+            local jar = game:spawnEntity("jar", 120, 80)
+            jar.impactSide = "left"
+            assert(game:openContainer(jar))
+            for i, velocity in ipairs(velocities) do
+                local particle = game.effects.particles[i+1]
+                assert(particle.kind == "rubble" and particle.vx == velocity[1] and particle.vy == velocity[2],
+                    "The jar Destroy event creates its three pieces before selecting contents")
+            end
+            assert((game.level.entities[2] and game.level.entities[2].kind) == reward,
+                "Pot loot must follow the particle calls in the shared sequence")
+            local count = #game.effects.particles
+            assert(not game:openContainer(jar) and #game.effects.particles == count,
+                "Repeated destruction cannot emit particles or reroll loot")
+        end },
+        { "scarab collection sparks use the colliding character's origin", function()
+            local game = fixture()
+            local reference = love.math.newRandomGenerator(17)
+            reference:random() -- scarab Create counter
+            local scarab = game:spawnEntity("scarab", game.player.x+6, game.player.y+4)
+            game:checkCollectibles()
+            assert(not scarab.alive and #game.effects.particles == 3)
+            for _, particle in ipairs(game.effects.particles) do
+                local x = game.player.x+6+math.floor(reference:random()*5)
+                local y = game.player.y+6+math.floor(reference:random()*5)
+                assert(particle.x == x and particle.y == y,
+                    "Scarab Destroy inherits other from the character collision event")
+            end
+        end },
+        { "mattock destruction consumes particle rand before the break roll", function()
+            local game = fixture()
+            game.player.x = 88
+            game.world:set("solid", 6, 6)
+            local reference = love.math.newRandomGenerator(17)
+            local function rand(a, b) return a+math.floor(reference:random()*(b-a+1)) end
+            local positions = {}
+            for i = 1, 3 do
+                positions[i] = { 104+rand(0, 8)-rand(0, 8), 104+rand(0, 8)-rand(0, 8) }
+            end
+            local breaks = rand(1, 20) == 1
+            local mattock = game:spawnEntity("mattock", 88, 104)
+            mattock:pickup(game.player, game.run)
+            game.heldItem = mattock
+            game:handleActionPressed({})
+            for _ = 1, 65 do
+                game.player:step(game.world, {})
+                require("src.platform.item_actions").updateMelee(game)
+                game.world.time = game.world.time+1
+                if not game.world:has("solid", 6, 6) then break end
+            end
+            assert(not game.world:has("solid", 6, 6) and #game.effects.particles == 3,
+                "The mattock must run the solid's Destroy event at the end of the swing")
+            for i, position in ipairs(positions) do
+                local particle = game.effects.particles[i]
+                assert(particle.x == position[1] and particle.y == position[2],
+                    "Solid Destroy consumes its particle random calls before the mattock break roll")
+            end
+            assert(mattock.opened == breaks,
+                "Mattock break chance follows the solid's Destroy random calls")
+        end },
+        { "scarab lethal hits wait for an active Step and move before destruction", function()
+            local game = fixture()
+            local scarab = game:spawnEntity("scarab", 200, 80)
+            scarab.vx = 2
+            scarab:damage(1)
+            assert(scarab.hp == 0 and scarab.alive and #game.effects.particles == 0,
+                "An enemy hit reduces HP without running the scarab Step's death branch")
+            game.world.activeView = { x = 400, y = 300, width = 320, height = 240 }
+            scarab:update(game.world, game.player)
+            assert(scarab.alive and scarab.x == 200 and #game.effects.particles == 0,
+                "Offscreen scarab Step postpones movement and destruction")
+            game.world.activeView = nil
+            scarab:update(game.world, game.player)
+            assert(not scarab.alive and scarab.x == 202 and #game.effects.particles == 6,
+                "The first active Step moves the dying scarab before emitting its death sparks")
+            scarab:update(game.world, game.player)
+            assert(#game.effects.particles == 6, "Scarab destruction only runs once")
+            local dyingGame = fixture()
+            local reference = love.math.newRandomGenerator(17)
+            reference:random() -- Create counter
+            for _ = 1, 15 do reference:random() end -- Step and Destroy sparks
+            reference:random() -- distant character: direction
+            local counter = 10+math.floor(reference:random()*21)
+            local dying = dyingGame:spawnEntity("scarab", 200, 80)
+            dying.counter = 0
+            dying:damage(1)
+            dying:update(dyingGame.world, dyingGame.player)
+            assert(not dying.alive and dying.counter == counter
+                and dyingGame.effects.random:random() == reference:random(),
+                "The remaining scarab Step statements still consume rand after destruction")
+        end },
         { "bullets test their final sprite position rather than sweeping through enemies", function()
             local game = fixture()
             local snake = game:spawnEntity("snake", 80, 112)
@@ -1108,6 +1285,7 @@ function Test.run()
             local target = game:spawnEntity("scarab", game.player.x+16, game.player.y)
             game.player.facing, game.player.whipping, game.player.animationFrame = 1, true, 5
             game:checkWhip()
+            target:update(game.world, game.player)
             assert(not target.alive and #game.effects.particles == 9,
                 "A bloodless scarab produces six death sparks and no whip blood")
             local blastTarget = game:spawnEntity("scarab", 240, 64)

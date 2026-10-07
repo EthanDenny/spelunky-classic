@@ -123,8 +123,13 @@ function Test.run(app)
         assert(spider.state == Enemy.STATES.idle and spider.justAlerted,
             "A ceiling spider must drop when the player passes directly beneath it")
         local startY = spider.y
-        for _ = 1, 45 do spider:step(world, player) end
-        assert(spider.y > startY and spider.state ~= Enemy.STATES.hang,
+        local fell = false
+        for _ = 1, 45 do
+            world.time = world.time+1
+            spider:step(world, player)
+            fell = fell or spider.y > startY
+        end
+        assert(fell and spider.state ~= Enemy.STATES.hang,
             "A dropped spider must fall and enter its recovery or bouncing behavior")
     end
 

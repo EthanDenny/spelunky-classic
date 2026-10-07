@@ -3,6 +3,7 @@
 local Types = require("src.platform.enemies.types")
 
 local ActorBody = require("src.platform.actor_body")
+local Random = require("src.platform.source_random")
 local Enemy = {}
 Enemy.__index = Enemy
 
@@ -14,16 +15,6 @@ Enemy.STATES = {
 }
 
 local loadedAssets
-
-local function newRandom(seed)
-    local state = math.floor(seed or 1) % 2147483647
-    if state <= 0 then state = state + 2147483646 end
-    return function(minimum, maximum)
-        state = (state * 16807) % 2147483647
-        local unit = (state - 1) / 2147483646
-        return minimum + math.floor(unit * (maximum - minimum + 1))
-    end
-end
 
 function Enemy.loadAssets()
     if loadedAssets then return loadedAssets end
@@ -49,6 +40,7 @@ function Enemy.new(kind, x, y, options)
     options = options or {}
     local spec = Types[kind]
     assert(spec and spec.animations, "Unknown enemy kind: " .. tostring(kind))
+    local random = options.random or Random.new(options.seed or (x*31+y*17+#kind))
     local enemy = setmetatable({
         kind = kind,
         spec = spec,
@@ -70,7 +62,7 @@ function Enemy.new(kind, x, y, options)
         alive = true,
         animation = 0,
         animationName = nil,
-        random = newRandom(options.seed or (x * 31 + y * 17 + #kind)),
+        random = function(minimum, maximum) return random:random(minimum, maximum) end,
         justAlerted = false,
         sightTimer = 0,
     }, Enemy)

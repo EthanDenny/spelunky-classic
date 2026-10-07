@@ -44,13 +44,13 @@ local function activeDistance(spider, player)
     return player and Collision.distance(spider, player, player) or math.huge
 end
 
-function GiantSpider.initialize(spider, seed)
+function GiantSpider.initialize(spider, seed, random)
     spider.height = 16 -- oGiantSpiderHang uses a 32x16 sprite and collision box.
     spider.state = "hang"
     spider.spriteName = "sGiantSpiderHang"
     spider.animation = 0
     spider.imageSpeed = 0.4
-    spider.rng = love.math.newRandomGenerator(seed or 1)
+    spider.rng = random or require("src.platform.source_random").new(seed)
     spider.squirtTimer = 0
     spider.squirtFired = false
 end

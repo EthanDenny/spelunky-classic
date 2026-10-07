@@ -64,7 +64,7 @@ function Item.collect(kind, run, player, game)
     end
 end
 
-function Item.new(entity, metadata)
+function Item.new(entity, metadata, random)
     assert(Item.isCarryable(entity.kind), "Non-carryable entity: " .. tostring(entity.kind))
     metadata = metadata or {}
     local definition = Definitions[entity.kind]
@@ -72,6 +72,7 @@ function Item.new(entity, metadata)
         entity = entity,
         kind = entity.kind,
         definition = definition,
+        random = random,
         properties = entity.properties or {},
         x = entity.x * 16,
         y = entity.y * 16,

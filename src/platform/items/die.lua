@@ -11,7 +11,8 @@ function Definition.collisionSprite(item)
 end
 
 function Definition.initialize(self)
-    self.diceValue = love.math.random(1, 6)
+    self.diceValue = self.entity.diceValue
+        or (self.random and self.random:random(1, 6) or love.math.random(1, 6))
     self.diceRolling = false
     self.diceAge = 0
 end
@@ -21,7 +22,7 @@ function Definition.updateLoose(self, world, player)
     self.diceAge = self.diceAge + 1
     self.diceRolling = math.abs(self.vx) > 2 or math.abs(self.vy) > 2
     if self.diceRolling then
-        self.diceValue = love.math.random(1, 6)
+        self.diceValue = self.random and self.random:random(1, 6) or love.math.random(1, 6)
         if player and (player.bet or 0) > 0 then self.betRolling = true end
     elseif PhysicalBody.probe(world, self, "y", 1) and self.vy == 0 and self.betRolling then
         if self.rolled then self.diceCheated = true end

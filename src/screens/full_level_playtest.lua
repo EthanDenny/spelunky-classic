@@ -163,6 +163,7 @@ function FullLevelPlaytest:configureProjectiles()
 end
 
 function FullLevelPlaytest:generateLevel(seed)
+    local random = seed == nil and self.random or nil
     seed = seed or self.seed
     if self.run then
         if self.heldItem then self:captureHeldItem() end
@@ -172,7 +173,8 @@ function FullLevelPlaytest:generateLevel(seed)
     self.run = self.run or RunState.new(seed)
     self.level = MinesGenerator.generate(seed, { levelNumber = self.levelNumber,
         run = self.run, forceDark = self.forceDarkLevels,
-        graphicsHigh = self.app.controls.settings.graphicsHigh })
+        graphicsHigh = self.app.controls.settings.graphicsHigh, random = random })
+    self.random = self.level.random
     self.level.selectedSubtype = MinesLevelSelection.choices[self.subtypeIndex].key
     if self.app.playtestLog then
         self.app.playtestLog:generatedLevel(self.screenName, self.level, self.levelNumber)
@@ -214,7 +216,7 @@ function FullLevelPlaytest:buildSimulation()
     self.sounds.settings = self.app.controls.settings
     if self.throwSound then ClassicSounds.configure(self.throwSound, soundVolume) end
     self.player:loadAssets(soundVolume)
-    self.tools = ToolSystem.new(self.world, Player.TICK_RATE)
+    self.tools = ToolSystem.new(self.world, Player.TICK_RATE, self.level.random)
     self.tools.sounds = self.sounds
     self.tools:loadAssets(soundVolume)
     self.traps = TrapSystem.new(self.world, self.level, self.renderer)
@@ -228,7 +230,7 @@ function FullLevelPlaytest:buildSimulation()
     self.enemies = {}
     self.items = {}
     self.collectibles = {}
-    self.effects = Effects.new(self.seed)
+    self.effects = Effects.new(self.seed, self.level.random)
     self.effects.settings, self.tools.effects.settings = self.app.controls.settings, self.app.controls.settings
     self.effects.sounds = self.sounds
     self.tools.effects.sounds = self.sounds
@@ -256,7 +258,7 @@ function FullLevelPlaytest:buildSimulation()
     for index, entity in ipairs(self.level.entities) do
         if entity.kind == "hidden_sapphire" or entity.kind == "hidden_emerald"
             or entity.kind == "hidden_ruby" or entity.kind == "hidden_item" then
-            entity.contentKind = entity.kind == "hidden_sapphire" and "sapphire_big"
+            entity.contentKind = entity.contentKind or entity.kind == "hidden_sapphire" and "sapphire_big"
                 or entity.kind == "hidden_emerald" and "emerald_big"
                 or entity.kind == "hidden_ruby" and "ruby_big"
             if not entity.contentKind then
@@ -396,20 +398,23 @@ end
 
 function FullLevelPlaytest:openContainer(item)
     local x, y = item.x, item.y
+    local spec = item.definition.container
+    if not spec or item.opened or spec.requires and not self.run.hasKey then return false end
+    local effect = spec.effect
+    if effect == "jar" then
+        self.sounds:play("break_item")
+        self.effects:jarBreak(x, y, item.impactSide)
+    end
     local rewards = item:open(self.run, self.effects.random)
     if not rewards then return false end
-    local effect = item.definition.container.effect
-    if effect == "jar" then
-        self.effects:jarBreak(x, y, item.impactSide)
-        self.sounds:play("break_item")
-    elseif effect == "smoke" then
+    if effect == "smoke" then
         self.effects:add("poof", x, y)
         self.sounds:play("pickup")
     elseif effect == "unlock" then
         self.effects:add("poof", x, y, -0.4)
         self.effects:add("poof", x, y, 0.4)
         self.sounds:play("chest_open")
-    elseif not (rewards[1] and rewards[1].trapped) then
+    elseif effect ~= "jar" and not (rewards[1] and rewards[1].trapped) then
         self.sounds:play("chest_open")
     end
     for _, reward in ipairs(rewards) do

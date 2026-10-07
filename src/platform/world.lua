@@ -103,7 +103,13 @@ function World:has(kind, tileX, tileY)
 end
 
 function World:cellAt(kind, x, y)
-    return self:has(kind, math.floor(x / self.tileSize), math.floor(y / self.tileSize))
+    local tileX, tileY = math.floor(x/self.tileSize), math.floor(y/self.tileSize)
+    if not self:has(kind, tileX, tileY) then return false end
+    if kind == "ladder" then
+        return require("src.platform.sprite_collision").overlaps(Tiles.ladder.collisionSprite,
+            0, tileX*self.tileSize, tileY*self.tileSize, false, x, y, x+0.001, y+0.001, true)
+    end
+    return true
 end
 
 function World:webAtPoint(x, y)
@@ -172,7 +178,7 @@ function World:climbableAtPoint(x, y)
     if self:has("rope", tileX, tileY) then
         return "rope", tileX, tileY
     end
-    if self:has("ladder", tileX, tileY) or self:has("ladderTop", tileX, tileY) then
+    if self:cellAt("ladder", x, y) or self:cellAt("ladderTop", x, y) then
         return "ladder", tileX, tileY
     end
 end

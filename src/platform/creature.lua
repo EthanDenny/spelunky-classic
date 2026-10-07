@@ -56,9 +56,9 @@ function Creature.new(entity, metadata, options)
             bones = "bones", rise = "rise" },
         sightTimer = 0,
     }, Creature)
-    local random = love.math.newRandomGenerator(options.seed or 1)
+    local random = options.random or require("src.platform.source_random").new(options.seed)
     creature.random = function(a, b) return random:random(a, b) end
-    if spec.initializeCreature then spec.initializeCreature(creature, options.seed) end
+    if spec.initializeCreature then spec.initializeCreature(creature, options.seed, random) end
     return creature
 end
 

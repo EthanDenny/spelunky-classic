@@ -50,7 +50,7 @@ function FullGame:leave()
 end
 
 function FullGame:generateLevel(seed)
-    seed = seed or love.math.random(1, 2147483646)
+    if seed == nil and not self.run then seed = love.math.random(1, 2147483646) end
     self.transition = nil
     self.levelStats = { loot = {}, kills = {}, money = 0 }
     FullLevel.generateLevel(self, seed)

@@ -14,11 +14,20 @@ local RunState = require("src.game.run_state")
 
 local Test = {}
 
-local function jarSeedFor(kind, run)
+local function jarSeedFor(kind, run, app, side)
+    local game = FullLevelPlaytest.new(app)
+    game.renderer, game.run = app.renderer, run
+    game.world = World.new(12, 12, 16)
+    game.sounds = { play = function() end }
     for seed = 1, 10000 do
+        game.seed, game.level = seed, { entities = {} }
+        game.enemies, game.collectibles = {}, {}
+        game.effects = Effects.new(seed)
         local probe = Item.new({ kind = "jar", x = 0, y = 0 })
-        local rewards = probe:open(run, love.math.newRandomGenerator(seed))
-        if rewards[1] and rewards[1].kind == kind then return seed end
+        probe.impactSide = side
+        game:openContainer(probe)
+        local reward = game.enemies[1] or game.collectibles[1]
+        if reward and reward.kind == kind then return seed end
     end
     error("No jar roll found for " .. kind)
 end
@@ -368,12 +377,12 @@ function Test.run(app)
             screen.world = potWorld
             screen.player = Player.new(32, 32)
             screen.enemies, screen.collectibles = {}, {}
-            screen.effects = Effects.new(jarSeedFor(kind, screen.run))
             local pot = Item.new({ kind = "jar", x = case.x / 16, y = case.y / 16 })
             pot.vx, pot.vy = case.vx, case.vy
             screen.items = { pot }
             pot:update(potWorld, screen.player)
             assert(pot.justHit, "A " .. case.name .. " impact must break the pot")
+            screen.effects = Effects.new(jarSeedFor(kind, screen.run, app, pot.impactSide))
             screen:processItemImpact(pot)
             assert(pot.opened and #screen.enemies == 1 and screen.enemies[1].kind == kind,
                 "A " .. case.name .. "-broken pot must release its rolled " .. kind)
@@ -400,7 +409,7 @@ function Test.run(app)
     screen.player = Player.new(144, 90)
     screen.player.facing, screen.player.whipping, screen.player.animationFrame = 1, true, 5
     screen.enemies, screen.collectibles = {}, {}
-    screen.effects = Effects.new(jarSeedFor("spider", screen.run))
+    screen.effects = Effects.new(jarSeedFor("spider", screen.run, app))
     local whippedPot = Item.new({ kind = "jar", x = 10, y = 90/16 })
     screen.items = { whippedPot }
     assert(screen.player:whipOverlapsRectangle(156, 84, 164, 96),
@@ -420,8 +429,8 @@ function Test.run(app)
     local gemPot = Item.new({ kind = "jar", x = 391 / 16, y = 199 / 16 })
     gemPot.vx, gemPot.vy = -8.53, -6
     screen.items = { gemPot }
-    screen.effects = Effects.new(jarSeedFor("emerald_big", screen.run))
     gemPot:update(gemWorld, screen.player)
+    screen.effects = Effects.new(jarSeedFor("emerald_big", screen.run, app, gemPot.impactSide))
     screen:processItemImpact(gemPot)
     assert(gemPot.opened, "A ceiling impact must break the pot")
     assert(#screen.collectibles == 1, "A ceiling-broken pot must be able to release its gem")

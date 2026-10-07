@@ -6,14 +6,14 @@ local Bomb = require("src.platform.tools.bomb")
 local Rope = require("src.platform.tools.rope")
 local Explosion = require("src.platform.tools.explosion")
 
-function ToolSystem.new(world, tickRate)
+function ToolSystem.new(world, tickRate, random)
     return setmetatable({
         world = world,
         tickRate = tickRate or 30,
         bombs = {},
         ropes = {},
         explosions = {},
-        effects = Effects.new(1),
+        effects = Effects.new(1, random),
         assets = nil,
         explosionSound = nil,
     }, ToolSystem)

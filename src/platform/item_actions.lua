@@ -127,7 +127,9 @@ function ItemActions.updateMelee(context)
         local name = (player.meleeFacing or player.facing) < 0 and "sMattockHitL" or "sMattockHitR"
         local destroyed = context.world:destroySolidAtSprite(name, 2, x, y)
         if #destroyed > 0 then context.world:cleanExplosionTerrain(destroyed) end
-        if not context.world.game then
+        if context.world.game and #destroyed > 0 then
+            require("src.platform.terrain_destruction").update(context)
+        elseif not context.world.game then
             for _, cell in ipairs(destroyed) do
                 context.effects:terrainBreak(cell.pixelX or (cell.x + 0.5) * context.world.tileSize,
                     cell.pixelY or (cell.y + 0.5) * context.world.tileSize, context.world.tileSize, cell.entity)

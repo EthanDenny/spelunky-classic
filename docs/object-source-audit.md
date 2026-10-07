@@ -643,15 +643,20 @@ blocked. The following are still open, rather than implied to be certified:
 - GameMaker Step/Collision/End Step/Alarm/Animation end ordering, creation-tick
   behavior, equal-depth instance order and every activation/instance-cap case.
   The inspected branches are ported; the clone is not a complete GM8 scheduler.
-- Exact RNG algorithm and call order. Generation, actors and effects still use
-  different random streams. Seed equality with Classic is not established.
-- Universal terrain AUTO-mask coverage, exact rotated-mask rasterization and
-  legacy Direct3D circle/surface edge pixels. The inspected sprite contacts use
-  the archived masks; terrain movement still uses the world’s rectangles.
+- Exact RNG algorithm and complete creation/event call order. Generation,
+  gameplay actors, tools and effects now share one stream, with the source
+  `rand` wrapper; seed equality with Classic is not established. Some generation
+  work, including embedded shop-stock resolution, still runs in batches rather
+  than reproducing every original instance-creation event.
+- Exact rotated-mask rasterization and legacy Direct3D circle/surface edge
+  pixels. The scoped Mines solid masks were checked against the archived
+  RECTANGLE/AUTO definitions and are full 16×16 rectangles. Ladder body point
+  contacts now use their narrower AUTO bounds; see the source-only pass below.
 - Mattock instance selection and collision iteration use deterministic clone
   order; original tie behavior needs an executable trace.
-- Scarab Destroy’s use of `other` and the lab-only visual skull fallback still
-  need original-runtime verification. Generated Mines drop real carryable skulls.
+- Scarab Destroy's use of `other` when called from Step and the lab-only visual
+  skull fallback still need original-runtime verification. Collection now uses
+  the colliding character's origin. Generated Mines drop real carryable skulls.
 - Pot-released enemies retain the bounded nearby-free-space correction described
   in the pot placement follow-up. Unobstructed spawn coordinates match the source;
   embedded-spawn handling is a clone adaptation pending original collision traces.
@@ -736,3 +741,59 @@ the repaired native lifecycle test passes, and both renders were inspected.
 The original executable oracle was retried and still cannot connect to the
 Parallels service. The engine, RNG, rasterization and sound-mixing limits above
 remain open.
+
+
+### Source-only Mines parity pass (2026-10-06)
+
+The archived sprite XML and native mask reader confirm that the scoped brick,
+block, smooth cave, arrow-trap, altar and shop-sign solids use RECTANGLE/AUTO
+masks with full 16×16 bounds. Replacing their rectangles with opaque-pixel
+collision would introduce a mismatch. `sLadder` instead has AUTO bounds from
+column 1 through 14; the world now excludes columns 0 and 15 when checking
+ladder-body points. Ladder tops retain their full-width mask.
+
+`source_random.lua` implements `rand(a,b)` as `floor(random(b-a+1))+a`.
+Generation, actor AI, shopkeeper actions, giant-spider conversion, dice, ordinary
+particles and tool particles now use one live random stream. The next level
+continues that state, including calls consumed during gameplay. An explicitly
+selected seed starts a fresh reproducible stream. LÖVE still supplies the random
+algorithm; this does not establish GameMaker seed equivalence.
+
+Hidden item selection now runs when its brick is generated. Generated scarabs
+and dice likewise consume their Create rolls at their placement sites and keep
+those initial values when their live bodies are built. Dynamic creation still
+consumes the live stream at the actual spawn. This removes these delayed or
+repeated creation calls; it does not certify every generation call site.
+
+Pot Destroy now emits the smoke and three rubble pieces before rolling its
+contents, including the different call counts for side impacts. The mattock
+runs queued solid Destroy effects and drops at swing completion, before its
+break-chance roll. Duplicate pot destruction does not emit effects or reroll.
+The existing pot wall, floor, ceiling, corner and push-block clearance scenarios
+retain their assertions; their seed search now breaks an actual pot with the
+same impact side instead of rolling contents directly.
+
+Scarab hits reduce HP immediately but defer destruction to the next active
+Step. That Step moves first, tests embedded terrain, emits its death sparks,
+and continues the remaining source statements after destruction, preserving
+those random calls. Offscreen steps remain deferred. Collection Destroy sparks
+use the colliding character's origin. The separate Step-triggered Destroy
+`other` context still retains the documented fallback pending an executable
+trace; it is not inferred from the collection case.
+
+Verification: the ladder regression and the first six new Mines scenario groups
+fail for their intended discrepancies against an isolated pre-change snapshot.
+The generated-actor group and the post-destruction scarab random assertion also
+fail against their pre-fix implementation. The new scenarios use production
+factories, actions, generation and event owners; random expectations apply the
+source formula to an independent native stream. No test-only gameplay exports
+were added. The existing dropped-spider check now observes its fall throughout
+the scenario instead of assuming its height at one arbitrary bounce phase.
+
+The full native `love . --smoke-test` suite passes with **74 Mines completion
+scenarios**, **12 Kali scenarios**, **58 native sound-event cases**, Full game
+lifecycle/intermission pixel checks, and the remaining gameplay/render owners.
+Manual diff review and `git diff --check` pass. Original-runtime comparison
+remains blocked by the Parallels service; the engine scheduling, complete RNG
+call-order, rotated-mask, rasterization and sound-mixing limits above remain
+open.

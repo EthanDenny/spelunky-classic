@@ -22,14 +22,16 @@ function Factory.create(game, entity, options)
         metadata = sprite and sprite.metadata
     end
     local body
-    if group == "items" then body = Item.new(entity, metadata)
+    if group == "items" then body = Item.new(entity, metadata, game.effects.random)
     elseif group == "collectibles" then body = Treasure.new(entity, not options.placed, game)
     elseif dynamicEnemies[entity.kind] then
         body = Enemy.new(entity.kind, options.x or entity.x*16+8, options.y or entity.y*16+16,
-            { seed = options.seed or game.seed+#game.enemies, hanging = options.placed and entity.kind ~= "snake" or false })
+            { seed = options.seed or game.seed+#game.enemies, random = game.effects.random,
+                hanging = options.placed and entity.kind ~= "snake" or false })
     else
         body = Creature.new(entity, metadata, {
             seed = options.seed or game.seed+#game.enemies,
+            random = game.effects.random,
             angry = options.placed and entity.kind == "shopkeeper" and game.run.shopkeeperAnger > 0,
         })
     end

@@ -4,6 +4,7 @@ local MinesVariants = require("src.world.mines_variants")
 local RunState = require("src.game.run_state")
 
 local Tiles = require("src.platform.tiles.types")
+local Random = require("src.platform.source_random")
 
 local MinesGenerator = {}
 
@@ -13,16 +14,6 @@ local ROOM_COLUMNS = 4
 local ROOM_ROWS = 4
 local ROOM_WIDTH = 10
 local ROOM_HEIGHT = 8
-
-local function newRandom(seed)
-    local source = love.math.newRandomGenerator(seed)
-
-    return {
-        integer = function(_, minimum, maximum)
-            return source:random(minimum, maximum)
-        end,
-    }
-end
 
 local function makeGrid(width, height)
     local grid = {}
@@ -105,6 +96,9 @@ local function createBrick(level, rng, x, y, options)
             addEntity(level, "hidden_ruby", x, y)
         elseif rng:integer(1, 1200) == 1 then
             addEntity(level, "hidden_item", x, y)
+            local hidden = level.entities[#level.entities]
+            hidden.contentKind, hidden.contentX, hidden.contentY =
+                require("src.platform.item_contents").underground(rng)
         end
     end
 
@@ -452,6 +446,7 @@ local function generateSymbol(level, rng, symbol, x, y, roomX, roomY, shopType)
         addEntity(level, "shop_item", x, y, { shopType = shopType, highEnd = symbol == "q" })
     elseif symbol == "d" then
         addEntity(level, "die", x + 0.5, y + 0.5)
+        level.entities[#level.entities].diceValue = rng:integer(1, 6)
     elseif symbol == "D" then
         addEntity(level, "damsel", x + 0.5, y + 0.5, { forSale = true })
         level.hasDamsel = true
@@ -558,10 +553,11 @@ function MinesGenerator.generate(seed, options)
     options = options or {}
     validateTemplates()
 
-    local rng = newRandom(seed)
+    local rng = options.random or Random.new(seed)
     local level = {
         area = "mines",
         seed = seed,
+        random = rng,
         graphicsHigh = options.graphicsHigh ~= false,
         levelNumber = math.max(1, math.min(4, options.levelNumber or 1)),
         absoluteLevel = math.max(1, math.min(4, options.levelNumber or 1)),

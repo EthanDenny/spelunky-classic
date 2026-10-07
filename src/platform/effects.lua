@@ -76,11 +76,11 @@ function Effects.loadAssets()
     return images
 end
 
-function Effects.new(seed)
+function Effects.new(seed, random)
     return setmetatable({
         particles = {},
         trails = {},
-        random = love.math.newRandomGenerator(seed or 1),
+        random = random or require("src.platform.source_random").new(seed),
     }, Effects)
 end
 

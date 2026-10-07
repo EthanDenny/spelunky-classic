@@ -54,7 +54,7 @@ function Treasure:damage(amount, _, hit)
     if not self.alive or not self.hp then return false end
     self.hp = self.hp-amount
     if hit then self.vx, self.vy = hit.vx or self.vx, hit.vy or self.vy end
-    if self.hp <= 0 then
+    if self.hp <= 0 and not self.definition.deferDeath then
         self.alive = false
         if self.definition.onDeath and self.game then self.definition.onDeath(self, self.game) end
     end

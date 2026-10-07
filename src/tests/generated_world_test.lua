@@ -35,6 +35,10 @@ function Test.run()
         "Both halves of the sacrifice altar must block movement")
     assert(world:has("ladder", 1, 2) and world:has("ladderTop", 1, 1),
         "Generated ladders must retain their body and one-way top distinction")
+    for _, x in ipairs({ 16, 17, 30, 31 }) do
+        assert((world:climbableAtPoint(x, 40) ~= nil) == (x > 16 and x < 31),
+            "A ladder's AUTO rectangle excludes its transparent outer columns")
+    end
 
     local x, y = GeneratedWorld.spawnPoint(level)
     assert(x == 24 and y == 24, "Player spawn must use the entrance tile center")

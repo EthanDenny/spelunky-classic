@@ -4,6 +4,7 @@ local Definition = Traits.money(4000, "coin")
 
 Definition.depth = 40
 Definition.hp = 1
+Definition.deferDeath = true
 Definition.bloodless = true
 Definition.deathBlood = 0
 Definition.treasureAnchor = { 8, 8 }
@@ -15,7 +16,7 @@ local function random(body, minimum, maximum)
 end
 
 function Definition.initializeTreasure(body)
-    body.counter = random(body, 10, 30)
+    body.counter = body.entity.counter or random(body, 10, 30)
 end
 
 function Definition.collisionSprite(body)
@@ -31,9 +32,13 @@ function Definition.updateTreasure(body, world, player)
     Physics.move(world, body, "x", body.vx)
     Physics.move(world, body, "y", body.vy)
     if world:solidAtPoint(body.x, body.y) then
-        body:damage(999)
-        return
+        body.hp = -999
     end
+    if body.hp < 1 then
+        body.alive = false
+        Definition.onDeath(body, body.game)
+    end
+    -- oScarab continues its Step after instance_destroy, including rand calls.
     local function slow(value)
         if value > 0 then value = value-0.5 elseif value < 0 then value = value+0.5 end
         return math.abs(value) < 1 and 0 or value
@@ -54,11 +59,15 @@ function Definition.updateTreasure(body, world, player)
     if Physics.probe(world, body, "y", 1) and body.vy > 0 then body.vy = -body.vy end
 end
 
-function Definition.onCollected(body, game)
+local function destroySparks(game, x, y)
     local random = game.effects.random
     for _ = 1, 3 do
-        game.effects:add("teleport_spark", body.x-2+random:random(0,4), body.y-2+random:random(0,4))
+        game.effects:add("teleport_spark", x+random:random(0,4), y+random:random(0,4))
     end
+end
+
+function Definition.onCollected(_, game)
+    destroySparks(game, game.player.x+6, game.player.y+6)
 end
 
 function Definition.onDeath(body, game)
@@ -67,7 +76,7 @@ function Definition.onDeath(body, game)
         game.effects:add("teleport_spark", body.x-6+random:random(0,14),
             body.y-6+random:random(0,14), 0, random:random(1,3))
     end
-    Definition.onCollected(body, game)
+    destroySparks(game, body.x-2, body.y-2)
 end
 
 return Definition

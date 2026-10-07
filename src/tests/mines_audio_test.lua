@@ -93,6 +93,7 @@ function Test.run(app)
         end
         check("scarab inherits enemy hit", function(game)
             local scarab = swing(game, nil, "scarab")
+            scarab:update(game.world, game.player)
             assert(not scarab.alive, "Whip must kill the scarab")
             heard("whip,hit")
         end)
@@ -205,7 +206,7 @@ function Test.run(app)
         end)
         for _, kind in ipairs({ "crate", "flare_crate", "chest" }) do
             check(kind.." opens", function(game)
-                game.effects.random:setSeed(101)
+                game.effects.random = require("src.platform.source_random").new(101)
                 local item = game:spawnEntity(kind, game.player.x, game.player.y)
                 item:pickup(game.player, game.run)
                 game.heldItem = item
