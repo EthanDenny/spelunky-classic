@@ -838,3 +838,30 @@ sound-event cases**, **20 worn-equipment pixel cases**, Full game lifecycle and
 the remaining gameplay/render owners. No test-only gameplay exports were added.
 Original-runtime scheduling and visual comparison remain uncertified under the
 previously documented Parallels limitation.
+
+### Thrown paste-bomb sprites and shotgun lethality (2026-10-07)
+
+The source's bomb-button branch sets `sBombArmed`, `armed = true` and image
+speed 0.2 for both ordinary and paste bombs. Paste sets `sticky`; it changes
+attachment and depth, not the sprite or draw tint. `oBomb` Alarm 0 increases
+image speed to 1 for the final 40 ticks. The existing production renderer loads
+the two archived armed frames directly. New native pixel checks exercise actual
+throws and compare both bomb variants at ticks 0, 6, 11, 81 and 82 with those
+archived frames and their 4,4 origin. They pass without a production change.
+The reported visual discrepancy remains unreproduced; these checks establish
+the bomb's own rendering, not every possible scene overlap.
+
+`scrUseItem` creates six shotgun bullets. Each `oBullet` enemy collision removes
+four HP without a bullet immunity check. Generated hanging giant spiders start
+with 10 HP and transfer remaining HP to the active spider; shopkeepers have
+20 HP. A close volley can therefore kill either enemy immediately. The latest
+playtest recorded a shopkeeper changing from 20 to -4 and a giant spider from
+10 to -2 in their hit ticks, consistent with those source rules. New gameplay
+checks use actual held-weapon actions: a pistol bullet leaves 16 or 6 HP, while
+a close shotgun volley kills both. The giant spider completes its real
+conversion animation before the weapon checks. Damage is unchanged.
+
+The full native suite passes with **77 Mines completion scenarios**, the new
+bomb pixel checks, **13 Kali scenarios**, **58 native sound-event cases** and
+the existing gameplay, rendering and Full game owners. These are coverage of
+existing source contracts, not regressions for a repaired production defect.

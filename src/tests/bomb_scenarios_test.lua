@@ -106,6 +106,47 @@ function Test.run(app)
     assert(not launches:throwBomb(thrower) and #launches.bombs == 4,
         "A whip must prevent launching or consuming another bomb")
 
+    for _, sticky in ipairs({ false, true }) do
+        local world = World.new(40, 40, 16)
+        local player = Player.new(200, 200)
+        player.equipment.paste = sticky
+        local tools = ToolSystem.new(world, Player.TICK_RATE)
+        tools:loadAssets()
+        local bomb = tools:throwBomb(player)
+        assert(bomb.armed and bomb.sticky == sticky)
+        local tick = 0
+        for _, sample in ipairs({ { 0, 0 }, { 6, 1 }, { 11, 0 }, { 81, 1 }, { 82, 0 } }) do
+            while tick < sample[1] do
+                tools:update(player, {}, {})
+                tick = tick+1
+            end
+            local canvas = love.graphics.newCanvas(16, 16)
+            love.graphics.push("all")
+            love.graphics.setCanvas(canvas)
+            love.graphics.clear(0, 0, 0, 0)
+            love.graphics.origin()
+            love.graphics.translate(8-math.floor(bomb.x), 8-math.floor(bomb.y))
+            tools:drawBomb(bomb)
+            love.graphics.pop()
+            local actual = canvas:newImageData()
+            local expected = love.image.newImageData("original-game-reference/source/extracted/spelunky/Sprites/Items/Weapons/"
+                .. "sBombArmed.images/image " .. sample[2] .. ".png")
+            for y = 0, 15 do
+                for x = 0, 15 do
+                    local r, g, b, a = actual:getPixel(x, y)
+                    local er, eg, eb, ea = 0, 0, 0, 0
+                    if x >= 4 and x < 12 and y >= 4 and y < 12 then
+                        er, eg, eb, ea = expected:getPixel(x-4, y-4)
+                    end
+                    assert(math.abs(a-ea) < 0.01 and (ea == 0 or
+                        math.abs(r-er) < 0.01 and math.abs(g-eg) < 0.01 and math.abs(b-eb) < 0.01),
+                        "Thrown " .. (sticky and "paste" or "ordinary") .. " bombs must render the source armed frame at tick " .. tick)
+                end
+            end
+            canvas:release()
+        end
+    end
+
     local pickupGame = FullLevelPlaytest.new(app)
     pickupGame.world = World.new(12, 9, 16)
     pickupGame.player = Player.new(72, 72)

@@ -281,6 +281,30 @@ function Test.run()
             assert(bullet.x == 120 and bullet.alive and snake.alive,
                 "oBullet's direct Step movement can pass a target between collision events")
         end },
+        { "one bullet wounds durable enemies while a close shotgun volley can kill them", function()
+            for _, kind in ipairs({ "shopkeeper", "giant_spider" }) do
+                for _, weapon in ipairs({ "pistol", "shotgun" }) do
+                    local game = fixture()
+                    game.player.facing = 1
+                    local target = game:spawnEntity(kind, 200, kind == "giant_spider" and 80 or 112)
+                    for _ = 1, 12 do game:simulationStepBody({}) end
+                    target.x, target.y, target.vx, target.vy = 108, 112, 0, 0
+                    local gun = game:spawnEntity(weapon, game.player.x, game.player.y)
+                    assert(gun:pickup(game.player))
+                    game.heldItem = gun
+                    for tick = 1, 8 do game:simulationStepBody({ attack = tick == 1 }) end
+                    if weapon == "pistol" then
+                        assert(target.alive and target.hp == (kind == "shopkeeper" and 16 or 6),
+                            "One four-damage bullet cannot instantly kill a healthy " .. kind
+                                .. " (HP " .. target.hp .. ", alive " .. tostring(target.alive) .. ")")
+                    else
+                        assert(not target.alive and target.hp <= 0,
+                            "A close shotgun volley can kill a healthy " .. kind .. " without bullet immunity"
+                                .. " (HP " .. target.hp .. ", alive " .. tostring(target.alive) .. ")")
+                    end
+                end
+            end
+        end },
         { "fast rocks transfer velocity, ignore immunity, and can be caught by a mitt", function()
             for _, mitt in ipairs({ false, true }) do
                 local game = fixture()
