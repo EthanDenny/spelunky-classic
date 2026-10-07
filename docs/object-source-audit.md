@@ -865,3 +865,20 @@ The full native suite passes with **77 Mines completion scenarios**, the new
 bomb pixel checks, **13 Kali scenarios**, **58 native sound-event cases** and
 the existing gameplay, rendering and Full game owners. These are coverage of
 existing source contracts, not regressions for a repaired production defect.
+
+### Exit support protection (2026-10-07)
+
+`scrRoomGen` marks the brick beneath each exit invincible, while the entrance
+support remains ordinary terrain. The generator already wrote this flag on the
+tile, but `World:isProtectedCell` read it from `tile.properties` instead. Static
+tile protection now reads the tile's `invincible` and `fixed` flags, matching
+the generated tile representation. Dynamic bodies retain their separate
+properties. Bombs, mattocks and boulders share this static protection check.
+
+The bomb owner now tests real generated exits at three seeds across all four
+Mines depths instead of supplying a hand-built tile with the wrong flag shape.
+Actual explosion updates preserve exit support collision and queue no support
+destruction event, while destroying an ordinary neighbor and entrance support.
+The boulder fixture also uses the actual static tile shape. The generated-exit
+regression fails before the fix at depth 1, seed 1; the full native suite passes
+after the fix with all existing gameplay and rendering checks.

@@ -46,21 +46,33 @@ function Test.run(app)
     assert(not block.alive and large == 1 and small == 2,
         "A blast-destroyed movable block must emit one large and two small rubble pieces")
 
-    local protectedWorld = World.new(12, 9, 16)
-    protectedWorld:set("solid", 6, 5)
-    protectedWorld.level = { tiles = { [6] = { [7] = {
-        kind = "brick", properties = { invincible = true },
-    } } } }
-    local protectedTools = ToolSystem.new(protectedWorld, Player.TICK_RATE)
-    protectedTools:explode(104, 88)
-    local protectedRubble = 0
-    for _, particle in ipairs(protectedTools.effects.particles) do
-        if particle.kind == "rubble" or particle.kind == "rubbleLarge" then
-            protectedRubble = protectedRubble + 1
+    for levelNumber = 1, 4 do
+        for _, seed in ipairs({ 1, 17, 8675309 }) do
+            local level = require("src.world.mines_generator").generate(seed, { levelNumber = levelNumber })
+            local world = require("src.platform.generated_world").fromLevel(level)
+            local tools = ToolSystem.new(world, Player.TICK_RATE)
+            local x, y = level.exit.x, level.exit.y+1
+            local neighborX = x == level.width-2 and x-1 or x+1
+            world:set("solid", neighborX, y)
+            level.tiles[y+1][neighborX+1] = { kind = "brick" }
+            local observer = Player.new(16, 16)
+            tools:explode((x+0.5)*16, (y+0.5)*16)
+            for _ = 1, 13 do tools:update(observer, {}, {}) end
+            assert(world:has("solid", x, y),
+                "Bombs must preserve the generated exit support at Mines depth " .. levelNumber .. ", seed " .. seed)
+            assert(not world:has("solid", neighborX, y),
+                "The same explosion must still destroy an ordinary neighboring brick")
+            for _, event in ipairs(world.destructions or {}) do
+                assert(event.x ~= x or event.y ~= y,
+                    "An invincible exit support cannot queue destruction effects or treasure drops")
+            end
+            local entranceX, entranceY = level.entrance.x, level.entrance.y+1
+            tools:explode((entranceX+0.5)*16, (entranceY+0.5)*16)
+            for _ = 1, 13 do tools:update(observer, {}, {}) end
+            assert(not world:has("solid", entranceX, entranceY),
+                "Classic protects exit supports, while entrance supports remain destructible")
         end
     end
-    assert(protectedWorld:has("solid", 6, 5) and protectedRubble == 0,
-        "An invincible block must remain intact and emit no destruction rubble")
 
     local skeleton = Enemy.new("skeleton", 88, 88, { seed = 18 })
     local skeletonTools = ToolSystem.new(World.new(12, 9, 16), Player.TICK_RATE)

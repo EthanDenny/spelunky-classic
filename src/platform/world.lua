@@ -327,7 +327,7 @@ function World:isProtectedCell(tileX, tileY)
     if not self.level then return false end
     local row = self.level.tiles[tileY + 1]
     local tile = row and row[tileX + 1]
-    return tile and tile.properties and (tile.properties.invincible or tile.properties.fixed)
+    return tile and (tile.invincible or tile.fixed)
 end
 
 function World:destroyTerrain(centerX, centerY, radius, overlaps)
