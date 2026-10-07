@@ -63,12 +63,12 @@ local function sacrifice(game, body, altar)
     if game.run.favor <= -8 then message = body.kind == "damsel"
         and "KALI DEVOURS YOUR SACRIFICE!" or "KALI DEVOURS THE SACRIFICE!"
     else game.run.favor = game.run.favor + (body.corpse and spec.deadFavor or spec.favor) end
-    local response = favorMessage(game, body, altar)
-    game.run:addMessage(message .. "\n" .. response, 200)
-    game.shakeTicks = math.max(game.shakeTicks or 0, 10)
     game.effects:add("flame", body.x, body.y - 8)
     game.effects:blood(body.x, body.y - 8, 3)
     game.sounds:play("small_explode")
+    local response = favorMessage(game, body, altar)
+    game.run:addMessage(message .. "\n" .. response, 200)
+    game.shakeTicks = math.max(game.shakeTicks or 0, 10)
     body.alive, body.corpse, body.sacrificed = false, false, true
     body.deathCounted = true
     body.entity.destroyed = true

@@ -106,7 +106,12 @@ function Test.run()
                 assert(level.symbols[entity.y+1][entity.x+1] == "l" or parentY > 1 and parentY < level.height-4
                     and (roomX ~= level.startRoomX or roomY ~= level.startRoomY),
                     "Dark ceiling spawns must obey the source top, bottom and entrance-room exclusions")
-                if entity.kind == "lamp" then lamps = lamps+1 else scarabs = scarabs+1 end
+                if entity.kind == "lamp" then
+                    local tile = level.tiles[entity.y+1][entity.x+1]
+                    assert(tile.kind ~= "ladder" and tile.kind ~= "ladder_top",
+                        "A hanging lamp must not occupy a climbable ladder cell (seed " .. seed .. ")")
+                    lamps = lamps+1
+                else scarabs = scarabs+1 end
             elseif entity.kind == "arrow_trap_left_lit" or entity.kind == "arrow_trap_right_lit" then
                 litTraps = litTraps+1
             else

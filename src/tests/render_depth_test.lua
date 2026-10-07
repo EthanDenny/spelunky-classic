@@ -49,6 +49,8 @@ local function assertWornEquipment(app)
     for _, case in ipairs({
         { "cape", 1, "standing", "sStandLeft", "sCapeDR", 0, -4, -2 },
         { "cape", -1, "running", "sRunLeft", "sCapeLeft", 3, 4, -2, moving = true },
+        { "cape", 1, "running", "sRunLeft", "sCapeRight", 1, -4, -2, moving = true, startMoving = true },
+        { "cape", -1, "running", "sRunLeft", "sCapeLeft", 1, 4, -2, moving = true, startMoving = true },
         { "cape", 1, "falling", "sFallLeft", "sCapeUR", 1, -4, -2, open = true },
         { "cape", -1, "falling", "sFallLeft", "sCapeUL", 1, 4, -2, open = true },
         { "cape", 1, "climbing", "sClimbUp", "sCapeBack", 0, 0, 4, front = true },
@@ -76,8 +78,16 @@ local function assertWornEquipment(app)
         end
         if case.replaces then pickup(case.replaces) end
         pickup(case[1])
-        game.player.state, game.player.vx, game.player.capeOpen = "falling", case.moving and 2 or 0, case.open
+        game.player.state, game.player.vx, game.player.capeOpen = "falling",
+            case.moving and not case.startMoving and 2 or 0, case.open
         for _ = 1, 3 do game:simulationStepBody({}) end
+        if case.startMoving then
+            for _ = 1, 10 do
+                game:simulationStepBody({ right = case[2] == 1, left = case[2] == -1 })
+                if math.abs(game.player.vx) > 0 then break end
+            end
+            assert(math.abs(game.player.vx) > 0, "Cape regression must reach the first movement tick")
+        end
         game.items = {}
         game.player.x, game.player.y = 400, 300
         game.cameraX, game.cameraY = 240, 180

@@ -90,13 +90,16 @@ function Effects:add(kind, x, y, vx, vy)
         kind = kind, x = x, y = y, vx = vx or 0, vy = vy or 0,
         age = 0, life = definition.life,
     }
-    if definition.randomGravity then
-        particle.gravity = self.random:random(1, 6) * 0.1
-    elseif definition.gravity then particle.gravity = definition.gravity end
+    if definition.initialVx and vx == nil then
+        particle.vx = definition.initialVx(self.random)
+    end
     if definition.initialVy and vy == nil then
         particle.vy = type(definition.initialVy) == "function"
             and definition.initialVy(self.random) or definition.initialVy
     end
+    if definition.randomGravity then
+        particle.gravity = self.random:random(1, 6) * 0.1
+    elseif definition.gravity then particle.gravity = definition.gravity end
     self.particles[#self.particles + 1] = particle
     return particle
 end

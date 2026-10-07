@@ -57,6 +57,43 @@ end
 
 function Test.run()
     local cases = {
+        { "hanging giant spiders wait for conversion before their first bounce", function()
+            local game = fixture()
+            game.world:fill("solid", 11, 3, 2, 1)
+            local spider = game:spawnEntity("giant_spider", 200, 80)
+            for _ = 1, 90 do game:simulationStepBody({}) end
+            assert(spider.alive and spider.state == "hang" and spider.y == 80,
+                "An undisturbed hanging giant spider cannot run an active spider's alarm")
+            game.player.x = 200
+            game:simulationStepBody({})
+            assert(spider.alive and spider.state == "idle" and spider.height == 32
+                and spider.y == 96,
+                "Approaching from below converts the spider while preserving its source top-left")
+            game.player.x = 80
+            local bounced = false
+            for _ = 1, 90 do
+                game:simulationStepBody({})
+                bounced = bounced or spider.vy < 0
+                assert(spider.alive and not game.world:collidesSolid(spider, spider.x, spider.y),
+                    "The converted giant spider must keep its active collision bounds clear of terrain")
+            end
+            assert(bounced, "The converted spider must actually bounce during the terrain regression")
+        end },
+        { "falling push blocks crush treasure without crushing adjacent or supported treasure", function()
+            for _, kind in ipairs({ "gold_bar", "gold_bars", "emerald_big", "diamond" }) do
+                local game = fixture()
+                game.world:addDynamicSolid({ kind = "push_block", x = 160, y = 64,
+                    width = 16, height = 16, moveable = true, vx = 0, vy = 0 })
+                local crushed = game:spawnEntity(kind, 168, 108)
+                local beside = game:spawnEntity(kind, 184, 108)
+                local supported = game:spawnEntity(kind, 168, 60)
+                for _ = 1, 15 do game:simulationStepBody({}) end
+                assert(not crushed.alive and game.run.money == 0,
+                    "A push block covering " .. kind .. " must destroy it without paying the player")
+                assert(beside.alive and supported.alive,
+                    "A block's side and supporting top cannot destroy uncrushed treasure")
+            end
+        end },
         { "generated scarabs and dice keep the random state from their creation event", function()
             local Generator = require("src.world.mines_generator")
             for _, kind in ipairs({ "scarab", "die" }) do
@@ -93,6 +130,7 @@ function Test.run()
             local die = game:spawnEntity("die", 120, 80)
             assert(die.diceValue == rand(1, 6), "Dice creation consumes the next shared rand")
             game.effects:add("flame", 160, 80)
+            for _ = 1, 3 do reference:random() end
             assert(game.effects.particles[1].gravity == rand(1, 6)*0.1,
                 "Particle creation continues the actors' random sequence")
             local giant = game:spawnEntity("giant_spider", 200, 80)
@@ -105,6 +143,7 @@ function Test.run()
             assert(gun.vy == rand(4, 6) and gun.vx == rand(4, 6),
                 "Shopkeeper gun-drop impulses consume the same rand sequence")
             game.tools.effects:add("flame", 160, 80)
+            for _ = 1, 3 do reference:random() end
             assert(game.tools.effects.particles[1].gravity == rand(1, 6)*0.1,
                 "Tool particles continue the same random sequence")
             local nextScarab = game:spawnEntity("scarab", 220, 80)

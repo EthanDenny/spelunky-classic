@@ -1260,7 +1260,7 @@ function Player:updateSoundAlarms()
     end
 end
 
-function Player:step(world, input)
+local function stepMovement(self, world, input)
     input = input or {}
     local rawInput = input
     local jumpRestricted = self.cantJumpTimer > 0
@@ -1273,7 +1273,6 @@ function Player:step(world, input)
     end
     world.time = (world.time or 0) + 1
     self.tick = world.time
-    Cape.stepWorn(self)
     self:updateSoundAlarms()
     self.currentInput = input
     local jumpPressed = self:pressed(input, "jump")
@@ -1379,6 +1378,11 @@ function Player:step(world, input)
     self.wideCollision = math.abs(self.vx) >= 4 and self:isGroundState()
     self.collisionTopOffset = -8
     self:rememberInput(rawInput)
+end
+
+function Player:step(world, input)
+    stepMovement(self, world, input)
+    Cape.stepWorn(self)
 end
 
 function Player:getAnimationFrame()

@@ -53,6 +53,31 @@ end
 
 function Test.run(app)
     local cases = {
+        { "sacrifice feedback launches its flame before blood and gift rolls", function()
+            local game = fixture()
+            game.run.favor = 7
+            sacrificeBody(game, "caveman", true, 184)
+            ticks(game, 20)
+            game.effects = Effects.new(17)
+            local reference = love.math.newRandomGenerator(17)
+            local velocities = {}
+            for i = 1, 4 do
+                velocities[i] = { reference:random()*4-reference:random()*4,
+                    -1-reference:random()*2, (1+math.floor(reference:random()*6))*0.1 }
+            end
+            local gift = ({ "cape", "gloves", "spectacles", "mitt", "spring_shoes",
+                "spike_shoes", "paste", "compass" })[1+math.floor(reference:random()*8)]
+            ticks(game, 1)
+            for i, velocity in ipairs(velocities) do
+                local particle = game.effects.particles[i]
+                assert(particle and particle.kind == (i == 1 and "flame" or "blood")
+                    and math.abs(particle.vx-velocity[1]) < 0.000001
+                    and math.abs(particle.vy-velocity[2]-velocity[3]) < 0.000001,
+                    "The sacrifice's flame and blood must use source Create launch velocities and call order")
+            end
+            assert(game.items[#game.items].kind == gift,
+                "Kali's gift roll must follow the sacrifice's flame and blood Create events")
+        end },
         { "stationary bodies are consumed after twenty countdown ticks", function()
             for _, example in ipairs({ { "caveman", false, 2 }, { "caveman", true, 1 },
                 { "shopkeeper", false, 12 }, { "shopkeeper", true, 6 },

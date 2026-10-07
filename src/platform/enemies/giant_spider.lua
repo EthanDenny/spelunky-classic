@@ -47,6 +47,7 @@ end
 function GiantSpider.initialize(spider, seed, random)
     spider.height = 16 -- oGiantSpiderHang uses a 32x16 sprite and collision box.
     spider.state = "hang"
+    spider.timer = 0
     spider.spriteName = "sGiantSpiderHang"
     spider.animation = 0
     spider.imageSpeed = 0.4

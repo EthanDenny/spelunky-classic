@@ -193,7 +193,11 @@ local function populateMines(level, rng, x, y, state)
                 addEntity(level, "web", x, y + 2)
                 addEntity(level, "web", x + 1, y + 2)
                 state.giantSpider = true
-            elseif level.dark and rng:integer(1, 60) == 1 then addEntity(level, "lamp", x, y + 1)
+            elseif level.dark and rng:integer(1, 60) == 1 then
+                local tile = getTile(level, x, y+1)
+                if tile.kind ~= "ladder" and tile.kind ~= "ladder_top" then
+                    addEntity(level, "lamp", x, y+1)
+                end
             elseif level.dark and rng:integer(1, 40) == 1 then
                 addEntity(level, "scarab", x, y + 1)
                 level.entities[#level.entities].counter = rng:integer(10, 30)

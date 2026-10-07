@@ -78,6 +78,12 @@ function Treasure:update(world, player)
         if not Activity.enemy(world, self) then return end
     elseif not Activity.contains(world, self) then return end
     if not self.active then return end
+    local block = world:dynamicSolidAt(self.x, self.y, self.x+0.001, self.y+0.001, true)
+    if not self.hp and block and block.kind == "push_block" then
+        self.alive = false
+        self.entity.destroyed = true
+        return
+    end
     if self.definition.updateTreasure then
         self.definition.updateTreasure(self, world, player)
         self:syncEntity()

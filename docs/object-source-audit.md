@@ -797,3 +797,44 @@ Manual diff review and `git diff --check` pass. Original-runtime comparison
 remains blocked by the Parallels service; the engine scheduling, complete RNG
 call-order, rotated-mask, rasterization and sound-mixing limits above remain
 open.
+
+### Cape, giant spider, treasure, lamp and Kali feedback (2026-10-06)
+
+The cape now advances after the player's movement Step, using the resulting
+pose's frame count. Previously, starting to move advanced against the stationary
+one-frame sprite before rendering the running sprite. The archived cape poses,
+origins and draw depths remain unchanged. Animation still advances one frame per
+tick: neither `oCape` nor its parent overrides the engine's default image speed
+([GameMaker 8 manual, page 44](https://web.engr.oregonstate.edu/~mjb/gamemaker/gmaker80.pdf)).
+The worn-equipment pixel owner now checks both directions on the first actual
+movement tick, alongside the existing running, open, climbing and exit poses.
+
+Giant spiders inherited a generic creature alarm while hanging. It could fire
+before the source conversion, leaving an active bouncing spider with the hanging
+16-pixel height and wrong anchor. Hanging spiders now start without that alarm;
+the active object's Step schedules it after conversion. The regression waits
+90 ticks under a ceiling, approaches from below, then observes actual bouncing
+while checking that the active collision bounds remain clear of terrain.
+
+Kali's sacrifice flame now receives `oFlame.Create`'s horizontal and upward
+launch velocities before its random gravity. Sacrifice flame and blood creation
+also precede the gift roll, as in the enemy and damsel source events. The Kali
+owner checks the resulting particle order, launch velocities and selected gift
+against an independent random stream. Explicit explosion launch velocities keep
+their existing call count.
+
+Two changes intentionally follow the requested gameplay behavior rather than
+claiming literal source parity. A live push block covering an ordinary treasure
+origin destroys that treasure without paying the player; adjacent treasure and
+treasure supported on top survive. No matching treasure-crush rule was found in
+the archived treasure events. Dark-level ceiling lamps now skip ladder and
+ladder-top cells, preserving the placement roll and consuming no replacement
+roll; the archived generation branch permits that overlap.
+
+All five regression contracts fail for their intended discrepancy against an
+isolated pre-fix snapshot. The repaired full native `love . --smoke-test` suite
+passes: **76 Mines completion scenarios**, **13 Kali scenarios**, **58 native
+sound-event cases**, **20 worn-equipment pixel cases**, Full game lifecycle and
+the remaining gameplay/render owners. No test-only gameplay exports were added.
+Original-runtime scheduling and visual comparison remain uncertified under the
+previously documented Parallels limitation.
