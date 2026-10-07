@@ -1,0 +1,44 @@
+src/tests/mines_completion_test.lua
+  s_a149baf2181030::t_5a75014fcf2493 60-96
+  s_a149baf2181030::t_297db2cb84ce56 133,146
+src/tests/kali_altar_test.lua
+  s_a149baf2181030::t_5a75014fcf2493 56-80
+docs/object-source-audit.md
+  s_a149baf2181030::t_7ac778ad555c73 800-840
+src/platform/kali.lua
+  s_a149baf2181030::t_013a598a5b96c8 69-71
+src/platform/treasure.lua
+  s_a149baf2181030::t_013a598a5b96c8 81-86
+src/platform/effects.lua
+  s_a149baf2181030::t_013a598a5b96c8 93-95,100-102
+src/tests/render_depth_test.lua
+  s_a149baf2181030::t_59105b83eaa5be 85-89
+  s_a149baf2181030::t_332b9840986139 52-53,81-82,84,90
+src/platform/player.lua
+  s_a149baf2181030::t_297db2cb84ce56 1263,1383-1385
+  s_a149baf2181030::t_03ade5cd198fd2 1386-1387
+src/world/entity_generator.lua
+  s_a149baf2181030::t_013a598a5b96c8 196-200
+src/platform/effects/flame.lua
+  s_a149baf2181030::t_013a598a5b96c8 4-5
+src/platform/enemies/giant_spider.lua
+  s_a149baf2181030::t_013a598a5b96c8 50
+src/tests/entity_population_test.lua
+  s_a149baf2181030::t_5a75014fcf2493 109-114
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2e9acfbf534256ae8f5f98bc04fba3dcad1e26b1",
+  "prompts": {},
+  "sessions": {
+    "s_a149baf2181030": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0fdc3-ae05-7e41-a96b-bd7a333b41c3",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Ethan Denny <ethandenny@protonmail.com>"
+    }
+  }
+}
