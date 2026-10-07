@@ -2,11 +2,7 @@
 
 This is a coverage inventory for the original **Spelunky Classic (1.1)**, not a claim that the game is finished. The original source in [`original-game-reference`](original-game-reference/SOURCE_OF_TRUTH.md) is the behavioral authority; the [Classic wiki's places](https://spelunky.fandom.com/wiki/Places_%28Classic%29), [level feelings](https://spelunky.fandom.com/wiki/Level_Feeling_%28Classic%29), [enemies](https://spelunky.fandom.com/wiki/Enemies_%28Classic%29), [items](https://spelunky.fandom.com/wiki/Items_%28Classic%29), [traps](https://spelunky.fandom.com/wiki/Traps_%28Classic%29), and [unlockable rooms](https://spelunky.fandom.com/wiki/Unlockable_rooms) are cross-checks for omissions. HD and Spelunky 2 content is out of scope.
 
-The playable implementation currently focuses on **Mines 1–4 only**. Full Level Playtest and Full game generate Mines levels; the playtest completes after the 1–4 exit animation; R then starts a new run. Jungle, Ice Caves, Temple, Olmec, and special-level generation/gameplay were removed for this focused pass. Their entries below remain as future coverage goals, not active implementations. The animation viewer, original-source archive, and image/sound assets still cover the wider Classic game. Run the project with Love 11.5 (`love .`); run its smoke suite with `love . --smoke-test`. The smoke suite mutes application audio before loading screens; normal playtest audio is unchanged.
-
 Implemented objects live in individual Lua modules under `src/platform/` (`items/shotgun.lua`, `pickups/compass.lua`, `enemies/skeleton.lua`, `tiles/brick.lua`, etc.). See [object module conventions](src/platform/README.md#object-modules) for the registries and shared systems.
-
-The [step-by-step object source audit](docs/object-source-audit.md) records the initial 96-module comparison with Classic's objects and inherited events, plus the Kali and Mines completion follow-ups, new modules, remaining parity limits, and regression results. Module separation does not establish complete source parity.
 
 Normal playtest sessions log automatically to `playtest-logs/` in Love's save directory. `latest.txt` points to the most recent JSONL session; press F9 during a test to add a bookmark for later diagnosis. The smoke suite does not create a playtest session.
 
