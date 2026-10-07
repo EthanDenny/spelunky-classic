@@ -1,0 +1,28 @@
+src/screens/level_transition.lua
+  s_a149baf2181030::t_06187742bbecc4 226-227
+src/render/transition_room.lua
+  s_a149baf2181030::t_06187742bbecc4 19,29-30,59-61
+  s_a149baf2181030::t_8056d437d30cf2 62-63
+src/tests/full_game_test.lua
+  s_a149baf2181030::t_1e323ee01554d5 42-47,49-72,75-77,80-83,86-96,254,323
+  s_a149baf2181030::t_9dd001c3d68341 48,78-79,84-85
+  s_a149baf2181030::t_06187742bbecc4 73-74
+docs/object-source-audit.md
+  s_a149baf2181030::t_da2fb6beef669f 655-657,722-738
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "79a06588c2935914a0d4aafeeae4d734976ddff9",
+  "prompts": {},
+  "sessions": {
+    "s_a149baf2181030": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0fdc3-ae05-7e41-a96b-bd7a333b41c3",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Ethan Denny <ethandenny@protonmail.com>"
+    }
+  }
+}
