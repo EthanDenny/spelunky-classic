@@ -1,0 +1,26 @@
+src/tests/bomb_scenarios_test.lua
+  s_a149baf2181030::t_ed0f779a8b7258 61
+  s_a149baf2181030::t_f8bd4a087cf01f 49-60,62-73
+src/tests/mines_report_regression_test.lua
+  s_a149baf2181030::t_f8bd4a087cf01f 76
+src/platform/world.lua
+  s_a149baf2181030::t_84fc4ec73a04c8 330
+docs/object-source-audit.md
+  s_a149baf2181030::t_ed0f779a8b7258 868-884
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "cf7204d8659e3247bdf5edcfd95a0e4445a11394",
+  "prompts": {},
+  "sessions": {
+    "s_a149baf2181030": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0fdc3-ae05-7e41-a96b-bd7a333b41c3",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Ethan Denny <ethandenny@protonmail.com>"
+    }
+  }
+}
